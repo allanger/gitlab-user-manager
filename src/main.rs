@@ -1,19 +1,19 @@
 mod cmd;
-mod models;
+mod types;
 
-use std::env;
+use std::process::exit;
 
-use clap::{App, AppSettings, Arg};
+use clap::{App, AppSettings};
 use cmd::init::init_cmd;
 use cmd::search::search_cmd;
-use gitlab::api::{self, projects, Query};
+use gitlab::api::{users, Query};
 use gitlab::Gitlab;
 use serde::Deserialize;
 
-use crate::models::models::{Config, Team};
+use crate::types::types::{Config, Team};
 
 #[derive(Debug, Deserialize)]
-struct Project {
+struct User {
     name: String,
 }
 
@@ -23,9 +23,6 @@ fn main() {
         .version("v1.1.1")
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .author("allanger")
-        .arg(
-            Arg::from_usage("[arg] 'some opt'").env_os(OsStr::new("CLP_TEST_ENV")),
-        )
         .subcommand(init_cmd())
         .subcommand(App::new("sync"))
         .subcommand(App::new("user"))
@@ -65,59 +62,53 @@ fn main() {
 
             return;
         }
-        Some(("sync", sync_matches)) => {
+        Some(("sync", _)) => {
             println!("sync");
             return;
         }
-        Some(("user", sync_matches)) => {
+        Some(("user", _)) => {
             println!("user");
             return;
         }
-        Some(("team", sync_matches)) => {
+        Some(("team", _)) => {
             println!("team");
             return;
         }
-        Some(("projects", sync_matches)) => {
+        Some(("projects", _)) => {
             println!("projects");
             return;
         }
-        Some(("groups", sync_matches)) => {
+        Some(("groups", _)) => {
             println!("groups");
             return;
         }
-        Some(("search", flags)) => {
-            match flags.subcommand() {
-                Some(("users", sub)) => {
-                    println!("USERS!1");
+        Some(("search", sub_matches)) => {
+            let token = sub_matches
+                .value_of("token")
+                .expect("gitlab token is missing");
+            let url = sub_matches.value_of("url").expect("gitlab url is missing");
+            let client = Gitlab::new(url, token).unwrap();
+
+            match sub_matches.subcommand() {
+                Some(("users", sub_matches)) => {
+                    let users = users::Users::builder()
+                        .search(sub_matches.value_of("USER").expect("required"))
+                        .build()
+                        .unwrap();
+                    let output: Vec<User> = users.query(&client).unwrap();
+                    output.iter().enumerate().for_each(|(_, u)| {
+                        println!("{}", u.name);
+                    })
                 }
                 None => {
-                    println!("NONE");
+                    eprintln!("You should specify what you are looking for, please use help");
+                    exit(1);
                 }
-                Some((&_, _)) => {
-                    println!("NONE");
-                }
+                _ => unreachable!(), // If all subcommands are defined above, anything else is unreachable
             }
-            // TODO: DON"T PUSH THIS TOKEN
-            let client = Gitlab::new("gitlab.com", "").unwrap();
-            // Some endpoints support pagination. They work on their own or via the `api::paged` function
-            // to get further results.
-            let pageable_endpoint = projects::Projects::builder()
-                .search("optima")
-                .build()
-                .unwrap();
-            // The endpoint on its own is just the first page of results (usually 20 entries).
-            let first_page: Vec<Project> = pageable_endpoint.query(&client).unwrap();
-
-            first_page.iter().enumerate().for_each(|(i, x)| {
-                println!("Item {} = {}", i, x.name);
-            });
-
-            println!("search");
             return;
         }
 
         _ => unreachable!(), // If all subcommands are defined above, anything else is unreachable
     }
 }
-
-
