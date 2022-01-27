@@ -1,8 +1,8 @@
-use std::ffi::OsStr;
+use clap::{arg, App};
 
-use clap::{arg, App, Arg};
+use super::{arg_gitlab_token, arg_gitlab_url};
 
-fn find_projects() -> App<'static> {
+fn find_projects() ->   App<'static> {
     return App::new("projects").about("Look for GitLab projects")
     .aliases(&["p", "project"])
     .arg(arg!(<PROJECT> "Look for projects"));
@@ -21,30 +21,11 @@ fn find_groups() -> App<'static> {
 }
 
 pub fn search_cmd() -> App<'static> {
-    // Define flags
-    let arg_gitlab_token = Arg::new("token")
-        .short('t')
-        .long("token")
-        .takes_value(true)
-        .value_name("GITLAB_TOKEN")
-        .default_value_os(OsStr::new("GITLAB_TOKEN"))
-        .help("Provide a name of the config file")
-        .env("GITLAB_TOKEN")
-        .default_value("GITLAB_TOKEN");
-
-    let arg_gitlab_url = Arg::new("url")
-        .short('u')
-        .long("url")
-        .takes_value(true)
-        .value_name("GITLAB_URL")
-        .help("Provide the gitlab url if it's not gitlab.com")
-        .default_value("gitlab.com");
-
     return App::new("search")
         .aliases(&["s", "find"])
-        .about("Create a default yaml file in the current directory")
-        .arg(arg_gitlab_token)
-        .arg(arg_gitlab_url)
+        .about("Search for GitLab entities")
+        .arg(arg_gitlab_token())
+        .arg(arg_gitlab_url())
         .subcommand(find_projects())
         .subcommand(find_users())
         .subcommand(find_groups());

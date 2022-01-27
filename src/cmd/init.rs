@@ -1,5 +1,6 @@
 use clap::{App, Arg};
 
+
 pub fn init_cmd() -> App<'static> {
     // Define flags
     let filename = Arg::new("file_name")
