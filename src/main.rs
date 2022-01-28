@@ -5,7 +5,6 @@ mod pkg;
 use std::process::exit;
 
 use clap::{App, AppSettings};
-use cmd::teams;
 use cmd::{sync::sync_cmd, init::init_cmd, search::search_cmd, teams::teams_cmd, users::users_cmd};
 use gitlab::api::{groups, projects, users, Query};
 use gitlab::Gitlab;
