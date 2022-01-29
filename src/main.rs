@@ -1,17 +1,17 @@
 mod cmd;
-mod types;
 mod pkg;
+mod types;
 
 use std::process::exit;
 
 use clap::{App, AppSettings};
-use cmd::{sync::sync_cmd, init::init_cmd, search::search_cmd, teams::teams_cmd, users::users_cmd};
+use cmd::{init::init_cmd, search::search_cmd, sync::sync_cmd, teams::teams_cmd, users::users_cmd};
 use gitlab::api::{groups, projects, users, Query};
 use gitlab::Gitlab;
 use pkg::teams::teams_pkg;
 use serde::Deserialize;
 
-use crate::types::types::{Config, Team};
+use crate::pkg::init::init_pkg;
 
 #[derive(Debug, Deserialize)]
 struct User {
@@ -42,25 +42,7 @@ fn main() {
 
     match matches.subcommand() {
         Some(("init", _)) => {
-            let file_name = "gum-config.yaml";
-            println!("Initializing gum config {:?}", file_name);
-
-            let f = std::fs::OpenOptions::new()
-                .write(true)
-                .create(true)
-                .open(file_name)
-                .expect("Couldn't open file");
-            // Create default empty config
-            let new_config = Config {
-                teams: Some(vec![Team {
-                    name: "default".to_string(),
-                    projects: None,
-                }]),
-                users: None,
-            };
-            // Write to file
-            serde_yaml::to_writer(f, &new_config).unwrap();
-
+            init_pkg();
             return;
         }
         Some(("sync", _)) => {
