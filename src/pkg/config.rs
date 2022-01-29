@@ -7,11 +7,10 @@ pub fn read_config() -> Result<crate::types::types::Config, Error> {
     let file_name = "gum-config.yaml";
 
     let f = std::fs::OpenOptions::new()
-        .create(true)
         .write(true)
         .read(true)
         .open(file_name);
-
+    // TODO: Handle different reader errors
     let f = match f {
         Ok(file) => file,
         Err(_error) => {

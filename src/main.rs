@@ -54,7 +54,10 @@ fn main() {
             return;
         }
         Some(("teams", sub_matches)) => {
-            teams_pkg(sub_matches);
+            let err = teams_pkg(sub_matches);
+            if err.is_some() {
+              println!("{}", err.unwrap());
+            }
             return;
         }
         Some(("projects", _)) => {
