@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
-
 pub struct Config {
     pub(crate) teams: Option<Vec<Team>>,
     pub(crate) users: Option<Vec<User>>,
