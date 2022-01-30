@@ -13,6 +13,13 @@ pub fn teams_pkg(sub_matches: &ArgMatches) -> Option<Error> {
                     .expect("Team name is required"),
             )
         }
+        Some(("remove", sub_matches)) => {
+            return remove(
+                sub_matches
+                    .value_of("TEAM_NAME")
+                    .expect("Team name is required"),
+            )
+        }
         Some(("list", _)) => {
             return list();
         }
@@ -71,25 +78,33 @@ fn remove(team_name: &str) -> Option<Error> {
     };
 
     //  TODO: It shouldn't look that bad, I hope
-    if config
+    config
         .teams
         .as_mut()
         .unwrap()
-        .iter()
-        .any(|i| i.name == team_name)
-    {
-        return Some(Error::new(
-            ErrorKind::AlreadyExists,
-            "team with this name already exists",
-        ));
-    }
-
-    config.teams.as_mut().unwrap().retain(f)
-
-    config.teams.as_mut().unwrap().extend([new_team]);
+        .retain(|t| t.name != team_name);
 
     let _ = match config::write_config(config) {
         Ok(()) => return None,
         Err(_error) => return Some(_error),
     };
+}
+
+fn add_project() -> Option<Error> {
+    let mut config = match config::read_config() {
+        Ok(c) => c,
+        Err(_error) => return Some(_error),
+    };
+
+    for team in config.teams.unwrap().iter() {
+        if team.name == "default" {
+            team.projects.as_ref().unwrap().extend([types::Project{
+                access_right: "default".to_string(),
+                id: 1,
+                name: "project".to_string(),
+            }]);
+            break;
+        };
+    }
+    None
 }
