@@ -1,6 +1,7 @@
 mod cmd;
 mod pkg;
 mod types;
+mod third_party;
 
 use std::process::exit;
 

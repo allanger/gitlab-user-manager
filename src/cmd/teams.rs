@@ -1,10 +1,10 @@
 use clap::{arg, App, Arg};
 
-use super::arg_project_id;
+use super::{arg_project_id, arg_gitlab_token, arg_gitlab_url};
 
 fn arg_team_name() -> Arg<'static> {
     return Arg::new("team-name")
-        .short('t')
+        .short('n')
         .takes_value(true)
         .value_name("TEAM_NAME")
         .help("Provide a name of the team")
@@ -36,7 +36,9 @@ fn add_project() -> App<'static> {
         .alias("ap")
         .about("Remove the team from the config file")
         .arg(arg_team_name())
-        .arg(arg_project_id());
+        .arg(arg_project_id())
+        .arg(arg_gitlab_token())
+        .arg(arg_gitlab_url());
 }
 
 fn remove_project() -> App<'static> {

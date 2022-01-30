@@ -1,8 +1,8 @@
 use std::io::{Error, ErrorKind};
 
-use clap::ArgMatches;
+use clap::{ArgMatches, Arg};
 
-use crate::{pkg::config, types::types};
+use crate::{pkg::config, types::types, third_party::{self, gitlab::GitlabActions}};
 
 pub fn teams_pkg(sub_matches: &ArgMatches) -> Option<Error> {
     match sub_matches.subcommand() {
@@ -23,8 +23,9 @@ pub fn teams_pkg(sub_matches: &ArgMatches) -> Option<Error> {
         Some(("list", _)) => {
             return list();
         }
+        Some(("add-project", sub_matches)) => add_project(sub_matches),
         _ => return None,
-    };
+    }
 }
 
 fn create(team_name: &str) -> Option<Error> {
@@ -90,21 +91,27 @@ fn remove(team_name: &str) -> Option<Error> {
     };
 }
 
-fn add_project() -> Option<Error> {
+fn add_project(sub_matches: &ArgMatches) -> Option<Error> {
     let mut config = match config::read_config() {
         Ok(c) => c,
         Err(_error) => return Some(_error),
     };
+    let g_conn = third_party::gitlab::GitlabConnection{
+        url: sub_matches.value_of("url").unwrap().to_string(),
+        token: sub_matches.value_of("token").unwrap().to_string()
+    };
+    let gitlab = third_party::gitlab::new_gitlab_client(g_conn);
+    gitlab.get_project_name_by_id();
 
-    for team in config.teams.unwrap().iter() {
-        if team.name == "default" {
-            team.projects.as_ref().unwrap().extend([types::Project{
-                access_right: "default".to_string(),
-                id: 1,
-                name: "project".to_string(),
-            }]);
-            break;
-        };
-    }
+    // for team in config.teams.unwrap().iter() {
+        // if team.name == "default" {
+            // team.projects.as_ref().unwrap().extend([types::Project{
+                // access_right: "default".to_string(),
+                // id: 1,
+                // name: "project".to_string(),
+            // }]);
+            // break;
+        // };
+    // }
     None
 }
