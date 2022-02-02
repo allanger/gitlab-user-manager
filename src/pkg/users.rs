@@ -29,7 +29,8 @@ fn create(sub_matches: &ArgMatches) -> Option<Error> {
         Ok(c) => c,
         Err(_error) => return Some(_error),
     };
-    let user_id: u64 = match sub_matches.value_of_t("user-id") {
+    
+    let user_id: u64 = match sub_matches.value_of_t("GITLAB_USER_ID") {
         Ok(uid) => uid,
         Err(_error) => return Some(Error::new(ErrorKind::InvalidInput, _error.to_string())),
     };
@@ -42,7 +43,7 @@ fn create(sub_matches: &ArgMatches) -> Option<Error> {
     let gitlab = third_party::gitlab::new_gitlab_client(g_conn.url, g_conn.token);
 
     let user = match gitlab.get_user_data_by_id(user_id) {
-        Ok(p) => p,
+        Ok(u) => u,
         Err(_error) => return Some(_error),
     };
 
@@ -56,19 +57,19 @@ fn create(sub_matches: &ArgMatches) -> Option<Error> {
 
     //  TODO: It shouldn't look that bad, I hope
     if config
-        .teams
+        .users
         .as_mut()
         .unwrap()
         .iter()
-        .any(|i| i.name == new_team.name)
+        .any(|i| i.name == new_user.name)
     {
         return Some(Error::new(
             ErrorKind::AlreadyExists,
-            "team with this name already exists",
+            format!("user {} is already in the config file", new_user.name),
         ));
     }
 
-    config.teams.as_mut().unwrap().extend([new_team]);
+    config.users.as_mut().unwrap().extend([new_user]);
 
     let _ = match config::write_config(config) {
         Ok(()) => return None,

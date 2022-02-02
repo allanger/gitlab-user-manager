@@ -1,7 +1,7 @@
 use std::io::Error;
 
 use gitlab::{
-    api::{projects, Query, users},
+    api::{projects, users, Query},
     Gitlab,
 };
 use serde::Deserialize;
@@ -23,11 +23,16 @@ pub(crate) fn new_gitlab_client(url: String, token: String) -> impl GitlabAction
 
 pub(crate) trait GitlabActions {
     fn get_project_data_by_id(&self, id: u64) -> Result<Project, Error>;
-    fn get_user_data_by_id(&self, id: u64) -> Result<Project, Error>;
+    fn get_user_data_by_id(&self, id: u64) -> Result<User, Error>;
 }
 
 #[derive(Debug, Deserialize)]
 pub(crate) struct Project {
+    pub(crate) name: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub(crate) struct User {
     pub(crate) name: String,
 }
 
@@ -42,15 +47,14 @@ impl GitlabActions for RsGitlab {
         let output: Project = project.query(&self.gitlab_client).unwrap();
         Ok(output)
     }
-    fn get_user_data_by_id(&self, id: u64) -> Result<Project, Error> {
+    fn get_user_data_by_id(&self, id: u64) -> Result<User, Error> {
         let user = match users::User::builder().user(id).build() {
             Ok(user) => user,
             Err(_error) => {
                 return Err(Error::new(std::io::ErrorKind::Other, _error.to_string()));
             }
         };
-        let output: Project = user.query(&self.gitlab_client).unwrap();
+        let output: User = user.query(&self.gitlab_client).unwrap();
         Ok(output)
     }
-
 }
