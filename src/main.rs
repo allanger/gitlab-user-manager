@@ -1,7 +1,7 @@
 mod cmd;
 mod pkg;
-mod types;
 mod third_party;
+mod types;
 
 use std::process::exit;
 
@@ -10,12 +10,14 @@ use cmd::{init::init_cmd, search::search_cmd, sync::sync_cmd, teams::teams_cmd, 
 use gitlab::api::{groups, projects, users, Query};
 use gitlab::Gitlab;
 use pkg::teams::teams_pkg;
+use pkg::users::users_pkg;
 use serde::Deserialize;
 
 use crate::pkg::init::init_pkg;
 
 #[derive(Debug, Deserialize)]
 struct User {
+    id: u64,
     name: String,
 }
 
@@ -50,14 +52,17 @@ fn main() {
             println!("sync");
             return;
         }
-        Some(("user", _)) => {
-            println!("user");
+        Some(("users", sub_matches)) => {
+            let err = users_pkg(sub_matches);
+            if err.is_some() {
+                println!("{}", err.unwrap());
+            }
             return;
         }
         Some(("teams", sub_matches)) => {
             let err = teams_pkg(sub_matches);
             if err.is_some() {
-              println!("{}", err.unwrap());
+                println!("{}", err.unwrap());
             }
             return;
         }
@@ -84,7 +89,7 @@ fn main() {
                         .unwrap();
                     let output: Vec<User> = users.query(&client).unwrap();
                     output.iter().enumerate().for_each(|(_, u)| {
-                        println!("{}", u.name);
+                        println!("{} | {}", u.name, u.id);
                     })
                 }
                 Some(("projects", sub_matches)) => {

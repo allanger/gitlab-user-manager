@@ -1,4 +1,6 @@
-[use clap::{arg, App};
+use clap::{arg, App};
+
+use super::{arg_gitlab_token, arg_gitlab_url};
 
 fn create() -> App<'static> {
     return App::new("create")
