@@ -11,6 +11,15 @@ fn arg_team_name() -> Arg<'static> {
         .default_value("default");
 }
 
+fn arg_access() -> Arg<'static> {
+    return Arg::new("access")
+        .short('a')
+        .takes_value(true)
+        .value_name("ACCESS")
+        .help("Provide a valid access level")
+        .default_value("guest");
+}
+
 fn create() -> App<'static> {
     return App::new("create")
         .alias("c")
@@ -36,6 +45,7 @@ fn add_project() -> App<'static> {
         .alias("ap")
         .about("Remove the team from the config file")
         .arg(arg_team_name())
+        .arg(arg_access())
         .arg(arg_project_id())
         .arg(arg_gitlab_token())
         .arg(arg_gitlab_url());
@@ -45,6 +55,8 @@ fn remove_project() -> App<'static> {
     return App::new("remove-project")
         .alias("rp")
         .about("Remove a Gitlab project from the team")
+        .arg(arg_gitlab_token())
+        .arg(arg_gitlab_url())
         .arg(arg_team_name())
         .arg(arg_project_id());
 }

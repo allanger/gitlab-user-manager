@@ -1,10 +1,12 @@
-use clap::{arg, App};
+[use clap::{arg, App};
 
 fn create() -> App<'static> {
     return App::new("create")
         .alias("c")
         .about("Add user to the config file")
-        .arg(arg!(<GITLAB_USER_ID> "Provide the GitLab user ID"));
+        .arg(arg!(<GITLAB_USER_ID> "Provide the GitLab user ID"))
+        .arg(arg_gitlab_token())
+        .arg(arg_gitlab_url());
 }
 
 fn list() -> App<'static> {
