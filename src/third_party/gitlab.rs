@@ -29,16 +29,19 @@ pub(crate) trait GitlabActions {
 
 #[derive(Debug, Deserialize)]
 pub(crate) struct Project {
+    pub(crate) id: u64,
     pub(crate) name: String,
 }
 
 #[derive(Debug, Deserialize)]
 pub(crate) struct User {
+    pub(crate) id: u64,
     pub(crate) name: String,
 }
 #[derive(Debug, Deserialize)]
 
 pub(crate) struct Group {
+    pub(crate) id: u64,
     pub(crate) name: String,
     pub(crate) web_url: String,
     
