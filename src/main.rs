@@ -3,14 +3,17 @@ mod pkg;
 mod third_party;
 mod types;
 
+use std::io::Error;
+use std::process::exit;
+
 use clap::{App, AppSettings};
 
-use cmd::{init_cmd, users_cmd, teams_cmd, search_cmd, sync_cmd};
+use cmd::{init_cmd, search_cmd, sync_cmd, teams_cmd, users_cmd};
 use pkg::search::search_pkg;
 use pkg::teams::teams_pkg;
 use pkg::users::users_pkg;
 
-use crate::pkg::init::init_pkg;
+use crate::pkg::init::init_srv;
 
 fn main() {
     let matches = App::new("gum")
@@ -24,38 +27,30 @@ fn main() {
         .subcommand(search_cmd())
         .subcommand(sync_cmd())
         .get_matches();
-
+    let error: Option<Error>;
     match matches.subcommand() {
         Some(("init", _)) => {
-            init_pkg();
-            return;
+            error = init_srv();
         }
         Some(("sync", _)) => {
             println!("sync");
             return;
         }
         Some(("users", sub_matches)) => {
-            let err = users_pkg(sub_matches);
-            if err.is_some() {
-                println!("{}", err.unwrap());
-            }
-            return;
+            error = users_pkg(sub_matches);
         }
         Some(("teams", sub_matches)) => {
-            let err = teams_pkg(sub_matches);
-            if err.is_some() {
-                println!("{}", err.unwrap());
-            }
-            return;
+            error = teams_pkg(sub_matches);
         }
         Some(("search", sub_matches)) => {
-            let err = search_pkg(sub_matches);
-            if err.is_some() {
-                println!("{}", err.unwrap());
-            }
-            return;
+            error = search_pkg(sub_matches);
         }
 
         _ => unreachable!(), // If all subcommands are defined above, anything else is unreachable
     }
+    if error.is_some() {
+        println!("ERROR: {}", error.unwrap());
+        exit(1);
+    }
+    println!("cool, huh?")
 }

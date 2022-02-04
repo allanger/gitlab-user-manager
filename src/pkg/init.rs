@@ -1,11 +1,16 @@
-use std::process::exit;
-
 use crate::types::types::{Config, Team};
+use std::io::Error;
 
-pub fn init_pkg() -> () {
+pub fn init_srv() -> Option<Error> {
+    //  TODO: Add possibility use other file names
     let file_name = "gum-config.yaml";
     println!("Initializing gum config {:?}", file_name);
-
+    if std::path::Path::new(file_name).exists() {
+        return Some(Error::new(
+            std::io::ErrorKind::AlreadyExists,
+            "config file already exists in the current dir",
+        ));
+    }
     // Creating a config file
     let f = std::fs::OpenOptions::new()
         .write(true)
@@ -14,10 +19,7 @@ pub fn init_pkg() -> () {
 
     let f = match f {
         Ok(file) => file,
-        Err(_error) => {
-            println!("File not found: { }", file_name);
-            exit(1);
-        }
+        Err(_error) => return Some(_error),
     };
 
     // Create default empty config
@@ -30,4 +32,5 @@ pub fn init_pkg() -> () {
     };
     // Write to file
     serde_yaml::to_writer(f, &new_config).unwrap();
+    None
 }
