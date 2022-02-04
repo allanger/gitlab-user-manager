@@ -4,8 +4,8 @@ mod third_party;
 mod types;
 
 use clap::{App, AppSettings};
-use cmd::{init::init_cmd, search::search_cmd, sync::sync_cmd, teams::teams_cmd, users::users_cmd};
 
+use cmd::{init_cmd, users_cmd, teams_cmd, search_cmd, sync_cmd};
 use pkg::search::search_pkg;
 use pkg::teams::teams_pkg;
 use pkg::users::users_pkg;
