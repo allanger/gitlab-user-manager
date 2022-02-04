@@ -1,6 +1,5 @@
 use std::io::Error;
 use std::io::ErrorKind;
-// use std::io::Result;
 use std::result::Result;
 
 pub fn read_config() -> Result<crate::types::types::Config, Error> {
