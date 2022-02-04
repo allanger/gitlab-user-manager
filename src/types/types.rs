@@ -16,7 +16,7 @@ pub struct User {
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Ownership {
     pub(crate) name: String,
-    pub(crate) id: i32,
+    pub(crate) id: u64,
     pub(crate) url: String,
 }
 #[derive(Debug, PartialEq, Serialize, Deserialize)]

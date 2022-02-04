@@ -1,24 +1,8 @@
-use clap::{arg, App, Arg};
+use clap::{arg, App};
 
-use super::{arg_project_id, arg_gitlab_token, arg_gitlab_url};
+use super::{arg_project_id, arg_gitlab_token, arg_gitlab_url, arg_access, arg_team_name};
 
-fn arg_team_name() -> Arg<'static> {
-    return Arg::new("team-name")
-        .short('n')
-        .takes_value(true)
-        .value_name("TEAM_NAME")
-        .help("Provide a name of the team")
-        .default_value("default");
-}
 
-fn arg_access() -> Arg<'static> {
-    return Arg::new("access")
-        .short('a')
-        .takes_value(true)
-        .value_name("ACCESS")
-        .help("Provide a valid access level")
-        .default_value("guest");
-}
 
 fn create() -> App<'static> {
     return App::new("create")

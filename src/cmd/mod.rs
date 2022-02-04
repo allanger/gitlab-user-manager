@@ -2,9 +2,9 @@ use clap::Arg;
 
 pub(crate) mod init;
 pub(crate) mod search;
+pub(crate) mod sync;
 pub(crate) mod teams;
 pub(crate) mod users;
-pub(crate) mod sync;
 
 fn arg_gitlab_token() -> Arg<'static> {
     return Arg::new("token")
@@ -39,4 +39,20 @@ fn arg_project_id() -> Arg<'static> {
         .global(true);
 }
 
+fn arg_access() -> Arg<'static> {
+    return Arg::new("access")
+        .short('a')
+        .takes_value(true)
+        .value_name("ACCESS")
+        .help("Provide a valid access level")
+        .default_value("guest");
+}
 
+fn arg_team_name() -> Arg<'static> {
+    return Arg::new("team-name")
+        .short('n')
+        .takes_value(true)
+        .value_name("TEAM_NAME")
+        .help("Provide a name of the team")
+        .default_value("default");
+}
