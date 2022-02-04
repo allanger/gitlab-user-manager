@@ -2,6 +2,7 @@ mod cmd;
 mod pkg;
 mod third_party;
 mod types;
+mod srv;
 
 use std::io::Error;
 use std::process::exit;
