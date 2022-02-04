@@ -2,4 +2,14 @@
 teams:
   - name: team_1
     projects: []
-users: ~
+users:
+  - id: 6012633
+    name: Nikolay Rodionov
+    teams: ~
+    projects: ~
+    ownerships: ~
+  - id: 5738651
+    name: Boris Ivanov
+    teams: []
+    projects: []
+    ownerships: []

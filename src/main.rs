@@ -23,10 +23,12 @@ struct User {
 
 #[derive(Debug, Deserialize)]
 struct Project {
+    id: u64,
     name: String,
 }
 #[derive(Debug, Deserialize)]
 struct Groups {
+    id: u64,
     name: String,
 }
 
@@ -99,7 +101,7 @@ fn main() {
                         .unwrap();
                     let output: Vec<Project> = projects.query(&client).unwrap();
                     output.iter().enumerate().for_each(|(_, u)| {
-                        println!("{}", u.name);
+                        println!("{} | {}", u.name, u.id);
                     })
                 }
                 Some(("groups", sub_matches)) => {
@@ -109,7 +111,7 @@ fn main() {
                         .unwrap();
                     let output: Vec<Groups> = projects.query(&client).unwrap();
                     output.iter().enumerate().for_each(|(_, u)| {
-                        println!("{}", u.name);
+                        println!("{} | {}", u.name, u.id);
                     })
                 }
 
