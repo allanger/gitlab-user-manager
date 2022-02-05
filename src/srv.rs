@@ -1,26 +1,59 @@
 pub(crate) mod srv {
-    use clap::ArgMatches;
     use std::io::Error;
 
-    struct Srv<'a> {
-        sub_matches: &'a ArgMatches,
+    pub fn new_srv() -> impl SrvActions {
+        Srv
     }
 
-    trait SrvActions {
+    struct Srv;
+    pub trait SrvActions {
         fn init(&self) -> Option<Error>;
     }
 
-    impl<'a> SrvActions for Srv<'a> {
+    impl SrvActions for Srv {
         fn init(&self) -> Option<Error> {
-          init_mod::init()
-            // None
+            let file = |f: String| {
+                std::fs::OpenOptions::new()
+                    .write(true)
+                    .create_new(true)
+                    .open(f)
+            };
+            init_mod::init(file)
         }
     }
 
     mod init_mod {
-        use std::io::Error;
+        use std::{
+            fs::File,
+            io::{Error, ErrorKind},
+            result::Result,
+        };
 
-        pub fn init() -> Option<Error> {
+        use crate::types::types::{Config, Team};
+        pub fn init<F>(mut f: F) -> Option<Error>
+        where
+            F: FnMut(String) -> Result<File, std::io::Error>,
+        {
+            //  TODO: Add possibility use other file names
+            let file_name = "gum-config.yaml";
+            println!("Initializing gum config {:?}", file_name);
+
+            let file = match f(file_name.to_string()) {
+                Ok(file) => file,
+                Err(_error) => return Some(Error::new(ErrorKind::AlreadyExists, _error)),
+            };
+
+            // Create default empty config
+            // Has to be mockable
+            let new_config = Config {
+                teams: Some(vec![Team {
+                    name: "default".to_string(),
+                    projects: None,
+                }]),
+                users: None,
+            };
+            // Write to file
+            serde_yaml::to_writer(file, &new_config).unwrap();
             None
         }
     }
