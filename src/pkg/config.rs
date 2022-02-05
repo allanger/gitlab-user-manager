@@ -44,8 +44,6 @@ pub fn write_config(config: crate::types::types::Config) -> Result<(), Error> {
         }
     };
 
-
-
     let _ = match serde_yaml::to_writer(&f, &config) {
         Ok(()) => return Ok(()),
         Err(_error) => {

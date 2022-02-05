@@ -1,17 +1,17 @@
 pub(crate) mod srv {
     use std::io::Error;
 
-    pub fn new_srv() -> impl SrvActions {
-        Srv
+    pub fn new_srv() -> impl Init {
+        Cmd
     }
 
-    struct Srv;
-    pub trait SrvActions {
-        fn init(&self) -> Result<(), Error>;
+    struct Cmd;
+    pub trait Init {
+        fn exec(&self) -> Result<(), Error>;
     }
 
-    impl SrvActions for Srv {
-        fn init(&self) -> Result<(), Error> {
+    impl Init for Cmd {
+        fn exec(&self) -> Result<(), Error> {
             let file = |f: String| {
                 std::fs::OpenOptions::new()
                     .write(true)
@@ -57,35 +57,12 @@ pub(crate) mod srv {
     }
     #[cfg(test)]
     mod tests {
-        use std::fs;
-
         use super::init_mod;
 
         #[test]
         fn create_file() {
-            let file = |f: String| {
-                std::fs::OpenOptions::new()
-                    .write(true)
-                    .create_new(true)
-                    .open("/tmp/gum")
-            };
+            let file = |f: String| tempfile::tempfile();
             assert!(init_mod::init(file).is_ok());
-            fs::remove_file("/tmp/gum");
-        }
-        #[test]
-        fn create_file_twice() {
-            let data = "Some data!";
-            fs::write("/tmp/gum2", data).expect("Unable to write file");
-            
-            let file = |f: String| {
-                std::fs::OpenOptions::new()
-                    .write(true)
-                    .create_new(true)
-                    .open("/tmp/gum2")
-            };
-            assert!(init_mod::init(file).is_err(), "fuck you");
-            fs::remove_file("/tmp/gum2");
-
         }
     }
 }
