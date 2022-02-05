@@ -31,7 +31,7 @@ fn main() {
     let error: Result<(), Error>;
     match matches.subcommand() {
         Some(("init", _)) => {
-            error = new_srv().exec();
+            error = new_srv().exec("gum-config.yaml".to_string());
         }
         Some(("sync", _)) => {
             println!("sync");
