@@ -57,12 +57,21 @@ pub(crate) mod srv {
     }
     #[cfg(test)]
     mod tests {
+        use std::{
+            io::{Error, ErrorKind},
+        };
+
         use super::init_mod;
 
         #[test]
         fn create_file() {
-            let file = |f: String| tempfile::tempfile();
+            let file = |_f: String| tempfile::tempfile();
             assert!(init_mod::init(file).is_ok());
+        }
+        #[test]
+        fn fail_file_creation() {
+            let file = |_f: String| Err(Error::new(ErrorKind::AlreadyExists, "exists"));
+            assert!(init_mod::init(file).is_err());
         }
     }
 }
