@@ -1,8 +1,8 @@
 mod cmd;
 mod pkg;
+mod srv;
 mod third_party;
 mod types;
-mod srv;
 
 use std::io::Error;
 use std::process::exit;
@@ -15,6 +15,7 @@ use pkg::teams::teams_pkg;
 use pkg::users::users_pkg;
 
 use crate::pkg::init::init_srv;
+use crate::srv::srv::{new_srv, SrvActions};
 
 fn main() {
     let matches = App::new("gum")
@@ -31,7 +32,8 @@ fn main() {
     let error: Option<Error>;
     match matches.subcommand() {
         Some(("init", _)) => {
-            error = init_srv();
+            // error = init_srv();
+            error = new_srv().init();
         }
         Some(("sync", _)) => {
             println!("sync");
