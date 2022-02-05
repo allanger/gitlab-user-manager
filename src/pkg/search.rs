@@ -8,7 +8,7 @@ use gitlab::{
 
 use crate::third_party::gitlab::{Group, Project, User};
 
-pub fn search_pkg(sub_matches: &ArgMatches) -> Option<Error> {
+pub fn search_pkg(sub_matches: &ArgMatches) -> Result<(), Error> {
     let token = sub_matches
         .value_of("token")
         .expect("gitlab token is missing");
@@ -25,7 +25,7 @@ pub fn search_pkg(sub_matches: &ArgMatches) -> Option<Error> {
             output.iter().enumerate().for_each(|(_, u)| {
                 println!("{} | {}", u.name, u.id);
             });
-            None
+            Ok(())
         }
         Some(("projects", sub_matches)) => {
             let projects = projects::Projects::builder()
@@ -36,7 +36,7 @@ pub fn search_pkg(sub_matches: &ArgMatches) -> Option<Error> {
             output.iter().enumerate().for_each(|(_, u)| {
                 println!("{} | {}", u.name, u.id);
             });
-            None
+            Ok(())
         }
         Some(("groups", sub_matches)) => {
             let projects = groups::Groups::builder()
@@ -47,16 +47,15 @@ pub fn search_pkg(sub_matches: &ArgMatches) -> Option<Error> {
             output.iter().enumerate().for_each(|(_, u)| {
                 println!("{} | {}", u.name, u.id);
             });
-            None
+            Ok(())
         }
 
         _ => {
             eprintln!("You should specify what you are looking for, please use help");
-            return Some(Error::new(
+            return Err(Error::new(
                 std::io::ErrorKind::InvalidInput,
                 "You should specify what you are looking for, please use help",
             ));
         }
-        // _ => unreachable!(), // If all subcommands are defined above, anything else is unreachable
     }
 }

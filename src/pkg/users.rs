@@ -8,7 +8,7 @@ use crate::{
     types::types,
 };
 
-pub fn users_pkg(sub_matches: &ArgMatches) -> Option<Error> {
+pub fn users_pkg(sub_matches: &ArgMatches) -> Result<(), Error> {
     match sub_matches.subcommand() {
         Some(("create", sub_matches)) => return create(sub_matches),
         Some(("list", _)) => return list(),
@@ -19,19 +19,19 @@ pub fn users_pkg(sub_matches: &ArgMatches) -> Option<Error> {
         Some(("remove-project", sub_matches)) => return remove_project(sub_matches),
         Some(("remove-team", sub_matches)) => return remove_team(sub_matches),
         Some(("remove-ownership", sub_matches)) => return remove_ownership(sub_matches),
-        _ => return None,
+        _ => return Ok(()),
     };
 }
 
-fn create(sub_matches: &ArgMatches) -> Option<Error> {
+fn create(sub_matches: &ArgMatches) -> Result<(), Error> {
     let mut config = match config::read_config() {
         Ok(c) => c,
-        Err(_error) => return Some(_error),
+        Err(_error) => return Err(_error),
     };
 
     let user_id: u64 = match sub_matches.value_of_t("GITLAB_USER_ID") {
         Ok(uid) => uid,
-        Err(_error) => return Some(Error::new(ErrorKind::InvalidInput, _error.to_string())),
+        Err(_error) => return Err(Error::new(ErrorKind::InvalidInput, _error.to_string())),
     };
 
     let g_conn = third_party::gitlab::GitlabConnection {
@@ -43,7 +43,7 @@ fn create(sub_matches: &ArgMatches) -> Option<Error> {
 
     let user = match gitlab.get_user_data_by_id(user_id) {
         Ok(u) => u,
-        Err(_error) => return Some(_error),
+        Err(_error) => return Err(_error),
     };
 
     let new_user = types::User {
@@ -57,7 +57,7 @@ fn create(sub_matches: &ArgMatches) -> Option<Error> {
     match config.users.as_mut() {
         Some(u) => {
             if u.iter().any(|i| i.id == user_id) {
-                return Some(Error::new(
+                return Err(Error::new(
                     ErrorKind::AlreadyExists,
                     format!("user {} is already in the config file", new_user.name),
                 ));
@@ -69,31 +69,31 @@ fn create(sub_matches: &ArgMatches) -> Option<Error> {
     }
 
     let _ = match config::write_config(config) {
-        Ok(()) => return None,
-        Err(_error) => return Some(_error),
+        Ok(()) => return Ok(()),
+        Err(_error) => return Err(_error),
     };
 }
 
-fn list() -> Option<Error> {
+fn list() -> Result<(), Error> {
     let config = match config::read_config() {
         Ok(c) => c,
-        Err(_error) => return Some(_error),
+        Err(_error) => return Err(_error),
     };
 
     for user in config.users.unwrap().iter() {
         println!("{}", user.name);
     }
-    None
+    Ok(())
 }
-fn remove(sub_matches: &ArgMatches) -> Option<Error> {
+fn remove(sub_matches: &ArgMatches) -> Result<(), Error> {
     let mut config = match config::read_config() {
         Ok(c) => c,
-        Err(_error) => return Some(_error),
+        Err(_error) => return Err(_error),
     };
 
     let user_id: u64 = match sub_matches.value_of_t("GITLAB_USER_ID") {
         Ok(uid) => uid,
-        Err(_error) => return Some(Error::new(ErrorKind::InvalidInput, _error.to_string())),
+        Err(_error) => return Err(Error::new(ErrorKind::InvalidInput, _error.to_string())),
     };
 
     let g_conn = third_party::gitlab::GitlabConnection {
@@ -105,7 +105,7 @@ fn remove(sub_matches: &ArgMatches) -> Option<Error> {
 
     let user = match gitlab.get_user_data_by_id(user_id) {
         Ok(u) => u,
-        Err(_error) => return Some(_error),
+        Err(_error) => return Err(_error),
     };
 
     let new_user = types::User {
@@ -119,7 +119,7 @@ fn remove(sub_matches: &ArgMatches) -> Option<Error> {
     match config.users.as_mut() {
         Some(u) => {
             if u.iter().any(|i| i.id == user_id) {
-                return Some(Error::new(
+                return Err(Error::new(
                     ErrorKind::AlreadyExists,
                     format!("user {} is already in the config file", new_user.name),
                 ));
@@ -131,15 +131,15 @@ fn remove(sub_matches: &ArgMatches) -> Option<Error> {
     }
 
     let _ = match config::write_config(config) {
-        Ok(()) => return None,
-        Err(_error) => return Some(_error),
+        Ok(()) => return Ok(()),
+        Err(_error) => return Err(_error),
     };
 }
 /// Give a user access to the project
-fn add_project(sub_matches: &ArgMatches) -> Option<Error> {
+fn add_project(sub_matches: &ArgMatches) -> Result<(), Error> {
     let mut config = match config::read_config() {
         Ok(c) => c,
-        Err(_error) => return Some(_error),
+        Err(_error) => return Err(_error),
     };
     let g_conn = third_party::gitlab::GitlabConnection {
         url: sub_matches.value_of("url").unwrap().to_string(),
@@ -148,12 +148,12 @@ fn add_project(sub_matches: &ArgMatches) -> Option<Error> {
     // let project_id  = value_t!(sub_matches.value_of("project-id"), u64);
     let project_id: u64 = match sub_matches.value_of_t("project-id") {
         Ok(pid) => pid,
-        Err(_error) => return Some(Error::new(ErrorKind::InvalidInput, _error.to_string())),
+        Err(_error) => return Err(Error::new(ErrorKind::InvalidInput, _error.to_string())),
     };
 
     let user_id: u64 = match sub_matches.value_of_t("GITLAB_USER_ID") {
         Ok(uid) => uid,
-        Err(_error) => return Some(Error::new(ErrorKind::InvalidInput, _error.to_string())),
+        Err(_error) => return Err(Error::new(ErrorKind::InvalidInput, _error.to_string())),
     };
 
     let access = sub_matches.value_of("access").unwrap().to_string();
@@ -161,7 +161,7 @@ fn add_project(sub_matches: &ArgMatches) -> Option<Error> {
 
     let project = match gitlab.get_project_data_by_id(project_id) {
         Ok(p) => p,
-        Err(_error) => return Some(_error),
+        Err(_error) => return Err(_error),
     };
 
     for user in config.users.as_mut().unwrap().iter_mut() {
@@ -174,7 +174,7 @@ fn add_project(sub_matches: &ArgMatches) -> Option<Error> {
             match user.projects.as_mut() {
                 Some(v) => {
                     if v.iter().any(|i| i.id == p.id) {
-                        return Some(Error::new(
+                        return Err(Error::new(
                             ErrorKind::AlreadyExists,
                             format!(
                                 "the user {} already has an access to this project: '{}'",
@@ -195,22 +195,22 @@ fn add_project(sub_matches: &ArgMatches) -> Option<Error> {
     }
 
     let _ = match config::write_config(config) {
-        Ok(()) => return None,
-        Err(_error) => return Some(_error),
+        Ok(()) => return Ok(()),
+        Err(_error) => return Err(_error),
     };
 }
 
-fn add_team(sub_matches: &ArgMatches) -> Option<Error> {
+fn add_team(sub_matches: &ArgMatches) -> Result<(), Error> {
     let mut config = match config::read_config() {
         Ok(c) => c,
-        Err(_error) => return Some(_error),
+        Err(_error) => return Err(_error),
     };
 
     let team_name = sub_matches.value_of("team-name").unwrap().to_string();
 
     let user_id: u64 = match sub_matches.value_of_t("GITLAB_USER_ID") {
         Ok(uid) => uid,
-        Err(_error) => return Some(Error::new(ErrorKind::InvalidInput, _error.to_string())),
+        Err(_error) => return Err(Error::new(ErrorKind::InvalidInput, _error.to_string())),
     };
 
     for user in config.users.as_mut().unwrap().iter_mut() {
@@ -218,7 +218,7 @@ fn add_team(sub_matches: &ArgMatches) -> Option<Error> {
             match user.teams.as_mut() {
                 Some(v) => {
                     if v.iter().any(|i| i == &team_name) {
-                        return Some(Error::new(
+                        return Err(Error::new(
                             ErrorKind::AlreadyExists,
                             format!(
                                 "the user {} already is already in the team: '{}'",
@@ -239,14 +239,14 @@ fn add_team(sub_matches: &ArgMatches) -> Option<Error> {
     }
 
     let _ = match config::write_config(config) {
-        Ok(()) => return None,
-        Err(_error) => return Some(_error),
+        Ok(()) => return Ok(()),
+        Err(_error) => return Err(_error),
     };
 }
-fn add_ownership(sub_matches: &ArgMatches) -> Option<Error> {
+fn add_ownership(sub_matches: &ArgMatches) -> Result<(), Error> {
     let mut config = match config::read_config() {
         Ok(c) => c,
-        Err(_error) => return Some(_error),
+        Err(_error) => return Err(_error),
     };
     let g_conn = third_party::gitlab::GitlabConnection {
         url: sub_matches.value_of("url").unwrap().to_string(),
@@ -255,18 +255,18 @@ fn add_ownership(sub_matches: &ArgMatches) -> Option<Error> {
     // let project_id  = value_t!(sub_matches.value_of("project-id"), u64);
     let group_id: u64 = match sub_matches.value_of_t("group-id") {
         Ok(gid) => gid,
-        Err(_error) => return Some(Error::new(ErrorKind::InvalidInput, _error.to_string())),
+        Err(_error) => return Err(Error::new(ErrorKind::InvalidInput, _error.to_string())),
     };
     let user_id: u64 = match sub_matches.value_of_t("GITLAB_USER_ID") {
         Ok(uid) => uid,
-        Err(_error) => return Some(Error::new(ErrorKind::InvalidInput, _error.to_string())),
+        Err(_error) => return Err(Error::new(ErrorKind::InvalidInput, _error.to_string())),
     };
 
     let gitlab = third_party::gitlab::new_gitlab_client(g_conn.url, g_conn.token);
 
     let group = match gitlab.get_group_data_by_id(group_id) {
         Ok(g) => g,
-        Err(_error) => return Some(_error),
+        Err(_error) => return Err(_error),
     };
 
     for user in config.users.as_mut().unwrap().iter_mut() {
@@ -279,7 +279,7 @@ fn add_ownership(sub_matches: &ArgMatches) -> Option<Error> {
             match user.ownerships.as_mut() {
                 Some(v) => {
                     if v.iter().any(|i| i.id == g.id) {
-                        return Some(Error::new(
+                        return Err(Error::new(
                             ErrorKind::AlreadyExists,
                             format!(
                                 "the user {} is the owner of tht group already: '{}'",
@@ -297,14 +297,14 @@ fn add_ownership(sub_matches: &ArgMatches) -> Option<Error> {
         }
     }
     let _ = match config::write_config(config) {
-        Ok(()) => return None,
-        Err(_error) => return Some(_error),
+        Ok(()) => return Ok(()),
+        Err(_error) => return Err(_error),
     };
 }
-fn remove_project(sub_matches: &ArgMatches) -> Option<Error> {
+fn remove_project(sub_matches: &ArgMatches) -> Result<(), Error> {
     let mut config = match config::read_config() {
         Ok(c) => c,
-        Err(_error) => return Some(_error),
+        Err(_error) => return Err(_error),
     };
 
     let g_conn = third_party::gitlab::GitlabConnection {
@@ -314,19 +314,19 @@ fn remove_project(sub_matches: &ArgMatches) -> Option<Error> {
     // let project_id  = value_t!(sub_matches.value_of("project-id"), u64);
     let project_id: u64 = match sub_matches.value_of_t("project-id") {
         Ok(pid) => pid,
-        Err(_error) => return Some(Error::new(ErrorKind::InvalidInput, _error.to_string())),
+        Err(_error) => return Err(Error::new(ErrorKind::InvalidInput, _error.to_string())),
     };
 
     let user_id: u64 = match sub_matches.value_of_t("GITLAB_USER_ID") {
         Ok(uid) => uid,
-        Err(_error) => return Some(Error::new(ErrorKind::InvalidInput, _error.to_string())),
+        Err(_error) => return Err(Error::new(ErrorKind::InvalidInput, _error.to_string())),
     };
 
     let gitlab = third_party::gitlab::new_gitlab_client(g_conn.url, g_conn.token);
 
     let project = match gitlab.get_project_data_by_id(project_id) {
         Ok(p) => p,
-        Err(_error) => return Some(_error),
+        Err(_error) => return Err(_error),
     };
 
     for user in config.users.as_mut().unwrap().iter_mut() {
@@ -341,20 +341,20 @@ fn remove_project(sub_matches: &ArgMatches) -> Option<Error> {
     }
 
     let _ = match config::write_config(config) {
-        Ok(()) => return None,
-        Err(_error) => return Some(_error),
+        Ok(()) => return Ok(()),
+        Err(_error) => return Err(_error),
     };
 }
-fn remove_team(sub_matches: &ArgMatches) -> Option<Error> {
+fn remove_team(sub_matches: &ArgMatches) -> Result<(), Error> {
     let mut config = match config::read_config() {
         Ok(c) => c,
-        Err(_error) => return Some(_error),
+        Err(_error) => return Err(_error),
     };
 
     let team_name = sub_matches.value_of("team-name").unwrap().to_string();
     let user_id: u64 = match sub_matches.value_of_t("GITLAB_USER_ID") {
         Ok(uid) => uid,
-        Err(_error) => return Some(Error::new(ErrorKind::InvalidInput, _error.to_string())),
+        Err(_error) => return Err(Error::new(ErrorKind::InvalidInput, _error.to_string())),
     };
 
     for user in config.users.as_mut().unwrap().iter_mut() {
@@ -366,15 +366,15 @@ fn remove_team(sub_matches: &ArgMatches) -> Option<Error> {
     }
 
     let _ = match config::write_config(config) {
-        Ok(()) => return None,
-        Err(_error) => return Some(_error),
+        Ok(()) => return Ok(()),
+        Err(_error) => return Err(_error),
     };
 }
 
-fn remove_ownership(sub_matches: &ArgMatches) -> Option<Error> {
+fn remove_ownership(sub_matches: &ArgMatches) -> Result<(), Error> {
     let mut config = match config::read_config() {
         Ok(c) => c,
-        Err(_error) => return Some(_error),
+        Err(_error) => return Err(_error),
     };
 
     let g_conn = third_party::gitlab::GitlabConnection {
@@ -384,19 +384,19 @@ fn remove_ownership(sub_matches: &ArgMatches) -> Option<Error> {
 
     let group_id: u64 = match sub_matches.value_of_t("group-id") {
         Ok(pid) => pid,
-        Err(_error) => return Some(Error::new(ErrorKind::InvalidInput, _error.to_string())),
+        Err(_error) => return Err(Error::new(ErrorKind::InvalidInput, _error.to_string())),
     };
 
     let user_id: u64 = match sub_matches.value_of_t("GITLAB_USER_ID") {
         Ok(uid) => uid,
-        Err(_error) => return Some(Error::new(ErrorKind::InvalidInput, _error.to_string())),
+        Err(_error) => return Err(Error::new(ErrorKind::InvalidInput, _error.to_string())),
     };
 
     let gitlab = third_party::gitlab::new_gitlab_client(g_conn.url, g_conn.token);
 
     let group = match gitlab.get_group_data_by_id(group_id) {
         Ok(g) => g,
-        Err(_error) => return Some(_error),
+        Err(_error) => return Err(_error),
     };
 
     for user in config.users.as_mut().unwrap().iter_mut() {
@@ -411,7 +411,7 @@ fn remove_ownership(sub_matches: &ArgMatches) -> Option<Error> {
     }
 
     let _ = match config::write_config(config) {
-        Ok(()) => return None,
-        Err(_error) => return Some(_error),
+        Ok(()) => return Ok(()),
+        Err(_error) => return Err(_error),
     };
 }
