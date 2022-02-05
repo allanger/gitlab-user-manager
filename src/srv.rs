@@ -34,7 +34,7 @@ pub(crate) mod srv {
         where
             F: FnMut(String) -> Result<File, std::io::Error>,
         {
-            //  TODO: Add possibility use other file names
+            //  TODO: Add possibility to use other file names
             let file_name = "gum-config.yaml";
             println!("Initializing gum config {:?}", file_name);
 
@@ -43,8 +43,6 @@ pub(crate) mod srv {
                 Err(_error) => return Some(Error::new(ErrorKind::AlreadyExists, _error)),
             };
 
-            // Create default empty config
-            // Has to be mockable
             let new_config = Config {
                 teams: Some(vec![Team {
                     name: "default".to_string(),
@@ -52,7 +50,7 @@ pub(crate) mod srv {
                 }]),
                 users: None,
             };
-            // Write to file
+            
             serde_yaml::to_writer(file, &new_config).unwrap();
             None
         }
