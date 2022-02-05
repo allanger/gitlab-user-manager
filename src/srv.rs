@@ -1,4 +1,5 @@
 pub(crate) mod srv {
+    use crate::types::types::{Config, Team};
     use std::io::Error;
 
     pub fn new_srv() -> impl Init {
@@ -7,40 +8,31 @@ pub(crate) mod srv {
 
     struct Cmd;
     pub trait Init {
-        fn exec(&self) -> Result<(), Error>;
+        fn exec(&self, f: String) -> Result<(), Error>;
     }
 
     impl Init for Cmd {
-        fn exec(&self) -> Result<(), Error> {
-            let file = |f: String| {
-                std::fs::OpenOptions::new()
-                    .write(true)
-                    .create_new(true)
-                    .open(f)
-            };
-            init_mod::init(file)
-        }
-    }
+        fn exec(&self, f: String) -> Result<(), Error> {
+            println!("Initializing gum config {:?}", f);
 
-    mod init_mod {
-        use std::{
-            fs::File,
-            io::{Error, ErrorKind},
-            result::Result,
-        };
-
-        use crate::types::types::{Config, Team};
-        pub fn init<F>(mut f: F) -> Result<(), Error>
-        where
-            F: FnMut(String) -> Result<File, std::io::Error>,
-        {
-            //  TODO: Add a possibility to use other file names
-            let file_name = "gum-config.yam l";
-            println!("Initializing gum config {:?}", file_name);
-
-            let file = match f(file_name.to_string()) {
+            let file = match std::fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(f)
+            {
                 Ok(file) => file,
-                Err(_error) => return Err(Error::new(ErrorKind::AlreadyExists, _error)),
+                // TODO: Should be more informative
+                Err(_error) => {
+                    return match _error.kind() {
+                        std::io::ErrorKind::AlreadyExists => {
+                            return Err(Error::new(
+                                _error.kind(),
+                                "config file already exists in specified directory",
+                            ))
+                        }
+                        _ => Err(Error::new(std::io::ErrorKind::AlreadyExists, _error)),
+                    }
+                }
             };
 
             let new_config = Config {
@@ -55,23 +47,33 @@ pub(crate) mod srv {
             Ok(())
         }
     }
+
     #[cfg(test)]
     mod tests {
-        use std::{
-            io::{Error, ErrorKind},
-        };
+        use std::fs::File;
 
-        use super::init_mod;
+        use super::{new_srv, Init};
 
         #[test]
-        fn create_file() {
-            let file = |_f: String| tempfile::tempfile();
-            assert!(init_mod::init(file).is_ok());
+        fn it_works() {
+            let tempdir = tempfile::tempdir().unwrap();
+            let filename = tempdir.path().join("gum-config.yaml");
+            assert!(new_srv()
+                .exec(filename.into_os_string().into_string().unwrap())
+                .is_ok());
         }
         #[test]
-        fn fail_file_creation() {
-            let file = |_f: String| Err(Error::new(ErrorKind::AlreadyExists, "exists"));
-            assert!(init_mod::init(file).is_err());
+
+        fn it_doesnt_work() {
+            let tempdir = tempfile::tempdir().unwrap();
+            let filename = tempdir.path().join("gum-config.yaml");
+            let _ = File::create(&filename);
+            let result = new_srv().exec(filename.into_os_string().into_string().unwrap());
+            assert!(result.is_err());
+            let actual_inner_error_disp = format!("{}", result.unwrap_err().into_inner().unwrap());
+            let expected_inner_error_disp =
+                format!("config file already exists in specified directory");
+            assert_eq!(actual_inner_error_disp, expected_inner_error_disp);
         }
     }
 }
