@@ -14,7 +14,7 @@ use pkg::search::search_pkg;
 use pkg::teams::teams_pkg;
 use pkg::users::users_pkg;
 
-use crate::srv::srv::{new_srv, SrvActions};
+use crate::srv::srv::{new_srv, Init};
 
 fn main() {
     let matches = App::new("gum")
@@ -31,8 +31,7 @@ fn main() {
     let error: Result<(), Error>;
     match matches.subcommand() {
         Some(("init", _)) => {
-            // error = init_srv();
-            error = new_srv().init();
+            error = new_srv().exec();
         }
         Some(("sync", _)) => {
             println!("sync");

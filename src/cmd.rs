@@ -1,4 +1,4 @@
-/// cmd module contains commands and argumets which are being parsed from command line
+/// cmd module contains commands and arguments which are being parsed from command line
 use clap::{arg, App, Arg};
 
 /// init cmd should be used to generate an empty gum-config
