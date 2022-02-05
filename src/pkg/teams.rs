@@ -8,7 +8,7 @@ use crate::{
     types::types,
 };
 
-pub fn teams_pkg(sub_matches: &ArgMatches) -> Option<Error> {
+pub fn teams_pkg(sub_matches: &ArgMatches) -> Result<(), Error> {
     match sub_matches.subcommand() {
         Some(("create", sub_matches)) => {
             return create(
@@ -29,14 +29,14 @@ pub fn teams_pkg(sub_matches: &ArgMatches) -> Option<Error> {
         }
         Some(("add-project", sub_matches)) => add_project(sub_matches),
         Some(("remove-project", sub_matches)) => remove_project(sub_matches),
-        _ => return None,
+        _ => return Ok(()),
     }
 }
 
-fn create(team_name: &str) -> Option<Error> {
+fn create(team_name: &str) -> Result<(), Error> {
     let mut config = match config::read_config() {
         Ok(c) => c,
-        Err(_error) => return Some(_error),
+        Err(_error) => return Err(_error),
     };
 
     let new_team = types::Team {
@@ -51,7 +51,7 @@ fn create(team_name: &str) -> Option<Error> {
         .iter()
         .any(|i| i.name == new_team.name)
     {
-        return Some(Error::new(
+        return Err(Error::new(
             ErrorKind::AlreadyExists,
             "team with this name already exists",
         ));
@@ -60,27 +60,27 @@ fn create(team_name: &str) -> Option<Error> {
     config.teams.as_mut().unwrap().extend([new_team]);
 
     let _ = match config::write_config(config) {
-        Ok(()) => return None,
-        Err(_error) => return Some(_error),
+        Ok(()) => return Ok(()),
+        Err(_error) => return Err(_error),
     };
 }
 
-fn list() -> Option<Error> {
+fn list() -> Result<(), Error> {
     let config = match config::read_config() {
         Ok(c) => c,
-        Err(_error) => return Some(_error),
+        Err(_error) => return Err(_error),
     };
 
     for team in config.teams.unwrap().iter() {
         println!("{}", team.name);
     }
-    None
+    Ok(())
 }
 
-fn remove(team_name: &str) -> Option<Error> {
+fn remove(team_name: &str) -> Result<(), Error> {
     let mut config = match config::read_config() {
         Ok(c) => c,
-        Err(_error) => return Some(_error),
+        Err(_error) => return Err(_error),
     };
 
     //  TODO: It shouldn't look that bad, I hope
@@ -91,16 +91,16 @@ fn remove(team_name: &str) -> Option<Error> {
         .retain(|t| t.name != team_name);
 
     let _ = match config::write_config(config) {
-        Ok(()) => return None,
-        Err(_error) => return Some(_error),
+        Ok(()) => return Ok(()),
+        Err(_error) => return Err(_error),
     };
 }
 
 /// Give a team access to the project
-fn add_project(sub_matches: &ArgMatches) -> Option<Error> {
+fn add_project(sub_matches: &ArgMatches) -> Result<(), Error> {
     let mut config = match config::read_config() {
         Ok(c) => c,
-        Err(_error) => return Some(_error),
+        Err(_error) => return Err(_error),
     };
     let g_conn = third_party::gitlab::GitlabConnection {
         url: sub_matches.value_of("url").unwrap().to_string(),
@@ -109,7 +109,7 @@ fn add_project(sub_matches: &ArgMatches) -> Option<Error> {
     // let project_id  = value_t!(sub_matches.value_of("project-id"), u64);
     let project_id: u64 = match sub_matches.value_of_t("project-id") {
         Ok(pid) => pid,
-        Err(_error) => return Some(Error::new(ErrorKind::InvalidInput, _error.to_string())),
+        Err(_error) => return Err(Error::new(ErrorKind::InvalidInput, _error.to_string())),
     };
 
     let team_name = sub_matches.value_of("team-name").unwrap().to_string();
@@ -119,7 +119,7 @@ fn add_project(sub_matches: &ArgMatches) -> Option<Error> {
 
     let project = match gitlab.get_project_data_by_id(project_id) {
         Ok(p) => p,
-        Err(_error) => return Some(_error),
+        Err(_error) => return Err(_error),
     };
 
     for team in config.teams.as_mut().unwrap().iter_mut() {
@@ -132,7 +132,7 @@ fn add_project(sub_matches: &ArgMatches) -> Option<Error> {
             match team.projects.as_mut() {
                 Some(v) => {
                     if v.iter().any(|i| i.id == p.id) {
-                        return Some(Error::new(
+                        return Err(Error::new(
                             ErrorKind::AlreadyExists,
                             format!(
                                 "the team '{}' already has an access to this project: '{}'",
@@ -153,16 +153,16 @@ fn add_project(sub_matches: &ArgMatches) -> Option<Error> {
     }
 
     let _ = match config::write_config(config) {
-        Ok(()) => return None,
-        Err(_error) => return Some(_error),
+        Ok(()) => return Ok(()),
+        Err(_error) => return Err(_error),
     };
 }
 
 /// Remove team access from the project
-fn remove_project(sub_matches: &ArgMatches) -> Option<Error> {
+fn remove_project(sub_matches: &ArgMatches) -> Result<(), Error> {
     let mut config = match config::read_config() {
         Ok(c) => c,
-        Err(_error) => return Some(_error),
+        Err(_error) => return Err(_error),
     };
 
     let g_conn = third_party::gitlab::GitlabConnection {
@@ -172,7 +172,7 @@ fn remove_project(sub_matches: &ArgMatches) -> Option<Error> {
     // let project_id  = value_t!(sub_matches.value_of("project-id"), u64);
     let project_id: u64 = match sub_matches.value_of_t("project-id") {
         Ok(pid) => pid,
-        Err(_error) => return Some(Error::new(ErrorKind::InvalidInput, _error.to_string())),
+        Err(_error) => return Err(Error::new(ErrorKind::InvalidInput, _error.to_string())),
     };
 
     let team_name = sub_matches.value_of("team-name").unwrap().to_string();
@@ -181,7 +181,7 @@ fn remove_project(sub_matches: &ArgMatches) -> Option<Error> {
 
     let project = match gitlab.get_project_data_by_id(project_id) {
         Ok(p) => p,
-        Err(_error) => return Some(_error),
+        Err(_error) => return Err(_error),
     };
 
     for team in config.teams.as_mut().unwrap().iter_mut() {
@@ -196,7 +196,7 @@ fn remove_project(sub_matches: &ArgMatches) -> Option<Error> {
     }
 
     let _ = match config::write_config(config) {
-        Ok(()) => return None,
-        Err(_error) => return Some(_error),
+        Ok(()) => return Ok(()),
+        Err(_error) => return Err(_error),
     };
 }

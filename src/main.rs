@@ -14,7 +14,6 @@ use pkg::search::search_pkg;
 use pkg::teams::teams_pkg;
 use pkg::users::users_pkg;
 
-use crate::pkg::init::init_srv;
 use crate::srv::srv::{new_srv, SrvActions};
 
 fn main() {
@@ -29,7 +28,7 @@ fn main() {
         .subcommand(search_cmd())
         .subcommand(sync_cmd())
         .get_matches();
-    let error: Option<Error>;
+    let error: Result<(), Error>;
     match matches.subcommand() {
         Some(("init", _)) => {
             // error = init_srv();
@@ -48,12 +47,13 @@ fn main() {
         Some(("search", sub_matches)) => {
             error = search_pkg(sub_matches);
         }
-
         _ => unreachable!(), // If all subcommands are defined above, anything else is unreachable
     }
-    if error.is_some() {
-        println!("ERROR: {}", error.unwrap());
-        exit(1);
+    match error {
+        Ok(()) => println!("cool, huh?"),
+        Err(_error) => {
+            println!("ERROR: {}", _error);
+            exit(1);
+        }
     }
-    println!("cool, huh?")
 }
