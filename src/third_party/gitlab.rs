@@ -1,22 +1,23 @@
 use std::io::Error;
 
 use gitlab::{
-    api::{projects, users, Query, groups},
+    api::{groups, projects, users, Query},
     Gitlab,
 };
 use serde::Deserialize;
 
-pub(crate) struct RsGitlab {
+pub(crate) struct GitlabClient {
     gitlab_client: Gitlab,
 }
 
+// TODO: Get rid of
 pub struct GitlabConnection {
     pub url: String,
     pub token: String,
 }
 
 pub(crate) fn new_gitlab_client(url: String, token: String) -> impl GitlabActions {
-    RsGitlab {
+    GitlabClient {
         gitlab_client: Gitlab::new(url, token).unwrap(),
     }
 }
@@ -44,10 +45,9 @@ pub(crate) struct Group {
     pub(crate) id: u64,
     pub(crate) name: String,
     pub(crate) web_url: String,
-    
 }
 
-impl GitlabActions for RsGitlab {
+impl GitlabActions for GitlabClient {
     fn get_project_data_by_id(&self, id: u64) -> Result<Project, Error> {
         let project = match projects::Project::builder().project(id).build() {
             Ok(project) => project,
@@ -78,5 +78,4 @@ impl GitlabActions for RsGitlab {
         let output: Group = group.query(&self.gitlab_client).unwrap();
         Ok(output)
     }
-
 }
