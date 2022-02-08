@@ -1,6 +1,13 @@
+pub(crate) mod search;
+
+use std::{io::Error, result::Result};
+
 /// cmd module contains commands and arguments which are being parsed from command line
 use clap::{arg, App, Arg};
 
+pub(crate) trait Cmd<'a> {
+    fn exec(&self) -> Result<(), Error>;
+}
 /// init cmd should be used to generate an empty gum-config
 pub(crate) fn init_cmd() -> App<'static> {
     let filename = Arg::new("file_name")
@@ -13,38 +20,6 @@ pub(crate) fn init_cmd() -> App<'static> {
     return App::new("init")
         .about("Create a default yaml file in the current directory")
         .arg(filename);
-}
-
-/// search cmd should be used to fong Gitlab entities which are being used in gum
-pub fn search_cmd() -> App<'static> {
-    return App::new("search")
-        .aliases(&["s", "find"])
-        .about("Search for GitLab entities")
-        .arg(arg_gitlab_token())
-        .arg(arg_gitlab_url())
-        .subcommand(find_projects())
-        .subcommand(find_users())
-        .subcommand(find_groups());
-}
-fn find_projects() -> App<'static> {
-    return App::new("projects")
-        .about("Look for GitLab projects")
-        .aliases(&["p", "project"])
-        .arg(arg!(<PROJECT> "Look for projects"));
-}
-
-fn find_users<'a>() -> App<'a> {
-    return App::new("users")
-        .about("Look for GitLab users")
-        .aliases(&["u", "user"])
-        .arg(arg!(<USER> "Look for users"));
-}
-
-fn find_groups() -> App<'static> {
-    return App::new("groups")
-        .about("Look for GitLab groups")
-        .aliases(&["g", "group"])
-        .arg(arg!(<GROUP> "Look for groups"));
 }
 
 /// sync cmd should be used to sync gum-config with Gitlab and generate or update the state file

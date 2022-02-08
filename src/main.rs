@@ -1,3 +1,4 @@
+mod args;
 mod cmd;
 mod pkg;
 mod srv;
@@ -9,8 +10,11 @@ use std::process::exit;
 
 use clap::{App, AppSettings};
 
-use cmd::{init_cmd, search_cmd, sync_cmd, teams_cmd, users_cmd};
-use pkg::search::search_pkg;
+use cmd::{
+    init_cmd,
+    search::{self, add_search_cmd},
+    sync_cmd, teams_cmd, users_cmd, Cmd,
+};
 use pkg::teams::teams_pkg;
 use pkg::users::users_pkg;
 
@@ -18,6 +22,7 @@ use crate::srv::srv::{new_srv, Init};
 
 fn main() {
     let matches = App::new("gum")
+        .setting(AppSettings::ArgRequiredElseHelp)
         .about("Manage gitlab users even in the free version, beoch!")
         .version("v1.1.1")
         .setting(AppSettings::SubcommandRequiredElseHelp)
@@ -25,30 +30,34 @@ fn main() {
         .subcommand(init_cmd())
         .subcommand(users_cmd())
         .subcommand(teams_cmd())
-        .subcommand(search_cmd())
+        .subcommand(add_search_cmd())
         .subcommand(sync_cmd())
         .get_matches();
-    let error: Result<(), Error>;
+    let result: Result<(), Error>;
+
     match matches.subcommand() {
         Some(("init", _)) => {
-            error = new_srv().exec("gum-config.yaml".to_string());
+            result = new_srv().exec("gum-config.yaml".to_string());
         }
         Some(("sync", _)) => {
             println!("sync");
             return;
         }
         Some(("users", sub_matches)) => {
-            error = users_pkg(sub_matches);
+            result = users_pkg(sub_matches);
         }
         Some(("teams", sub_matches)) => {
-            error = teams_pkg(sub_matches);
+            result = teams_pkg(sub_matches);
         }
         Some(("search", sub_matches)) => {
-            error = search_pkg(sub_matches);
+            result = match search::prepare(sub_matches) {
+                Ok(cmd) => cmd.exec(),
+                Err(_error) => Err(_error),
+            };
         }
         _ => unreachable!(), // If all subcommands are defined above, anything else is unreachable
     }
-    match error {
+    match result {
         Ok(()) => println!("cool, huh?"),
         Err(_error) => {
             println!("ERROR: {}", _error);
