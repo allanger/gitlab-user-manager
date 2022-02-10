@@ -16,9 +16,15 @@ pub struct GitlabConnection {
     pub token: String,
 }
 
-pub(crate) fn new_gitlab_client(url: String, token: String) -> impl GitlabActions {
+pub(crate) fn new_gitlab_client_deprecated(url: String, token: String) -> impl GitlabActions {
     GitlabClient {
         gitlab_client: Gitlab::new(url, token).unwrap(),
+    }
+}
+
+pub(crate) fn new_gitlab_client(client: Gitlab) -> impl GitlabActions {
+    GitlabClient {
+        gitlab_client: client,
     }
 }
 

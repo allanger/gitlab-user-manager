@@ -1,6 +1,7 @@
 pub(crate) mod init;
 pub(crate) mod search;
-mod teams;
+pub(crate)mod teams;
+pub(crate) mod users;
 
 use std::{io::Error, result::Result};
 
@@ -23,59 +24,6 @@ pub fn sync_cmd() -> App<'static> {
     return App::new("sync")
         .about("Sync your config file with GitLab and generate the state file")
         .arg(dry_run);
-}
-
-pub(crate) fn teams_cmd() -> App<'static> {
-    // Register command
-    return App::new("teams")
-        .aliases(&["t", "team"])
-        .about("Manage GUM teams")
-        .subcommand(create_team())
-        .subcommand(list_teams())
-        .subcommand(remove_team())
-        .subcommand(add_project_to_team())
-        .subcommand(remove_project_from_team());
-}
-
-fn create_team() -> App<'static> {
-    return App::new("create")
-        .alias("c")
-        .about("Add a team to the config file")
-        .arg(arg!(<TEAM_NAME> "Name the team you're creating"));
-}
-
-fn list_teams() -> App<'static> {
-    return App::new("list")
-        .alias("l")
-        .about("List teams from config file");
-}
-
-fn remove_team() -> App<'static> {
-    return App::new("remove")
-        .alias("r")
-        .about("Remove the team from the config file")
-        .arg(arg!(<TEAM_NAME> "Name the team you're removing"));
-}
-
-fn add_project_to_team() -> App<'static> {
-    return App::new("add-project")
-        .alias("ap")
-        .about("Remove the team from the config file")
-        .arg(arg_team_name())
-        .arg(arg_access())
-        .arg(arg_project_id())
-        .arg(arg_gitlab_token())
-        .arg(arg_gitlab_url());
-}
-
-fn remove_project_from_team() -> App<'static> {
-    return App::new("remove-project")
-        .alias("rp")
-        .about("Remove a Gitlab project from the team")
-        .arg(arg_gitlab_token())
-        .arg(arg_gitlab_url())
-        .arg(arg_team_name())
-        .arg(arg_project_id());
 }
 
 fn arg_group_id() -> Arg<'static> {
