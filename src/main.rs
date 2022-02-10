@@ -11,14 +11,14 @@ use std::process::exit;
 use clap::{App, AppSettings};
 
 use cmd::{
-    init, init_cmd,
+    init::{self, add_init_cmd},
     search::{self, add_search_cmd},
-    sync_cmd, teams_cmd, users_cmd, Cmd,
+    sync_cmd,
+    teams::{self, add_teams_cmd},
+    users::{self, add_users_cmd},
+    users_cmd, Cmd,
 };
-use pkg::teams::teams_pkg;
 use pkg::users::users_pkg;
-
-use crate::srv::srv::{new_srv, Init};
 
 fn main() {
     let matches = App::new("gum")
@@ -27,9 +27,9 @@ fn main() {
         .version("v1.1.1")
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .author("allanger")
-        .subcommand(init_cmd())
-        .subcommand(users_cmd())
-        .subcommand(teams_cmd())
+        .subcommand(add_init_cmd())
+        .subcommand(add_users_cmd())
+        .subcommand(add_teams_cmd())
         .subcommand(add_search_cmd())
         .subcommand(sync_cmd())
         .get_matches();
@@ -50,7 +50,10 @@ fn main() {
             result = users_pkg(sub_matches);
         }
         Some(("teams", sub_matches)) => {
-            result = teams_pkg(sub_matches);
+            result = match teams::prepare(sub_matches) {
+                Ok(cmd) => cmd.exec(),
+                Err(_error) => Err(_error),
+            };
         }
         Some(("search", sub_matches)) => {
             result = match search::prepare(sub_matches) {

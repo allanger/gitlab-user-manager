@@ -2,4 +2,6 @@
 teams:
   - name: default
     projects: ~
+  - name: asd
+    projects: []
 users: ~

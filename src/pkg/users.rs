@@ -39,7 +39,7 @@ fn create(sub_matches: &ArgMatches) -> Result<(), Error> {
         token: sub_matches.value_of("token").unwrap().to_string(),
     };
 
-    let gitlab = third_party::gitlab::new_gitlab_client(g_conn.url, g_conn.token);
+    let gitlab = third_party::gitlab::new_gitlab_client_deprecated(g_conn.url, g_conn.token);
 
     let user = match gitlab.get_user_data_by_id(user_id) {
         Ok(u) => u,
@@ -101,7 +101,7 @@ fn remove(sub_matches: &ArgMatches) -> Result<(), Error> {
         token: sub_matches.value_of("token").unwrap().to_string(),
     };
 
-    let gitlab = third_party::gitlab::new_gitlab_client(g_conn.url, g_conn.token);
+    let gitlab = third_party::gitlab::new_gitlab_client_deprecated(g_conn.url, g_conn.token);
 
     let user = match gitlab.get_user_data_by_id(user_id) {
         Ok(u) => u,
@@ -157,7 +157,7 @@ fn add_project(sub_matches: &ArgMatches) -> Result<(), Error> {
     };
 
     let access = sub_matches.value_of("access").unwrap().to_string();
-    let gitlab = third_party::gitlab::new_gitlab_client(g_conn.url, g_conn.token);
+    let gitlab = third_party::gitlab::new_gitlab_client_deprecated(g_conn.url, g_conn.token);
 
     let project = match gitlab.get_project_data_by_id(project_id) {
         Ok(p) => p,
@@ -262,7 +262,7 @@ fn add_ownership(sub_matches: &ArgMatches) -> Result<(), Error> {
         Err(_error) => return Err(Error::new(ErrorKind::InvalidInput, _error.to_string())),
     };
 
-    let gitlab = third_party::gitlab::new_gitlab_client(g_conn.url, g_conn.token);
+    let gitlab = third_party::gitlab::new_gitlab_client_deprecated(g_conn.url, g_conn.token);
 
     let group = match gitlab.get_group_data_by_id(group_id) {
         Ok(g) => g,
@@ -322,7 +322,7 @@ fn remove_project(sub_matches: &ArgMatches) -> Result<(), Error> {
         Err(_error) => return Err(Error::new(ErrorKind::InvalidInput, _error.to_string())),
     };
 
-    let gitlab = third_party::gitlab::new_gitlab_client(g_conn.url, g_conn.token);
+    let gitlab = third_party::gitlab::new_gitlab_client_deprecated(g_conn.url, g_conn.token);
 
     let project = match gitlab.get_project_data_by_id(project_id) {
         Ok(p) => p,
@@ -392,7 +392,7 @@ fn remove_ownership(sub_matches: &ArgMatches) -> Result<(), Error> {
         Err(_error) => return Err(Error::new(ErrorKind::InvalidInput, _error.to_string())),
     };
 
-    let gitlab = third_party::gitlab::new_gitlab_client(g_conn.url, g_conn.token);
+    let gitlab = third_party::gitlab::new_gitlab_client_deprecated(g_conn.url, g_conn.token);
 
     let group = match gitlab.get_group_data_by_id(group_id) {
         Ok(g) => g,

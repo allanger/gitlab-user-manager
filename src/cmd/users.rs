@@ -9,32 +9,35 @@ use self::{
 
 use super::Cmd;
 
-pub(crate) fn add_teams_cmd() -> App<'static> {
-    // Register command
-    return App::new("teams")
-        .aliases(&["t", "team"])
-        .about("Manage GUM teams")
-        .subcommand(add_create_cmd())
-        .subcommand(add_list_cmd())
-        .subcommand(add_remove_cmd())
-        .subcommand(add_add_project_cmd())
-        .subcommand(add_remove_project_cmd());
+pub(crate) fn add_users_cmd() -> App<'static> {
+    return App::new("users")
+        .aliases(&["u", "users"])
+        .about("Manage GitLab users")
+        .subcommand(add_create_cmd());
+    // .subcommand(list_users())
+    // .subcommand(remove_user())
+    // .subcommand(add_user_to_project())
+    // .subcommand(add_user_to_team())
+    // .subcommand(add_ownership_to_user())
+    // .subcommand(remove_user_from_project())
+    // .subcommand(remove_user_from_team())
+    // .subcommand(remove_ownership_from_user());
 }
 
-pub(crate) struct TeamsCmd<'a> {
-    teams_sub: Option<(&'a str, &'a ArgMatches)>,
+pub(crate) struct UsersCmd<'a> {
+    users_sub: Option<(&'a str, &'a ArgMatches)>,
 }
 
 pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
-    Ok(TeamsCmd {
-        teams_sub: sub_matches.subcommand(),
+    Ok(UsersCmd {
+        users_sub: sub_matches.subcommand(),
     })
 }
 
-impl<'a> Cmd<'a> for TeamsCmd<'a> {
+impl<'a> Cmd<'a> for UsersCmd<'a> {
     fn exec(&self) -> Result<(), Error> {
         let result;
-        match self.teams_sub {
+        match self.users_sub {
             Some(("create", sub_matches)) => {
                 result = match create_cmd::prepare(sub_matches) {
                     Ok(cmd) => cmd.exec(),
@@ -76,31 +79,62 @@ mod create_cmd {
     use std::io::{Error, ErrorKind};
 
     use clap::{arg, App, ArgMatches};
+    use gitlab::Gitlab;
 
-    use crate::{cmd::Cmd, pkg::config, types::types};
+    use crate::{
+        cmd::{arg_gitlab_token, arg_gitlab_url, Cmd},
+        pkg::config,
+        third_party::{self, gitlab::GitlabActions},
+        types::types,
+    };
 
     pub(crate) fn add_create_cmd() -> App<'static> {
         return App::new("create")
             .alias("c")
-            .about("Add a team to the config file")
-            .arg(arg!(<TEAM_NAME> "Name the team you're creating"));
+            .about("Add user to the config file")
+            .arg(arg!(<GITLAB_USER_ID> "Provide the GitLab user ID"))
+            .arg(arg_gitlab_token())
+            .arg(arg_gitlab_url());
     }
 
     struct CreateCmd {
-        team_name: String,
+        gitlab_user_id: u64,
+        gitlab_client: Gitlab,
     }
 
     pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
-        let team_name = sub_matches.value_of("TEAM_NAME").ok_or(Error::new(
+        let gitlab_token = sub_matches.value_of("token").ok_or(Error::new(
             std::io::ErrorKind::PermissionDenied,
-            "team name is not specified",
+            "gitlab token is not specified",
         ));
-        if team_name.is_err() {
-            return Err(team_name.err().unwrap());
+        if gitlab_token.is_err() {
+            return Err(gitlab_token.err().unwrap());
+        }
+        // Get gitlab url from flags
+        let gitlab_url = sub_matches.value_of("url").ok_or(Error::new(
+            std::io::ErrorKind::PermissionDenied,
+            "gitlab url is not specified",
+        ));
+        if gitlab_url.is_err() {
+            return Err(gitlab_token.err().unwrap());
         }
 
+        let gitlab_client: Gitlab = match Gitlab::new(
+            gitlab_url.unwrap().to_string(),
+            gitlab_token.unwrap().to_string(),
+        ) {
+            Ok(g) => g,
+            Err(_err) => return Err(Error::new(ErrorKind::Other, _err)),
+        };
+
+        let gitlab_user_id: u64 = match sub_matches.value_of_t("GITLAB_USER_ID") {
+            Ok(uid) => uid,
+            Err(_error) => return Err(Error::new(ErrorKind::InvalidInput, _error.to_string())),
+        };
+
         Ok(CreateCmd {
-            team_name: team_name.unwrap().to_string(),
+            gitlab_user_id,
+            gitlab_client,
         })
     }
 
@@ -111,25 +145,34 @@ mod create_cmd {
                 Err(_error) => return Err(_error),
             };
 
-            let new_team = types::Team {
-                name: self.team_name.to_string(),
-                projects: None,
-            };
-            //  TODO: It shouldn't look that bad, I hope
-            if config
-                .teams
-                .as_mut()
-                .unwrap()
-                .iter()
-                .any(|i| i.name == new_team.name)
-            {
-                return Err(Error::new(
-                    ErrorKind::AlreadyExists,
-                    "team with this name already exists",
-                ));
-            }
+            let gitlab = third_party::gitlab::new_gitlab_client(self.gitlab_client.to_owned());
 
-            config.teams.as_mut().unwrap().extend([new_team]);
+            let user = match gitlab.get_user_data_by_id(self.gitlab_user_id) {
+                Ok(u) => u,
+                Err(_error) => return Err(_error),
+            };
+
+            let new_user = types::User {
+                id: self.gitlab_user_id,
+                name: user.name.to_string(),
+                projects: None,
+                teams: None,
+                ownerships: None,
+            };
+
+            match config.users.as_mut() {
+                Some(u) => {
+                    if u.iter().any(|i| i.id == self.gitlab_user_id) {
+                        return Err(Error::new(
+                            ErrorKind::AlreadyExists,
+                            format!("user {} is already in the config file", new_user.name),
+                        ));
+                    }
+                    u.extend([new_user]);
+                }
+                // TODO: Refactor this
+                None => config.users = Some(vec![new_user]),
+            }
 
             let _ = match config::write_config(config) {
                 Ok(()) => return Ok(()),
@@ -139,11 +182,11 @@ mod create_cmd {
     }
 }
 mod remove_cmd {
-    use std::io::Error;
+    use std::io::{Error, ErrorKind};
 
     use clap::{arg, App, ArgMatches};
 
-    use crate::{cmd::Cmd, pkg::config};
+    use crate::{cmd::Cmd, pkg::config, types::types::User};
 
     pub(crate) fn add_remove_cmd() -> App<'static> {
         return App::new("remove")
@@ -153,21 +196,16 @@ mod remove_cmd {
     }
 
     struct RemoveCmd {
-        team_name: String,
+        gitlab_user_id: u64,
     }
 
     pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
-        let team_name = sub_matches.value_of("TEAM_NAME").ok_or(Error::new(
-            std::io::ErrorKind::PermissionDenied,
-            "team name is not specified",
-        ));
-        if team_name.is_err() {
-            return Err(team_name.err().unwrap());
-        }
+        let gitlab_user_id: u64 = match sub_matches.value_of_t("GITLAB_USER_ID") {
+            Ok(uid) => uid,
+            Err(_error) => return Err(Error::new(ErrorKind::InvalidInput, _error.to_string())),
+        };
 
-        Ok(RemoveCmd {
-            team_name: team_name.unwrap().to_string(),
-        })
+        Ok(RemoveCmd { gitlab_user_id })
     }
 
     impl<'a> Cmd<'a> for RemoveCmd {
@@ -177,14 +215,20 @@ mod remove_cmd {
                 Err(_error) => return Err(_error),
             };
 
-            println!("Removing {} team", self.team_name);
-
-            //  TODO: It shouldn't look that bad, I hope
-            config
-                .teams
-                .as_mut()
-                .unwrap()
-                .retain(|t| t.name != self.team_name);
+            for (i, user) in config.users.as_ref().unwrap().iter().enumerate() {
+                if user.id == self.gitlab_user_id {
+                    let u = User {
+                        id: user.id,
+                        name: user.name.to_string(),
+                        ownerships: user.ownerships,
+                        projects: user.projects,
+                        teams: user.teams,
+                    };
+                    println!("removing user {} from config", u.name);
+                    config.users.unwrap().remove(i);
+                    break;
+                }
+            };
 
             let _ = match config::write_config(config) {
                 Ok(()) => return Ok(()),
@@ -357,7 +401,7 @@ mod remove_project_cmd {
     use crate::{
         cmd::{arg_project_id, arg_team_name, Cmd},
         pkg::config,
-        types::types::{Project},
+        types::types::Project,
     };
     use clap::{App, ArgMatches};
 
