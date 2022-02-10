@@ -11,7 +11,7 @@ use std::process::exit;
 use clap::{App, AppSettings};
 
 use cmd::{
-    init_cmd,
+    init, init_cmd,
     search::{self, add_search_cmd},
     sync_cmd, teams_cmd, users_cmd, Cmd,
 };
@@ -37,7 +37,10 @@ fn main() {
 
     match matches.subcommand() {
         Some(("init", _)) => {
-            result = new_srv().exec("gum-config.yaml".to_string());
+            result = match init::prepare() {
+                Ok(cmd) => cmd.exec(),
+                Err(_error) => Err(_error),
+            };
         }
         Some(("sync", _)) => {
             println!("sync");
