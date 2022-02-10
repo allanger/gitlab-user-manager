@@ -1,4 +1,6 @@
+pub(crate) mod init;
 pub(crate) mod search;
+mod teams;
 
 use std::{io::Error, result::Result};
 
@@ -8,20 +10,6 @@ use clap::{arg, App, Arg};
 pub(crate) trait Cmd<'a> {
     fn exec(&self) -> Result<(), Error>;
 }
-/// init cmd should be used to generate an empty gum-config
-pub(crate) fn init_cmd() -> App<'static> {
-    let filename = Arg::new("file_name")
-        .short('f')
-        .long("file_name")
-        .takes_value(true)
-        .value_name("FILE_NAME")
-        .help("Provide a name of the config file");
-
-    return App::new("init")
-        .about("Create a default yaml file in the current directory")
-        .arg(filename);
-}
-
 /// sync cmd should be used to sync gum-config with Gitlab and generate or update the state file
 pub fn sync_cmd() -> App<'static> {
     let dry_run = Arg::new("dry_run")

@@ -2,9 +2,7 @@ use std::io::{Error, ErrorKind};
 
 use clap::{App, ArgMatches};
 
-use gitlab::{
-    Gitlab,
-};
+use gitlab::Gitlab;
 
 use crate::{
     args::{arg_gitlab_token, arg_gitlab_url},
