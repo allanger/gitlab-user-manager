@@ -1,7 +1,10 @@
 ---
 teams:
   - name: default
-    projects: ~
-  - name: asd
     projects: []
-users: ~
+  - name: team_1
+    projects:
+      - name: optima-pf-deployer
+        id: 24060526
+        access_level: GUEST
+users: []
