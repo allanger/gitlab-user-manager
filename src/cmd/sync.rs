@@ -3,7 +3,9 @@ use std::io::{Error, ErrorKind};
 use clap::{App, Arg, ArgMatches};
 use gitlab::Gitlab;
 
-use crate::{cmd::Cmd, files};
+use crate::{cmd::Cmd, files, types::state};
+
+use self::sync_cmd::configure_projects;
 
 use super::{arg_gitlab_token, arg_gitlab_url};
 
@@ -74,37 +76,28 @@ impl<'a> Cmd<'a> for SyncCmd {
             Err(_error) => return Err(_error),
         };
 
-        for u in config.users.iter() {}
+        for u in config.users.iter() {
+            let state = state::State{
+                projects: configure_projects(u, &config),
+                user_id: todo!(),
+                ownerships: todo!(),
+            };
+        }
         Ok(())
     }
 }
 
 mod sync_cmd {
-    use crate::types::{config::Config, project::{Project, self}, user::User};
+    use crate::types::{config::Config, project::Project, user::User};
 
-    pub(crate) fn configure_projects(u: &User, c: &Config) -> Vec<Project> {
-        /*
-        var projects []models.Project
-        for _, t := range c.Teams {
-            if contains(u.Teams, t.Name) {
-                projects = append(projects, t.Projects...)
-            } else if t.Name == "default" {
-                projects = append(projects, t.Projects...)
-            }
-        }
-        projects = append(projects, u.Projects...)
-        return projects
-
-            */
+    pub(crate) fn configure_projects<'a>(u: &'a User, c: &'a Config) -> Vec<Project> {
         let mut projects: Vec<Project> = Vec::new();
-        for t in c.teams.iter(){
-            if u.teams.contains(&t.name.to_string()) {
-                projects.extend(t.projects);
+        for t in c.teams.iter() {
+            if u.teams.contains(&t.name.to_string()) || t.name == "default" {
+                projects.extend(t.projects.as_slice());
             }
         }
-
-        return vec![Project {
-            ..Default::default()
-        }];
+        projects.extend(u.projects);
+        projects
     }
 }
