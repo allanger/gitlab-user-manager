@@ -2,10 +2,7 @@ use std::io::{Error, ErrorKind};
 
 use clap::App;
 
-use crate::{
-    cmd::Cmd,
-    types::types::{Config, Team},
-};
+use crate::{cmd::Cmd, types::config::Config};
 
 /// init cmd should be used to generate an empty gum-config
 pub(crate) fn add_init_cmd() -> App<'static> {
@@ -43,13 +40,7 @@ impl<'a> Cmd<'a> for InitCmd {
             }
         };
 
-        let new_config = Config {
-            teams: Some(vec![Team {
-                name: "default".to_string(),
-                projects: None,
-            }]),
-            users: None,
-        };
+        let new_config: Config = Default::default();
 
         serde_yaml::to_writer(file, &new_config).unwrap();
         Ok(())

@@ -1,9 +1,7 @@
-mod args;
 mod cmd;
-mod pkg;
-mod srv;
-mod third_party;
-mod types;
+mod files;
+mod gitlab;
+pub mod types;
 
 use std::io::Error;
 use std::process::exit;
@@ -16,9 +14,8 @@ use cmd::{
     sync_cmd,
     teams::{self, add_teams_cmd},
     users::{self, add_users_cmd},
-    users_cmd, Cmd,
+    Cmd,
 };
-use pkg::users::users_pkg;
 
 fn main() {
     let matches = App::new("gum")
@@ -47,7 +44,10 @@ fn main() {
             return;
         }
         Some(("users", sub_matches)) => {
-            result = users_pkg(sub_matches);
+            result = match users::prepare(sub_matches) {
+                Ok(cmd) => cmd.exec(),
+                Err(_error) => Err(_error),
+            };
         }
         Some(("teams", sub_matches)) => {
             result = match teams::prepare(sub_matches) {
