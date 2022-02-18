@@ -11,6 +11,7 @@ use clap::{App, AppSettings};
 use cmd::{
     init::{self, add_init_cmd},
     search::{self, add_search_cmd},
+    sync::{self, add_sync_cmd},
     sync_cmd,
     teams::{self, add_teams_cmd},
     users::{self, add_users_cmd},
@@ -28,7 +29,7 @@ fn main() {
         .subcommand(add_users_cmd())
         .subcommand(add_teams_cmd())
         .subcommand(add_search_cmd())
-        .subcommand(sync_cmd())
+        .subcommand(add_sync_cmd())
         .get_matches();
     let result: Result<(), Error>;
 
@@ -39,9 +40,11 @@ fn main() {
                 Err(_error) => Err(_error),
             };
         }
-        Some(("sync", _)) => {
-            println!("sync");
-            return;
+        Some(("sync", sub_matches)) => {
+            result = match sync::prepare(sub_matches) {
+                Ok(cmd) => cmd.exec(),
+                Err(_error) => Err(_error),
+            };
         }
         Some(("users", sub_matches)) => {
             result = match users::prepare(sub_matches) {

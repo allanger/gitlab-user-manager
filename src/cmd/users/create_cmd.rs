@@ -62,7 +62,7 @@ pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, E
 
 impl<'a> Cmd<'a> for CreateCmd {
     fn exec(&self) -> Result<(), Error> {
-        let config = match files::read_config() {
+        let mut config = match files::read_config() {
             Ok(c) => c,
             Err(_error) => return Err(_error),
         };
@@ -85,6 +85,8 @@ impl<'a> Cmd<'a> for CreateCmd {
                 ErrorKind::AlreadyExists,
                 format!("user {} is already in the config file", new_user.name),
             ));
+        } else {
+            config.users.extend([new_user]);
         }
 
         let _ = match files::write_config(config) {

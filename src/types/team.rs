@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use super::project::Project;
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct Team {
     pub(crate) name: String,
     pub(crate) projects: Vec<Project>,

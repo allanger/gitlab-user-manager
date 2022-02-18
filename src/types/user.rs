@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{ownership::Ownership, project::Project};
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct User {
     pub(crate) id: u64,
     pub(crate) name: String,

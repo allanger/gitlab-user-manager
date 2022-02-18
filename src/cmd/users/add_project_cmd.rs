@@ -1,4 +1,7 @@
-use std::{io::{Error, ErrorKind}, str::FromStr};
+use std::{
+    io::{Error, ErrorKind},
+    str::FromStr,
+};
 
 use clap::{arg, App, ArgMatches};
 use gitlab::Gitlab;
@@ -7,7 +10,7 @@ use crate::{
     cmd::{arg_access, arg_gitlab_token, arg_gitlab_url, arg_project_id, Cmd},
     files,
     gitlab::GitlabActions,
-    types::{self, project::AccessLevel},
+    types::{self, access_level::AccessLevel},
 };
 
 pub(crate) struct AddProjectCmd {
@@ -58,19 +61,18 @@ pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, E
         Err(_error) => return Err(Error::new(ErrorKind::InvalidInput, _error.to_string())),
     };
 
-    let access_level: AccessLevel = Default::default();
+    let access_level: AccessLevel;
     let access_level_str = sub_matches.value_of("access").ok_or(Error::new(
         std::io::ErrorKind::PermissionDenied,
         "team name is not specified",
     ));
     if access_level_str.is_err() {
         return Err(access_level_str.err().unwrap());
-    } else {
-        match AccessLevel::from_str(&access_level_str.unwrap().to_string()) {
-            Ok(l) => l,
-            Err(e) => return Err(e),
-        };
     }
+    access_level = match AccessLevel::from_str(&access_level_str.unwrap().to_string()) {
+        Ok(l) => l,
+        Err(e) => return Err(e),
+    };
 
     let gitlab_user_id: u64 = match sub_matches.value_of_t("GITLAB_USER_ID") {
         Ok(pid) => pid,

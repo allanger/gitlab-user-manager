@@ -11,3 +11,4 @@ serde_yaml = "0.8"
 gitlab = "0.1407.0"
 log = "0.4.14"
 tempfile = "3.3.0"
+uuid = { version = "0.8", features = ["serde", "v4"]}

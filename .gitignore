@@ -1,2 +1,4 @@
 /target
 .DS_Store
+gum-config.yaml
+gum-state.yaml
