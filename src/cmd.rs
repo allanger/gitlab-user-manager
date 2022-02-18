@@ -76,7 +76,8 @@ pub(crate) fn arg_access() -> Arg<'static> {
         .takes_value(true)
         .value_name("ACCESS")
         .help("Provide a valid access level")
-        .default_value("guest");
+        .default_value("guest")
+        .global(true);
 }
 
 pub(crate) fn arg_team_name() -> Arg<'static> {
