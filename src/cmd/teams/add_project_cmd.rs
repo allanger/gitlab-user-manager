@@ -1,5 +1,6 @@
+use crate::cmd::Cmd;
 use crate::{
-    cmd::{arg_access, arg_gitlab_token, arg_gitlab_url, arg_project_id, arg_team_name, Cmd},
+    cmd::args::{arg_access, arg_gitlab_token, arg_gitlab_url, arg_project_id, arg_team_name},
     files,
     gitlab::GitlabActions,
     types::{self, access_level::AccessLevel},

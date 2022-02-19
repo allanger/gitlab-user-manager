@@ -1,16 +1,15 @@
 use std::io::{Error, ErrorKind};
-use std::path::Path;
 
 use clap::{App, Arg, ArgMatches};
 use gitlab::Gitlab;
 
-use crate::files::{read_state, state_exists};
-use crate::types::access_level::AccessLevel;
+use crate::files::state_exists;
+
 use crate::{cmd::Cmd, files, types::state};
 
 use self::sync_cmd::{apply, compare_states, configure_projects};
 
-use super::{arg_gitlab_token, arg_gitlab_url};
+use super::args::{arg_gitlab_token, arg_gitlab_url};
 
 /// init cmd should be used to generate an empty gum-config
 pub(crate) fn add_sync_cmd() -> App<'static> {
@@ -132,7 +131,7 @@ mod sync_cmd {
     pub(crate) fn apply(
         actions: Vec<Actions>,
         gitlab_client: &Gitlab,
-        mut state: &mut Vec<State>,
+        state: &mut Vec<State>,
         dry: bool,
     ) -> Result<(), Error> {
         for a in actions.iter() {

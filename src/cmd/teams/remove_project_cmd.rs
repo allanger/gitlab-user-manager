@@ -1,5 +1,6 @@
+use crate::cmd::Cmd;
 use crate::{
-    cmd::{arg_project_id, arg_team_name, Cmd},
+    cmd::args::{arg_project_id, arg_team_name},
     files,
     types::project::Project,
 };

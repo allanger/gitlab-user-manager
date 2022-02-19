@@ -2,8 +2,9 @@ use std::io::{Error, ErrorKind};
 
 use clap::{arg, App, ArgMatches};
 
+use crate::cmd::Cmd;
 use crate::{
-    cmd::{arg_gitlab_token, arg_gitlab_url, arg_group_id, Cmd},
+    cmd::args::{arg_gitlab_token, arg_gitlab_url, arg_group_id},
     files,
 };
 
