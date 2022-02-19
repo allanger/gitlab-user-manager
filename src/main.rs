@@ -12,7 +12,6 @@ use cmd::{
     init::{self, add_init_cmd},
     search::{self, add_search_cmd},
     sync::{self, add_sync_cmd},
-    sync_cmd,
     teams::{self, add_teams_cmd},
     users::{self, add_users_cmd},
     Cmd,

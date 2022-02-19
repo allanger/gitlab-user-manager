@@ -10,7 +10,7 @@ use gitlab::Gitlab;
 
 use crate::{
     cmd::Cmd,
-    cmd::{arg_gitlab_token, arg_gitlab_url},
+    cmd::args::{arg_gitlab_token, arg_gitlab_url},
 };
 
 /// Register search cmd

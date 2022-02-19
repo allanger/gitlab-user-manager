@@ -4,11 +4,12 @@ use clap::{arg, App, ArgMatches};
 use gitlab::Gitlab;
 
 use crate::{
-    cmd::{arg_gitlab_token, arg_gitlab_url, arg_group_id, Cmd},
+    cmd::args::{arg_gitlab_token, arg_gitlab_url, arg_group_id},
     files,
     gitlab::GitlabActions,
     types,
 };
+use crate::cmd::Cmd;
 
 pub(crate) struct AddOwnershipCmd {
     gitlab_user_id: u64,
@@ -26,27 +27,29 @@ pub(crate) fn add_add_ownership_cmd() -> App<'static> {
 }
 
 pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
-    let gitlab_token = sub_matches.value_of("token").ok_or(Error::new(
-        std::io::ErrorKind::PermissionDenied,
-        "gitlab token is not specified",
-    ));
-    if gitlab_token.is_err() {
-        return Err(gitlab_token.err().unwrap());
-    }
-    // Get gitlab url from flags
-    let gitlab_url = sub_matches.value_of("url").ok_or(Error::new(
-        std::io::ErrorKind::PermissionDenied,
-        "gitlab url is not specified",
-    ));
-    if gitlab_url.is_err() {
-        return Err(gitlab_token.err().unwrap());
-    }
+    let gitlab_token = sub_matches
+        .value_of("token")
+        .ok_or_else(|| {
+            Error::new(
+                std::io::ErrorKind::PermissionDenied,
+                "gitlab token is not specified",
+            )
+        })
+        .unwrap();
+
+    let gitlab_url = sub_matches
+        .value_of("url")
+        .ok_or_else(|| {
+            Error::new(
+                std::io::ErrorKind::PermissionDenied,
+                "gitlab url is not specified",
+            )
+        })
+        .unwrap();
 
     // Connect to gitlab
-    let gitlab_client: Gitlab = match Gitlab::new(
-        gitlab_url.unwrap().to_string(),
-        gitlab_token.unwrap().to_string(),
-    ) {
+    let gitlab_client: Gitlab = match Gitlab::new(gitlab_url.to_string(), gitlab_token.to_string())
+    {
         Ok(g) => g,
         Err(_err) => return Err(Error::new(ErrorKind::Other, _err)),
     };

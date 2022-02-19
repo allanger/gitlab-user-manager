@@ -6,8 +6,9 @@ use std::{
 use clap::{arg, App, ArgMatches};
 use gitlab::Gitlab;
 
+use crate::cmd::Cmd;
 use crate::{
-    cmd::{arg_access, arg_gitlab_token, arg_gitlab_url, arg_project_id, Cmd},
+    cmd::args::{arg_access, arg_gitlab_token, arg_gitlab_url, arg_project_id},
     files,
     gitlab::GitlabActions,
     types::{self, access_level::AccessLevel},

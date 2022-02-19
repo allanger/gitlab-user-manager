@@ -3,8 +3,9 @@ use std::io::{Error, ErrorKind};
 use clap::{arg, App, ArgMatches};
 use gitlab::Gitlab;
 
+use crate::cmd::Cmd;
 use crate::{
-    cmd::{arg_gitlab_token, arg_gitlab_url, Cmd},
+    cmd::args::{arg_gitlab_token, arg_gitlab_url},
     files,
     gitlab::GitlabActions,
     types,

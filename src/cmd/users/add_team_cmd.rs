@@ -2,10 +2,8 @@ use std::io::{Error, ErrorKind};
 
 use clap::{arg, App, ArgMatches};
 
-use crate::{
-    cmd::{arg_team_name, Cmd},
-    files,
-};
+use crate::cmd::Cmd;
+use crate::{cmd::args::arg_team_name, files};
 
 pub(crate) struct AddTeamCmd {
     gitlab_user_id: u64,
