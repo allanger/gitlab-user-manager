@@ -4,6 +4,7 @@ use clap::{arg, App, ArgMatches};
 use gitlab::Gitlab;
 
 use crate::cmd::Cmd;
+use crate::gitlab::GitlabClient;
 use crate::{
     cmd::args::{arg_gitlab_token, arg_gitlab_url},
     files,
@@ -68,9 +69,8 @@ impl<'a> Cmd<'a> for CreateCmd {
             Err(_error) => return Err(_error),
         };
 
-        let g = crate::gitlab::new_gitlab_client(self.gitlab_client.to_owned());
-
-        let user = match g.get_user_data_by_id(self.gitlab_user_id) {
+        let gitlab = GitlabClient::new(self.gitlab_client.to_owned());
+        let user = match gitlab.get_user_data_by_id(self.gitlab_user_id) {
             Ok(u) => u,
             Err(_error) => return Err(_error),
         };

@@ -115,9 +115,10 @@ mod sync_cmd {
     use std::collections::HashMap;
     use std::io::Error;
 
-    use gitlab::Gitlab;
 
-    use crate::gitlab::GitlabActions;
+    use ::gitlab::Gitlab;
+
+    use crate::gitlab::{GitlabActions, GitlabClient};
     use crate::types::access_level::AccessLevel;
 
     use crate::types::{
@@ -135,7 +136,7 @@ mod sync_cmd {
         dry: bool,
     ) -> Result<(), Error> {
         for a in actions.iter() {
-            let gitlab = crate::gitlab::new_gitlab_client(gitlab_client.to_owned());
+            let gitlab = GitlabClient::new(gitlab_client.to_owned());
             let username = match gitlab.get_user_data_by_id(a.user_id) {
                 Ok(r) => r,
                 Err(_error) => return Err(_error),
@@ -310,20 +311,20 @@ mod sync_cmd {
     fn higher_access<'a>(project1: &'a Project, project2: &'a Project) -> Project {
         let access_level: AccessLevel;
 
-        if project1.access_level == AccessLevel::MAINTAINER
-            || project2.access_level == AccessLevel::MAINTAINER
+        if project1.access_level == AccessLevel::Maintainer
+            || project2.access_level == AccessLevel::Maintainer
         {
-            access_level = AccessLevel::MAINTAINER;
-        } else if project1.access_level == AccessLevel::DEVELOPER
-            || project2.access_level == AccessLevel::DEVELOPER
+            access_level = AccessLevel::Maintainer;
+        } else if project1.access_level == AccessLevel::Developer
+            || project2.access_level == AccessLevel::Developer
         {
-            access_level = AccessLevel::DEVELOPER;
-        } else if project1.access_level == AccessLevel::REPORTER
-            || project2.access_level == AccessLevel::REPORTER
+            access_level = AccessLevel::Developer;
+        } else if project1.access_level == AccessLevel::Reporter
+            || project2.access_level == AccessLevel::Reporter
         {
-            access_level = AccessLevel::REPORTER;
+            access_level = AccessLevel::Reporter;
         } else {
-            access_level = AccessLevel::GUEST;
+            access_level = AccessLevel::Guest;
         }
 
         let p = Project {
@@ -399,7 +400,7 @@ mod sync_cmd {
                     user_id: p.user_id,
                     entity_id: ng.id,
                     entity_type: EntityType::GROUP,
-                    access: AccessLevel::OWNER,
+                    access: AccessLevel::Owner,
                     action: Action::CREATE,
                 }])
             }
@@ -420,7 +421,7 @@ mod sync_cmd {
                     user_id: p.user_id,
                     entity_id: og.id,
                     entity_type: EntityType::GROUP,
-                    access: AccessLevel::OWNER,
+                    access: AccessLevel::Owner,
                     action: Action::DELETE,
                 }])
             }
@@ -460,7 +461,7 @@ mod sync_cmd {
                 user_id,
                 entity_id: nv.id,
                 entity_type: EntityType::GROUP,
-                access: AccessLevel::OWNER,
+                access: AccessLevel::Owner,
                 action: Action::CREATE,
             }])
         }
@@ -469,7 +470,7 @@ mod sync_cmd {
                 user_id,
                 entity_id: ov.id,
                 entity_type: EntityType::GROUP,
-                access: AccessLevel::OWNER,
+                access: AccessLevel::Owner,
                 action: Action::DELETE,
             }])
         }

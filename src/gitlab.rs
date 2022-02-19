@@ -10,9 +10,11 @@ pub(crate) struct GitlabClient {
     gitlab_client: Gitlab,
 }
 
-pub(crate) fn new_gitlab_client(client: Gitlab) -> impl GitlabActions {
-    GitlabClient {
-        gitlab_client: client,
+impl GitlabClient {
+    pub(crate) fn new(client: Gitlab) -> Self {
+        Self {
+            gitlab_client: client,
+        }
     }
 }
 

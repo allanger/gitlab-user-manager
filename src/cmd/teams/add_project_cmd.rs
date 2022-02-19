@@ -1,4 +1,5 @@
 use crate::cmd::Cmd;
+use crate::gitlab::GitlabClient;
 use crate::{
     cmd::args::{arg_access, arg_gitlab_token, arg_gitlab_url, arg_project_id, arg_team_name},
     files,
@@ -96,7 +97,7 @@ impl<'a> Cmd<'a> for AddProjectCmd {
             Ok(c) => c,
             Err(_error) => return Err(_error),
         };
-        let gitlab = crate::gitlab::new_gitlab_client(self.gitlab_client.to_owned());
+        let gitlab = GitlabClient::new(self.gitlab_client.to_owned());
         let project = match gitlab.get_project_data_by_id(self.gitlab_project_id) {
             Ok(p) => p,
             Err(_error) => return Err(_error),

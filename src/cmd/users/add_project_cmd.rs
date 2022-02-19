@@ -6,13 +6,13 @@ use std::{
 use clap::{arg, App, ArgMatches};
 use gitlab::Gitlab;
 
-use crate::cmd::Cmd;
 use crate::{
     cmd::args::{arg_access, arg_gitlab_token, arg_gitlab_url, arg_project_id},
     files,
     gitlab::GitlabActions,
     types::{self, access_level::AccessLevel},
 };
+use crate::{cmd::Cmd, gitlab::GitlabClient};
 
 pub(crate) struct AddProjectCmd {
     gitlab_user_id: u64,
@@ -94,7 +94,7 @@ impl<'a> Cmd<'a> for AddProjectCmd {
             Ok(c) => c,
             Err(_error) => return Err(_error),
         };
-        let gitlab = crate::gitlab::new_gitlab_client(self.gitlab_client.to_owned());
+        let gitlab = GitlabClient::new(self.gitlab_client.to_owned());
 
         let project = match gitlab.get_project_data_by_id(self.gitlab_project_id) {
             Ok(p) => p,

@@ -1,3 +1,4 @@
+use std::fs::OpenOptions;
 use std::io::Error;
 use std::io::ErrorKind;
 use std::path::Path;
@@ -5,23 +6,22 @@ use std::result::Result;
 
 use uuid::Uuid;
 
-pub(crate) fn read_config() -> Result<crate::types::config::Config, Error> {
+use crate::types::config::Config;
+use crate::types::state::State;
+
+pub(crate) fn read_config() -> Result<Config, Error> {
     let file_name = "gum-config.yaml";
 
-    let f = std::fs::OpenOptions::new()
-        .write(true)
-        .read(true)
-        .open(file_name);
-    // TODO: Handle different reader errors
+    let f = OpenOptions::new().write(true).read(true).open(file_name);
+
     let f = match f {
         Ok(file) => file,
         Err(_error) => {
             return Err(_error);
         }
     };
-
-    let d: Result<crate::types::config::Config, _> = serde_yaml::from_reader(&f);
-
+    let d: Result<Config, _> = serde_yaml::from_reader(&f);
+    // return d
     let _ = match d {
         Ok(r) => return Ok(r),
         Err(_error) => {
@@ -30,10 +30,10 @@ pub(crate) fn read_config() -> Result<crate::types::config::Config, Error> {
     };
 }
 
-pub(crate) fn write_config(config: crate::types::config::Config) -> Result<(), Error> {
+pub(crate) fn write_config(config: Config) -> Result<(), Error> {
     let file_name = "gum-config.yaml";
 
-    let f = std::fs::OpenOptions::new()
+    let f = OpenOptions::new()
         .create(true)
         .write(true)
         .read(true)
@@ -55,13 +55,10 @@ pub(crate) fn write_config(config: crate::types::config::Config) -> Result<(), E
     };
 }
 
-pub(crate) fn read_state() -> Result<Vec<crate::types::state::State>, Error> {
+pub(crate) fn read_state() -> Result<Vec<State>, Error> {
     let file_name = "gum-state.yaml";
 
-    let f = std::fs::OpenOptions::new()
-        .write(true)
-        .read(true)
-        .open(file_name);
+    let f = OpenOptions::new().write(true).read(true).open(file_name);
     // TODO: Handle different reader errors
     let f = match f {
         Ok(file) => file,
@@ -70,7 +67,7 @@ pub(crate) fn read_state() -> Result<Vec<crate::types::state::State>, Error> {
         }
     };
 
-    let d: Result<Vec<crate::types::state::State>, _> = serde_yaml::from_reader(&f);
+    let d: Result<Vec<State>, _> = serde_yaml::from_reader(&f);
 
     let _ = match d {
         Ok(r) => return Ok(r),
@@ -80,7 +77,7 @@ pub(crate) fn read_state() -> Result<Vec<crate::types::state::State>, Error> {
     };
 }
 
-pub(crate) fn write_state(state: Vec<crate::types::state::State>, dry: bool) -> Result<(), Error> {
+pub(crate) fn write_state(state: Vec<State>, dry: bool) -> Result<(), Error> {
     let file_name;
     if dry {
         let file_uuid = Uuid::new_v4();
@@ -89,7 +86,7 @@ pub(crate) fn write_state(state: Vec<crate::types::state::State>, dry: bool) -> 
         file_name = "gum-state.yaml".to_string();
     }
 
-    let f = std::fs::OpenOptions::new()
+    let f = OpenOptions::new()
         .create(true)
         .write(true)
         .read(true)

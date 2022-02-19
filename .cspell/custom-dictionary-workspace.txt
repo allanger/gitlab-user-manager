@@ -37,6 +37,8 @@ termcolor
 textwrap
 thiserror
 tinyvec
+uuid
+Uuid
 vcpkg
 winapi
 winreg

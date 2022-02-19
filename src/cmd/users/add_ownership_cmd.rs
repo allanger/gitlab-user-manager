@@ -3,13 +3,13 @@ use std::io::{Error, ErrorKind};
 use clap::{arg, App, ArgMatches};
 use gitlab::Gitlab;
 
+use crate::cmd::Cmd;
 use crate::{
     cmd::args::{arg_gitlab_token, arg_gitlab_url, arg_group_id},
     files,
-    gitlab::GitlabActions,
+    gitlab::{GitlabActions, GitlabClient},
     types,
 };
-use crate::cmd::Cmd;
 
 pub(crate) struct AddOwnershipCmd {
     gitlab_user_id: u64,
@@ -77,9 +77,9 @@ impl<'a> Cmd<'a> for AddOwnershipCmd {
             Ok(c) => c,
             Err(_error) => return Err(_error),
         };
-        let g = crate::gitlab::new_gitlab_client(self.gitlab_client.to_owned());
+        let gitlab = GitlabClient::new(self.gitlab_client.to_owned());
 
-        let group = match g.get_group_data_by_id(self.gitlab_group_id) {
+        let group = match gitlab.get_group_data_by_id(self.gitlab_group_id) {
             Ok(p) => p,
             Err(_error) => return Err(_error),
         };

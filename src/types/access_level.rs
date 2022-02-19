@@ -8,19 +8,19 @@ use serde::{Deserialize, Serialize};
 
 #[derive(PartialEq, Debug, Serialize, Deserialize, Copy, Clone)]
 pub(crate) enum AccessLevel {
-    GUEST,
-    REPORTER,
-    DEVELOPER,
-    MAINTAINER,
-    OWNER,
+    Guest,
+    Reporter,
+    Developer,
+    Maintainer,
+    Owner,
 }
 impl FromStr for AccessLevel {
     fn from_str(input: &str) -> Result<AccessLevel, Error> {
         match input {
-            "guest" => Ok(AccessLevel::GUEST),
-            "reporter" => Ok(AccessLevel::REPORTER),
-            "developer" => Ok(AccessLevel::DEVELOPER),
-            "maintainer" => Ok(AccessLevel::MAINTAINER),
+            "guest" => Ok(AccessLevel::Guest),
+            "reporter" => Ok(AccessLevel::Reporter),
+            "developer" => Ok(AccessLevel::Developer),
+            "maintainer" => Ok(AccessLevel::Maintainer),
             _ => Err(Error::new(
                 ErrorKind::NotFound,
                 format!("access level {} can not be found", input),
@@ -37,6 +37,6 @@ impl fmt::Display for AccessLevel {
 }
 impl Default for AccessLevel {
     fn default() -> Self {
-        AccessLevel::GUEST
+        AccessLevel::Guest
     }
 }
