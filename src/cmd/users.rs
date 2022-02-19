@@ -40,7 +40,7 @@ pub(crate) struct UsersCmd<'a> {
     users_sub: Option<(&'a str, &'a ArgMatches)>,
 }
 
-pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
+pub(crate) fn prepare(sub_matches: &'_ ArgMatches) -> Result<impl Cmd<'_>, Error> {
     Ok(UsersCmd {
         users_sub: sub_matches.subcommand(),
     })

@@ -17,7 +17,7 @@ pub(crate) fn add_remove_team_cmd() -> App<'static> {
         .arg(arg_team_name());
 }
 
-pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
+pub(crate) fn prepare(sub_matches: &'_ ArgMatches) -> Result<impl Cmd<'_>, Error> {
     let gitlab_user_id: u64 = match sub_matches.value_of_t("GITLAB_USER_ID") {
         Ok(pid) => pid,
         Err(_error) => return Err(Error::new(ErrorKind::InvalidInput, _error.to_string())),
@@ -45,7 +45,7 @@ impl<'a> Cmd<'a> for RemoveTeamCmd {
         for u in config.users.iter_mut() {
             if u.id == self.gitlab_user_id {
                 for (i, p) in u.teams.iter().enumerate() {
-                    if p.to_string() == self.team_name {
+                    if p == &self.team_name {
                         println!("removing user {} from team {}", u.name, p);
                         u.teams.remove(i);
                         break;
