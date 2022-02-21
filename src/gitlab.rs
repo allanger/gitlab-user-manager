@@ -1,11 +1,16 @@
 use core::time;
-use std::{io::{Error, ErrorKind}, thread};
+use std::{
+    io::{Error, ErrorKind},
+    thread,
+};
 
 use gitlab::{
-    api::{groups, projects, users, Query, ApiError},
+    api::{self, groups, projects, users, ApiError, Query},
     Gitlab,
 };
 use serde::Deserialize;
+
+use crate::types::access_level::AccessLevel;
 
 pub(crate) struct GitlabClient {
     gitlab_client: Gitlab,
@@ -23,6 +28,12 @@ pub(crate) trait GitlabActions {
     fn get_project_data_by_id(&self, id: u64) -> Result<Project, Error>;
     fn get_user_data_by_id(&self, id: u64) -> Result<User, Error>;
     fn get_group_data_by_id(&self, id: u64) -> Result<Group, Error>;
+    fn add_user_to_project(
+        &self,
+        uid: u64,
+        pid: u64,
+        access_level: AccessLevel,
+    ) -> Result<(), Error>;
 }
 
 #[derive(Debug, Deserialize)]
@@ -123,5 +134,28 @@ impl GitlabActions for GitlabClient {
             Ok(res) => res,
         };
         Ok(output)
+    }
+    fn add_user_to_project(
+        &self,
+        uid: u64,
+        pid: u64,
+        access_level: AccessLevel,
+    ) -> Result<(), Error> {
+        let q = match projects::members::AddProjectMember::builder()
+            .access_level(access_level.to_gitlab_access_level())
+            .user(uid)
+            .project(pid)
+            .build()
+        {
+            Ok(q) => q,
+            Err(_error) => {
+                return Err(Error::new(std::io::ErrorKind::Other, _error.to_string()));
+            }
+        };
+        let _: () = match api::ignore(q).query(&self.gitlab_client) {
+            Ok(_) => print!("Fuck yeah, done"),
+            Err(_) => return Err(Error::new(ErrorKind::AddrNotAvailable, "asd")),
+        };
+        Ok(())
     }
 }

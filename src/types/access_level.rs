@@ -30,6 +30,17 @@ impl FromStr for AccessLevel {
     type Err = Error;
 }
 
+impl AccessLevel {
+    pub(crate) fn to_gitlab_access_level(&self) -> gitlab::api::common::AccessLevel {
+        match self {
+            AccessLevel::Guest => gitlab::api::common::AccessLevel::Guest,
+            AccessLevel::Reporter => gitlab::api::common::AccessLevel::Reporter,
+            AccessLevel::Developer => gitlab::api::common::AccessLevel::Developer,
+            AccessLevel::Maintainer => gitlab::api::common::AccessLevel::Maintainer,
+            AccessLevel::Owner => gitlab::api::common::AccessLevel::Owner,
+        }
+    }
+}
 impl fmt::Display for AccessLevel {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:?}", self)
