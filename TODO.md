@@ -16,7 +16,7 @@ What needs to be done before the tool can actually be used.
 - [ ] Refactor error handling
 
 # Nice to have
-- [ ] Add describe command foreach config entity 
+- [ ] Add a `describe` command foreach config entity 
   ```
   $ gum describe user allanger
   username: $GITLAB_USER_NAME
@@ -47,3 +47,19 @@ What needs to be done before the tool can actually be used.
 - [ ] Add possibility to write sync logs to file to have a better history
 - [ ] Rollback on errors or save the actual state if rollback is failed too.
 - [ ] Put temp state (dry-run) to the /tmp/gum folder and remove old ones
+- [ ] Add a `refresh` command to update gitlab Projects/Groups/Users name
+- [ ] Get rid of Ownerships and migrate to Groups
+- [ ] Add a head group to the config. Gum should be able to manage access only in these groups. (Maybe use a better name for this)
+  ```
+  meta: 
+    head_groups: 
+      - group_1
+      - group_2
+  ```
+- [ ] Add an ability to remove user completely from the groups specified in the head_groups. Maybe add a flag the `sync` command like that:
+  ```
+  $ gum sync --cleanup
+  ```
+And remove each user, which is being updated anyhow, from groups provided via head_groups (remove from groups, sub groups and projects)
+
+- [ ] Remove extra fields from state. State should only contain IDs and access_level.
