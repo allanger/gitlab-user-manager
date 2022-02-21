@@ -1,7 +1,8 @@
-use std::io::Error;
+use core::time;
+use std::{io::{Error, ErrorKind}, thread};
 
 use gitlab::{
-    api::{groups, projects, users, Query},
+    api::{groups, projects, users, Query, ApiError},
     Gitlab,
 };
 use serde::Deserialize;
@@ -51,7 +52,23 @@ impl GitlabActions for GitlabClient {
                 return Err(Error::new(std::io::ErrorKind::Other, _error.to_string()));
             }
         };
-        let output: Project = project.query(&self.gitlab_client).unwrap();
+        let output: Project = match project.query(&self.gitlab_client) {
+            Err(err) => {
+                match err {
+                    ApiError::GitlabObject { obj } => {
+                        if format!("{}", obj) == "{\"error\":\"This endpoint has been requested too many times. Try again later.\"}" {
+                                println!("Gitlab is screw by amount of our requests. I'm sorry, buy you need to wait, mate");
+                                let await_time = time::Duration::from_secs(30);
+                                thread::sleep(await_time);
+                                return self.get_project_data_by_id(id);
+                            };
+                    }
+                    _ => return Err(Error::new(ErrorKind::AddrNotAvailable, err)),
+                };
+                return Err(Error::new(ErrorKind::AddrNotAvailable, "asd"));
+            }
+            Ok(res) => res,
+        };
         Ok(output)
     }
     fn get_user_data_by_id(&self, id: u64) -> Result<User, Error> {
@@ -61,7 +78,24 @@ impl GitlabActions for GitlabClient {
                 return Err(Error::new(std::io::ErrorKind::Other, _error.to_string()));
             }
         };
-        let output: User = user.query(&self.gitlab_client).unwrap();
+        let output: User = match user.query(&self.gitlab_client) {
+            Err(err) => {
+                match err {
+                    ApiError::GitlabObject { obj } => {
+                        if format!("{}", obj) == "{\"error\":\"This endpoint has been requested too many times. Try again later.\"}" {
+                                println!("Gitlab is screw by amount of our requests. I'm sorry, buy you need to wait, mate");
+                                let await_time = time::Duration::from_secs(30);
+                                thread::sleep(await_time);
+                                return self.get_user_data_by_id(id);
+                            };
+                    }
+                    _ => return Err(Error::new(ErrorKind::AddrNotAvailable, err)),
+                };
+                return Err(Error::new(ErrorKind::AddrNotAvailable, "asd"));
+            }
+            Ok(res) => res,
+        };
+
         Ok(output)
     }
     fn get_group_data_by_id(&self, id: u64) -> Result<Group, Error> {
@@ -71,7 +105,23 @@ impl GitlabActions for GitlabClient {
                 return Err(Error::new(std::io::ErrorKind::Other, _error.to_string()));
             }
         };
-        let output: Group = group.query(&self.gitlab_client).unwrap();
+        let output: Group = match group.query(&self.gitlab_client) {
+            Err(err) => {
+                match err {
+                    ApiError::GitlabObject { obj } => {
+                        if format!("{}", obj) == "{\"error\":\"This endpoint has been requested too many times. Try again later.\"}" {
+                                println!("Gitlab is screw by amount of our requests. I'm sorry, buy you need to wait, mate");
+                                let await_time = time::Duration::from_secs(30);
+                                thread::sleep(await_time);
+                                return self.get_group_data_by_id(id);
+                            };
+                    }
+                    _ => return Err(Error::new(ErrorKind::AddrNotAvailable, err)),
+                };
+                return Err(Error::new(ErrorKind::AddrNotAvailable, "asd"));
+            }
+            Ok(res) => res,
+        };
         Ok(output)
     }
 }
