@@ -62,4 +62,21 @@ What needs to be done before the tool can actually be used.
   ```
 And remove each user, which is being updated anyhow, from groups provided via head_groups (remove from groups, sub groups and projects)
 
-- [ ] Remove extra fields from state. State should only contain IDs and access_level.
+- [ ] Remove extra fields from state. State should only contain IDs and access_level
+- [ ] Auto check for updates
+- [ ] Add feature for inviting users, if it's possible. 
+  When user is invited, he won't have an id until he confirms invitation. But after he confirms, he will be added to projects where he's been invited. So I think it should look like that:
+  -  New object is added to config
+  ```
+  invites: 
+   id: invite_id
+   projects: [] 
+   teams: []
+   groups: []
+  ```
+  - On each sync this invites should be checked for confirmation (if there so no such possibility, the whole invite ting seems impossible)
+  - If it's confirmed, the user should be automatically added to users and to state
+- [ ] Add patterns for checking users emails and usernames
+# Maybe nice to have
+- [ ] Generate HTML from the current state to publish it via gitlab pages
+- [ ] Add patterns for checking projects and groups names
