@@ -6,6 +6,7 @@ bitflags
 bumpalo
 byteorder
 chrono
+clippy
 codegen
 cpus
 demangle
