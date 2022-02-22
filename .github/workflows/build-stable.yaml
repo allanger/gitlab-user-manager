@@ -2,9 +2,10 @@
 name: "Stable build"
 
 on:
-  create:
-    tags:
-      - v*
+  # create:
+    # tags:
+      # - v*
+  push:
 
 jobs:
   containerization:
@@ -51,3 +52,27 @@ jobs:
             actor=${{ github.actor }}
             sha=${{ github.sha }}
             ref=${{ github.ref }}
+
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --all-features
+      - run: rustup target add aarch64-apple-darwin
+      - run: cargo build --target aarch64-apple-darwin
+
+      - name: 'Upload Artifact'
+        uses: actions/upload-artifact@v2
+        with:
+          name: build
+          path: target
+          retention-days: 5

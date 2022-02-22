@@ -3,6 +3,7 @@ autocfg
 bidi
 bindgen
 bitflags
+buildx
 bumpalo
 byteorder
 chrono
