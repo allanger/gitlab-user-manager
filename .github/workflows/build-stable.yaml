@@ -1,5 +1,5 @@
 ---
-name: 'Build a GUM stable docker image from main branch'
+name: "Build a GUM stable docker image from main branch"
 
 on:
   push:
@@ -32,7 +32,10 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.CR_PAT }}
-
+      
+      - name: debug
+        run: echo ${{ steps.buildx.outputs.name }}
+        
       - name: Build
         uses: docker/build-push-action@v2
         with:
