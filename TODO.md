@@ -14,6 +14,7 @@ What needs to be done before the tool can actually be used.
 - [ ] Create a Dockerfile and GitHub Actions for tests and releases
 - [ ] Refactor whole arguments module. Maybe rewrite it to methods or something
 - [ ] Refactor error handling
+- [ ] Write good documentation in README.md
 
 # Nice to have
 - [ ] Add a `describe` command foreach config entity 
