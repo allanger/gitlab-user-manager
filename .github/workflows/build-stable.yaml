@@ -20,7 +20,7 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@master
         with:
-          platforms: 386,amd64,arm,arm64
+          platforms: amd64
 
       - name: Set up Docker Buildx
         id: buildx
@@ -35,7 +35,7 @@ jobs:
       
       - name: debug
         run: echo ${{ steps.buildx.outputs.name }}
-        
+
       - name: Build
         uses: docker/build-push-action@v2
         with:
