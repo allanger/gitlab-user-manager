@@ -8,7 +8,7 @@ on:
       - 4-add-dockerfile-and-ci
 
 jobs:
-  docker:
+  containerization:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -20,7 +20,7 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@master
         with:
-          platforms: all
+          platforms: 386,amd64,arm,arm64
 
       - name: Set up Docker Buildx
         id: buildx
