@@ -4,37 +4,69 @@ name: "Stable build"
 on: [push]
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            arch: x86_64
-            target: x86_64-unknown-linux-gnu
-          - os: ubuntu-latest
-            arch: aarch64
-            target: aarch64-unknown-linux-gnu
-          - os: macos-latest
-            arch: x86_64
-            target: x86_64-apple-darwin
-          - os: macos-latest
-            arch: arm64
-            target: aarch64-apple-darwin
-          - os: windows-latest
-            arch: x86_64
-            target: x86_64-pc-windows-gnu
+  # build:
+    # runs-on: ${{ matrix.os }}
+    # strategy:
+      # fail-fast: false
+      # matrix:
+        # include:
+          # - os: ubuntu-latest
+            # arch: x86_64
+            # target: x86_64-unknown-linux-gnu
+          # - os: macos-latest
+            # arch: x86_64
+            # target: x86_64-apple-darwin
+          # - os: macos-latest
+            # arch: arm64
+            # target: aarch64-apple-darwin
+          # - os: windows-latest
+            # arch: x86_64
+            # target: x86_64-pc-windows-gnu
+    # steps:
+      # - name: Checkout
+        # uses: actions/checkout@v2
+# 
+      # - uses: actions-rs/toolchain@v1
+        # with:
+          # toolchain: stable
+          # target: ${{ matrix.target }}
+# 
+      # - uses: actions-rs/cargo@v1
+        # with:
+          # command: build
+          # args: --release --all-features --target=${{ matrix.target }}
+      # 
+      # - name: Create Draft Release
+        # id: create_release
+        # uses: actions/create-release@v1
+        # env:
+          # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # with:
+          # tag_name: <tofill>
+          # release_name: <tofill>
+          # draft: true
+          # prerelease: false
+  release:
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - uses: actions-rs/toolchain@v1
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        # if: startsWith(github.ref, 'refs/tags/')
         with:
-          toolchain: stable
-          target: ${{ matrix.target }}
-
-      - uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release --all-features --target=${{ matrix.target }}
+          files: |
+            REAMDE.md
+            Cargo.toml
+    # - uses: actions/upload-release-asset@v1.0.1
+      # env:
+        # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # with:
+        # upload_url: ${{ steps.create_release.outputs.upload_url }}
+        # asset_path: ./my-artifact.zip
+        # asset_name: my-artifact.zip
+        # asset_content_type: application/zip
+# 
+    # - uses: eregon/publish-release@v1
+      # env:
+        # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # with:
+        # release_id: ${{ steps.create_release.outputs.id }}

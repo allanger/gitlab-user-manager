@@ -4,7 +4,7 @@ name: "Version container"
 on:
   create:
     tags:
-      - v*
+      - "v*.*.*"
 
 jobs:
   containerization:
