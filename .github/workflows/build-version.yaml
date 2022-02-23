@@ -1,10 +1,7 @@
 ---
-name: "Stable build"
-
-# on: [push]
+name: "Version build"
 
 on:
-  push:
   create:
     tags:
       - "v*.*.*"
@@ -17,13 +14,13 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            arch: x86_64-Linux
+            system: x86_64-Linux
             target: x86_64-unknown-linux-gnu
           - os: macos-latest
-            arch: x86_64-Darwin
+            system: x86_64-Darwin
             target: x86_64-apple-darwin
           - os: macos-latest
-            arch: arm64-Darwin
+            system: arm64-Darwin
             target: aarch64-apple-darwin
     steps:
       - name: Checkout
@@ -42,7 +39,7 @@ jobs:
       - name: Archive build artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: build-${{matrix.target}}
+          name: build-${{matrix.system}}
           path: ${{  github.workspace  }}/target/${{ matrix.target }}/release/gum
 
   release:
@@ -54,32 +51,15 @@ jobs:
 
       - name: Download artifact
         uses: actions/download-artifact@v2
-      
+
       - name: Set version variable
         run: echo "GUM_VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
 
-      - name:  Rename release to avoid name conflict
+      - name: Rename release to avoid name conflict
         run: ./scripts/rename_releases.sh
-      
-      - run: ls release
-      # - name: Release
-      # uses: softprops/action-gh-release@v1
-      # if: startsWith(github.ref, 'refs/tags/')
-      # with:
-      # files: |
-      # REAMDE.md
-      # Cargo.toml
-      # env:
-      # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      # with:
-      # upload_url: ${{ steps.create_release.outputs.upload_url }}
-      # asset_path: ./my-artifact.zip
-      # asset_name: my-artifact.zip
-      # asset_content_type: application/zip
-    # - uses: actions/upload-release-asset@v1.0.1
-#
-# - uses: eregon/publish-release@v1
-# env:
-# GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-# with:
-# release_id: ${{ steps.create_release.outputs.id }}
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            release/*

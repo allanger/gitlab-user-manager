@@ -1,10 +1,10 @@
 #!/bin/bash
 echo 'renaming gum to gum-$VERSION-$SYSTEM format'
 mkdir -p release
-echp "version - $GUM_VERSION"
+echo "version - $GUM_VERSION"
 for BUILD in build*; do
+  SYSTEM=$(echo $BUILD | sed -e 's/build-//g')
   echo "system - $SYSTEM"
-  SYSTEM=$echo $BUILD | sed -e 's/build-//g')
-  mv $BUILD/gum release/gum-$GUM_VERSION-$SYSTEM
+  cp $BUILD/release/gum release/gum-$GUM_VERSION-$SYSTEM
 done
 ls release

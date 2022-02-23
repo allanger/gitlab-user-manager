@@ -41,7 +41,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/allanger/gitlab-user-manager:stable
+            ghcr.io/allanger/gitlab-environment-aggregator:${{ env.TAG }}
           labels: |
             action_id=${{ github.action }}
             action_link=${{ env.LINK }}
