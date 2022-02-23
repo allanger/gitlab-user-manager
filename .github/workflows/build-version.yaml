@@ -61,5 +61,4 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: |
-            gum-
+          files: release/*
