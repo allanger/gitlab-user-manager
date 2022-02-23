@@ -1,0 +1,64 @@
+---
+name: "Version build"
+
+on:
+  create:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            system: x86_64-Linux
+            target: x86_64-unknown-linux-gnu
+          - os: macos-latest
+            system: x86_64-Darwin
+            target: x86_64-apple-darwin
+          - os: macos-latest
+            system: arm64-Darwin
+            target: aarch64-apple-darwin
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --all-features --target=${{ matrix.target }}
+
+      - name: Archive build artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: build-${{matrix.system}}
+          path: ${{  github.workspace  }}/target/${{ matrix.target }}/release/gum
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Download artifact
+        uses: actions/download-artifact@v2
+
+      - name: Set version variable
+        run: echo "GUM_VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
+
+      - name: Rename release to avoid name conflict
+        run: ./scripts/rename_releases.sh
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: release/*

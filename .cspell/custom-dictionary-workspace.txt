@@ -1,13 +1,17 @@
 # Custom Dictionary Words
+aarch
 autocfg
 bidi
 bindgen
 bitflags
+buildx
 bumpalo
 byteorder
 chrono
+clippy
 codegen
 cpus
+darwin
 demangle
 fastrand
 gimli
