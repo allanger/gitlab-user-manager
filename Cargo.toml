@@ -2,7 +2,7 @@
 name = "gum"
 authors = ["allanger"]
 version = "0.0.0"
-edition = "2022"
+edition = "2021"
 
 [dependencies]
 clap = { version = "3.0", features = ["derive", "env"] }
