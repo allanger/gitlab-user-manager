@@ -1,11 +1,10 @@
 ---
-name: "Version build"
+name: "Stable container"
 
 on:
   push:
     branches:
       - main
-
     paths:
       - "src/**"
 
@@ -18,6 +17,9 @@ jobs:
 
       - name: Set action link variable
         run: echo "LINK=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" >> $GITHUB_ENV
+
+      - name: Set tag variable
+        run: echo "TAG=${GITHUB_REF##*/}" >> $GITHUB_ENV
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@master
@@ -34,7 +36,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.CR_PAT }}
-      
+
       - name: Build
         uses: docker/build-push-action@v2
         with:
@@ -44,7 +46,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/allanger/gitlab-user-manager:stable
+            ghcr.io/allanger/gitlab-environment-aggregator:${{ env.TAG }}
           labels: |
             action_id=${{ github.action }}
             action_link=${{ env.LINK }}
