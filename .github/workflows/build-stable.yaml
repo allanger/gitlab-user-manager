@@ -1,7 +1,12 @@
 ---
 name: "Stable build"
 
-on: [push]
+# on: [push]
+
+on:
+  create:
+    tags:
+      - "v*.*.*"
 
 jobs:
   # build:
