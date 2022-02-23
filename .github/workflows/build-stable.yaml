@@ -49,6 +49,7 @@ jobs:
           path: target/${{ matrix.target }}/gum
 
   release:
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Download artifact
