@@ -5,6 +5,6 @@ echo "version - $GUM_VERSION"
 for BUILD in build*; do
   SYSTEM=$(echo $BUILD | sed -e 's/build-//g')
   echo "system - $SYSTEM"
-  cp $BUILD/release/gum release/gum-$GUM_VERSION-$SYSTEM
+  cp $BUILD/gum release/gum-$GUM_VERSION-$SYSTEM
 done
 ls release
