@@ -3,6 +3,7 @@ mod files;
 mod gitlab;
 mod output;
 pub mod types;
+pub mod args;
 
 use clap::Command;
 use cmd::{
