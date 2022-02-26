@@ -115,7 +115,6 @@ mod sync_cmd {
     use std::collections::HashMap;
     use std::io::Error;
 
-
     use ::gitlab::Gitlab;
 
     use crate::gitlab::{GitlabActions, GitlabClient};
@@ -154,7 +153,11 @@ mod sync_cmd {
                                 username.name, project.name, a.access
                             );
                             if !dry {
-                                todo!();
+                                let r =
+                                    gitlab.add_user_to_project(a.user_id, a.entity_id, a.access);
+                                if r.is_err() {
+                                    return r;
+                                }
                             }
                             let mut exist = false;
                             for (i, _) in state.clone().iter().enumerate() {
@@ -185,7 +188,10 @@ mod sync_cmd {
                                 username.name, project.name, a.access
                             );
                             if !dry {
-                                todo!();
+                                let r = gitlab.remove_user_from_project(a.user_id, a.entity_id);
+                                if r.is_err() {
+                                    return r;
+                                }
                             }
                             for (i, s) in state.clone().iter().enumerate() {
                                 if s.user_id == a.user_id {
@@ -206,7 +212,11 @@ mod sync_cmd {
                                 username.name, project.name, a.access
                             );
                             if !dry {
-                                todo!();
+                                let r =
+                                    gitlab.edit_user_in_project(a.user_id, a.entity_id, a.access);
+                                if r.is_err() {
+                                    return r;
+                                }
                             }
                             for (i, s) in state.clone().iter().enumerate() {
                                 if s.user_id == a.user_id {
@@ -229,7 +239,10 @@ mod sync_cmd {
                         Action::CREATE => {
                             println!("Adding {} to {} as {}", username.name, group.name, a.access);
                             if !dry {
-                                todo!();
+                                let r = gitlab.add_user_to_group(a.user_id, a.entity_id, a.access);
+                                if r.is_err() {
+                                    return r;
+                                }
                             }
                             let mut exist = false;
                             for (i, _) in state.clone().iter().enumerate() {
@@ -260,7 +273,10 @@ mod sync_cmd {
                                 username.name, group.name, a.access
                             );
                             if !dry {
-                                todo!();
+                                let r = gitlab.remove_user_from_group(a.user_id, a.entity_id);
+                                if r.is_err() {
+                                    return r;
+                                }
                             }
                             for (i, s) in state.clone().iter().enumerate() {
                                 if s.user_id == a.user_id {

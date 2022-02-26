@@ -3,5 +3,5 @@ pub(crate) mod ownership;
 pub(crate) mod project;
 pub(crate) mod team;
 pub(crate) mod user;
-pub mod state;
-pub mod access_level;
+pub(crate) mod state;
+pub(crate) mod access_level;

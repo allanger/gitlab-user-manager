@@ -34,6 +34,22 @@ pub(crate) trait GitlabActions {
         pid: u64,
         access_level: AccessLevel,
     ) -> Result<(), Error>;
+    fn add_user_to_group(&self, uid: u64, gid: u64, access_level: AccessLevel)
+        -> Result<(), Error>;
+    fn remove_user_from_project(&self, uid: u64, pid: u64) -> Result<(), Error>;
+    fn remove_user_from_group(&self, uid: u64, gid: u64) -> Result<(), Error>;
+    fn edit_user_in_project(
+        &self,
+        uid: u64,
+        pid: u64,
+        access_level: AccessLevel,
+    ) -> Result<(), Error>;
+    fn edit_user_in_group(
+        &self,
+        uid: u64,
+        gid: u64,
+        access_level: AccessLevel,
+    ) -> Result<(), Error>;
 }
 
 #[derive(Debug, Deserialize)]
@@ -135,6 +151,7 @@ impl GitlabActions for GitlabClient {
         };
         Ok(output)
     }
+
     fn add_user_to_project(
         &self,
         uid: u64,
@@ -145,6 +162,152 @@ impl GitlabActions for GitlabClient {
             .access_level(access_level.to_gitlab_access_level())
             .user(uid)
             .project(pid)
+            .build()
+        {
+            Ok(q) => q,
+            Err(_error) => {
+                return Err(Error::new(std::io::ErrorKind::Other, _error.to_string()));
+            }
+        };
+        let _: () = match api::ignore(q).query(&self.gitlab_client) {
+            Ok(_) => return Ok(()),
+            Err(err) => {
+                if let ApiError::Gitlab { msg } = err {
+                    if msg == "Member already exists" {
+                        println!("Already added");
+                        return Ok(());
+                    }
+                    return Err(Error::new(ErrorKind::AddrNotAvailable, msg));
+                } else {
+                    return Err(Error::new(ErrorKind::AddrNotAvailable, err));
+                };
+            }
+        };
+    }
+
+    fn add_user_to_group(
+        &self,
+        uid: u64,
+        gid: u64,
+        access_level: AccessLevel,
+    ) -> Result<(), Error> {
+        let q = match groups::members::AddGroupMember::builder()
+            .access_level(access_level.to_gitlab_access_level())
+            .user(uid)
+            .group(gid)
+            .build()
+        {
+            Ok(q) => q,
+            Err(_error) => {
+                return Err(Error::new(std::io::ErrorKind::Other, _error.to_string()));
+            }
+        };
+        let _: () = match api::ignore(q).query(&self.gitlab_client) {
+            Ok(_) => return Ok(()),
+            Err(err) => {
+                if let ApiError::Gitlab { msg } = err {
+                    if msg == "Member already exists" {
+                        println!("Already added");
+                        return Ok(());
+                    }
+                    return Err(Error::new(ErrorKind::AddrNotAvailable, msg));
+                } else {
+                    return Err(Error::new(ErrorKind::AddrNotAvailable, err));
+                };
+            }
+        };
+    }
+
+    fn remove_user_from_project(&self, uid: u64, pid: u64) -> Result<(), Error> {
+        let q = match projects::members::RemoveProjectMember::builder()
+            .user(uid)
+            .project(pid)
+            .build()
+        {
+            Ok(q) => q,
+            Err(_error) => {
+                return Err(Error::new(std::io::ErrorKind::Other, _error.to_string()));
+            }
+        };
+        let _: () = match api::ignore(q).query(&self.gitlab_client) {
+            Ok(_) => return Ok(()),
+            Err(err) => {
+                match err {
+                    ApiError::Gitlab { msg } => {
+                        if msg == "404 Not found" {
+                            println!("Not a member");
+                            return Ok(());
+                        }
+                        return Err(Error::new(ErrorKind::AddrNotAvailable, msg));
+                    }
+                    _ => return Err(Error::new(ErrorKind::AddrNotAvailable, err)),
+                };
+            }
+        };
+    }
+
+    fn remove_user_from_group(&self, uid: u64, gid: u64) -> Result<(), Error> {
+        let q = match groups::members::RemoveGroupMember::builder()
+            .user(uid)
+            .group(gid)
+            .build()
+        {
+            Ok(q) => q,
+            Err(_error) => {
+                return Err(Error::new(std::io::ErrorKind::Other, _error.to_string()));
+            }
+        };
+        let _: () = match api::ignore(q).query(&self.gitlab_client) {
+            Ok(_) => return Ok(()),
+            Err(err) => {
+                match err {
+                    ApiError::Gitlab { msg } => {
+                        if msg == "404 Not found" {
+                            println!("Not a member");
+                            return Ok(());
+                        }
+                        return Err(Error::new(ErrorKind::AddrNotAvailable, msg));
+                    }
+                    _ => return Err(Error::new(ErrorKind::AddrNotAvailable, err)),
+                };
+            }
+        };
+    }
+
+    fn edit_user_in_project(
+        &self,
+        uid: u64,
+        pid: u64,
+        access_level: AccessLevel,
+    ) -> Result<(), Error> {
+        let q = match projects::members::EditProjectMember::builder()
+            .access_level(access_level.to_gitlab_access_level())
+            .user(uid)
+            .project(pid)
+            .build()
+        {
+            Ok(q) => q,
+            Err(_error) => {
+                return Err(Error::new(std::io::ErrorKind::Other, _error.to_string()));
+            }
+        };
+        let _: () = match api::ignore(q).query(&self.gitlab_client) {
+            Ok(_) => print!("Fuck yeah, done"),
+            Err(_) => return Err(Error::new(ErrorKind::AddrNotAvailable, "asd")),
+        };
+        Ok(())
+    }
+
+    fn edit_user_in_group(
+        &self,
+        uid: u64,
+        gid: u64,
+        access_level: AccessLevel,
+    ) -> Result<(), Error> {
+        let q = match groups::members::EditGroupMember::builder()
+            .access_level(access_level.to_gitlab_access_level())
+            .user(uid)
+            .group(gid)
             .build()
         {
             Ok(q) => q,
