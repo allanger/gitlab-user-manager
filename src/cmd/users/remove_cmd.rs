@@ -1,11 +1,11 @@
 use std::io::{Error, ErrorKind};
 
-use clap::{arg, App, ArgMatches};
+use clap::{arg, Command, ArgMatches};
 
 use crate::{cmd::Cmd, files, types::user::User};
 
-pub(crate) fn add_remove_cmd() -> App<'static> {
-    return App::new("remove")
+pub(crate) fn add_remove_cmd() -> Command<'static> {
+    return Command::new("remove")
         .alias("r")
         .about("Remove user from the config file")
         .arg(arg!(<GITLAB_USER_ID> "Provide the GitLab user ID"));

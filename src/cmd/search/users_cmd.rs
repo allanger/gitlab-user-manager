@@ -1,6 +1,6 @@
 use std::io::{Error, ErrorKind};
 
-use clap::{arg, App, ArgMatches};
+use clap::{arg, Command, ArgMatches};
 use gitlab::{
     api::{users, Query},
     Gitlab,
@@ -8,8 +8,8 @@ use gitlab::{
 
 use crate::{cmd::Cmd, gitlab::User};
 
-pub(crate) fn find_users<'a>() -> App<'a> {
-    return App::new("users")
+pub(crate) fn find_users<'a>() -> Command<'a> {
+    return Command::new("users")
         .about("Look for GitLab users")
         .aliases(&["u", "user"])
         .arg(arg!(<SEARCH> "What you are looking for, mate?"));

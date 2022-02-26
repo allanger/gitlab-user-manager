@@ -1,6 +1,6 @@
 use std::io::{Error, ErrorKind};
 
-use clap::{arg, App, ArgMatches};
+use clap::{arg, Command, ArgMatches};
 use gitlab::{
     api::{projects, Query},
     Gitlab,
@@ -8,8 +8,8 @@ use gitlab::{
 
 use crate::{cmd::Cmd, gitlab::Project};
 
-pub(crate) fn find_projects<'a>() -> App<'a> {
-    return App::new("projects")
+pub(crate) fn find_projects<'a>() -> Command<'a> {
+    return Command::new("projects")
         .about("Look for GitLab projects")
         .aliases(&["p", "project"])
         .arg(arg!(<SEARCH> "What you are looking for, mate?"));

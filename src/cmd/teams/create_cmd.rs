@@ -1,11 +1,11 @@
 use std::io::{Error, ErrorKind};
 
-use clap::{arg, App, ArgMatches};
+use clap::{arg, Command, ArgMatches};
 
 use crate::{cmd::Cmd, files, types};
 
-pub(crate) fn add_create_cmd() -> App<'static> {
-    return App::new("create")
+pub(crate) fn add_create_cmd() -> Command<'static> {
+    return Command::new("create")
         .alias("c")
         .about("Add a team to the config file")
         .arg(arg!(<TEAM_NAME> "Name the team you're creating"));

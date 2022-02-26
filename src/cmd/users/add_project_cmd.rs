@@ -3,7 +3,7 @@ use std::{
     str::FromStr,
 };
 
-use clap::{arg, App, ArgMatches};
+use clap::{arg, Command, ArgMatches};
 use gitlab::Gitlab;
 
 use crate::{
@@ -20,8 +20,8 @@ pub(crate) struct AddProjectCmd {
     gitlab_project_id: u64,
     gitlab_client: Gitlab,
 }
-pub(crate) fn add_add_project_cmd() -> App<'static> {
-    return App::new("add-project")
+pub(crate) fn add_add_project_cmd() -> Command<'static> {
+    return Command::new("add-project")
         .alias("ap")
         .about("Add user to project")
         .arg(arg!(<GITLAB_USER_ID> "Provide the GitLab user ID"))

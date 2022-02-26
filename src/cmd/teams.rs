@@ -6,7 +6,7 @@ mod remove_project_cmd;
 
 use std::io::Error;
 
-use clap::{App, ArgMatches};
+use clap::{Command, ArgMatches};
 
 use self::{
     add_project_cmd::add_add_project_cmd, create_cmd::add_create_cmd, list_cmd::add_list_cmd,
@@ -15,9 +15,9 @@ use self::{
 
 use super::Cmd;
 
-pub(crate) fn add_teams_cmd() -> App<'static> {
+pub(crate) fn add_teams_cmd() -> Command<'static> {
     // Register command
-    return App::new("teams")
+    return Command::new("teams")
         .aliases(&["t", "team"])
         .about("Manage GUM teams")
         .subcommand(add_create_cmd())

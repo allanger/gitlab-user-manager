@@ -6,7 +6,7 @@ pub mod types;
 use std::io::Error;
 use std::process::exit;
 
-use clap::{App, AppSettings};
+use clap::Command;
 
 use cmd::{
     init::{self, add_init_cmd},
@@ -18,11 +18,9 @@ use cmd::{
 };
 
 fn main() {
-    let matches = App::new("gum")
-        .setting(AppSettings::ArgRequiredElseHelp)
+    let matches = Command::new("gum")
         .about("Manage gitlab users even in the free version, beoch!")
-        .version("v1.1.1")
-        .setting(AppSettings::SubcommandRequiredElseHelp)
+        .version("v0.0.1")
         .author("allanger")
         .subcommand(add_init_cmd())
         .subcommand(add_users_cmd())

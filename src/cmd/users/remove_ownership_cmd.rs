@@ -1,6 +1,6 @@
 use std::io::{Error, ErrorKind};
 
-use clap::{arg, App, ArgMatches};
+use clap::{arg, Command, ArgMatches};
 
 use crate::cmd::Cmd;
 use crate::{
@@ -12,8 +12,8 @@ pub(crate) struct RemoveOwnershipCmd {
     gitlab_user_id: u64,
     gitlab_group_id: u64,
 }
-pub(crate) fn add_remove_ownership_cmd() -> App<'static> {
-    return App::new("remove-ownership")
+pub(crate) fn add_remove_ownership_cmd() -> Command<'static> {
+    return Command::new("remove-ownership")
         .alias("ro")
         .about("Remove an ownership from the user")
         .arg(arg!(<GITLAB_USER_ID> "Provide the GitLab user ID"))

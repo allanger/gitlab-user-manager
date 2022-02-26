@@ -1,6 +1,6 @@
 use std::io::{Error, ErrorKind};
 
-use clap::{arg, App, ArgMatches};
+use clap::{arg, Command, ArgMatches};
 use gitlab::Gitlab;
 
 use crate::cmd::Cmd;
@@ -16,8 +16,8 @@ pub(crate) struct AddOwnershipCmd {
     gitlab_group_id: u64,
     gitlab_client: Gitlab,
 }
-pub(crate) fn add_add_ownership_cmd() -> App<'static> {
-    return App::new("add-ownership")
+pub(crate) fn add_add_ownership_cmd() -> Command<'static> {
+    return Command::new("add-ownership")
         .alias("ao")
         .about("Set the user as the group owner")
         .arg(arg_gitlab_token())

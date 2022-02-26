@@ -1,6 +1,6 @@
 use std::io::{Error, ErrorKind};
 
-use clap::{arg, App, ArgMatches};
+use clap::{arg, Command, ArgMatches};
 
 use crate::cmd::Cmd;
 use crate::{cmd::args::arg_team_name, files};
@@ -9,8 +9,8 @@ pub(crate) struct AddTeamCmd {
     gitlab_user_id: u64,
     team_name: String,
 }
-pub(crate) fn add_add_team_cmd() -> App<'static> {
-    return App::new("add-team")
+pub(crate) fn add_add_team_cmd() -> Command<'static> {
+    return Command::new("add-team")
         .alias("at")
         .about("Add user to the team")
         .arg(arg_team_name())
