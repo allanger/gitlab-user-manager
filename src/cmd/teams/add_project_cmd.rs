@@ -6,15 +6,15 @@ use crate::{
     gitlab::GitlabActions,
     types::{self, access_level::AccessLevel},
 };
-use clap::{App, ArgMatches};
+use clap::{Command, ArgMatches};
 use gitlab::Gitlab;
 use std::{
     io::{Error, ErrorKind},
     str::FromStr,
 };
 
-pub(crate) fn add_add_project_cmd() -> App<'static> {
-    return App::new("add-project")
+pub(crate) fn add_add_project_cmd() -> Command<'static> {
+    return Command::new("add-project")
         .alias("ap")
         .about("Remove the team from the config file")
         .arg(arg_team_name())

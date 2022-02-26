@@ -1,11 +1,11 @@
 use std::io::Error;
 
-use clap::{arg, App, ArgMatches};
+use clap::{arg, Command, ArgMatches};
 
 use crate::{cmd::Cmd, files};
 
-pub(crate) fn add_remove_cmd() -> App<'static> {
-    return App::new("remove")
+pub(crate) fn add_remove_cmd() -> Command<'static> {
+    return Command::new("remove")
         .alias("r")
         .about("Remove the team from the config file")
         .arg(arg!(<TEAM_NAME> "Name the team you're removing"));

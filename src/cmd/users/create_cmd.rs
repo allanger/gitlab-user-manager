@@ -1,6 +1,6 @@
 use std::io::{Error, ErrorKind};
 
-use clap::{arg, App, ArgMatches};
+use clap::{arg, Command, ArgMatches};
 use gitlab::Gitlab;
 
 use crate::cmd::Cmd;
@@ -12,8 +12,8 @@ use crate::{
     types,
 };
 
-pub(crate) fn add_create_cmd() -> App<'static> {
-    return App::new("create")
+pub(crate) fn add_create_cmd() -> Command<'static> {
+    return Command::new("create")
         .alias("c")
         .about("Add user to the config file")
         .arg(arg!(<GITLAB_USER_ID> "Provide the GitLab user ID"))

@@ -1,12 +1,12 @@
 use std::io::{Error, ErrorKind};
 
-use clap::App;
+use clap::Command;
 
 use crate::{cmd::Cmd, types::config::Config};
 
 /// init cmd should be used to generate an empty gum-config
-pub(crate) fn add_init_cmd() -> App<'static> {
-    return App::new("init").about("Create a default yaml file in the current directory");
+pub(crate) fn add_init_cmd() -> Command<'static> {
+    return Command::new("init").about("Create a default yaml file in the current directory");
 }
 
 pub(crate) struct InitCmd;

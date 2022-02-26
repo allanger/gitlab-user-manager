@@ -1,10 +1,10 @@
 use crate::{cmd::Cmd, files};
-use clap::App;
+use clap::Command;
 
 use std::io::Error;
 
-pub(crate) fn add_list_cmd() -> App<'static> {
-    return App::new("list")
+pub(crate) fn add_list_cmd() -> Command<'static> {
+    return Command::new("list")
         .alias("l")
         .about("List teams from config file");
 }

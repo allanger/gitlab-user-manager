@@ -10,7 +10,7 @@ mod remove_team_cmd;
 
 use std::io::Error;
 
-use clap::{App, ArgMatches};
+use clap::{Command, ArgMatches};
 
 use self::{
     add_ownership_cmd::add_add_ownership_cmd, add_project_cmd::add_add_project_cmd,
@@ -21,8 +21,8 @@ use self::{
 
 use super::Cmd;
 
-pub(crate) fn add_users_cmd() -> App<'static> {
-    return App::new("users")
+pub(crate) fn add_users_cmd() -> Command<'static> {
+    return Command::new("users")
         .aliases(&["u", "users"])
         .about("Manage GitLab users")
         .subcommand(add_create_cmd())

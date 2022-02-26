@@ -4,12 +4,12 @@ use crate::{
     files,
     types::project::Project,
 };
-use clap::{App, ArgMatches};
+use clap::{Command, ArgMatches};
 
 use std::io::{Error, ErrorKind};
 
-pub(crate) fn add_remove_project_cmd() -> App<'static> {
-    return App::new("remove-project")
+pub(crate) fn add_remove_project_cmd() -> Command<'static> {
+    return Command::new("remove-project")
         .alias("rp")
         .about("Remove a Gitlab project from the team")
         .arg(arg_team_name())

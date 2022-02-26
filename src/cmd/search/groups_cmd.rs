@@ -1,6 +1,6 @@
 use std::io::{Error, ErrorKind};
 
-use clap::{arg, App, ArgMatches};
+use clap::{arg, Command, ArgMatches};
 use gitlab::{
     api::{groups, Query},
     Gitlab,
@@ -8,8 +8,8 @@ use gitlab::{
 
 use crate::{cmd::Cmd, gitlab::Project};
 
-pub(crate) fn find_groups<'a>() -> App<'a> {
-    return App::new("groups")
+pub(crate) fn find_groups<'a>() -> Command<'a> {
+    return Command::new("groups")
         .about("Look for GitLab groups")
         .aliases(&["g", "group"])
         .arg(arg!(<SEARCH> "What you are looking for, mate?"));

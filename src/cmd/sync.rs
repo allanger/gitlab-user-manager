@@ -1,6 +1,6 @@
 use std::io::{Error, ErrorKind};
 
-use clap::{App, Arg, ArgMatches};
+use clap::{Command, Arg, ArgMatches};
 use gitlab::Gitlab;
 
 use crate::files::state_exists;
@@ -12,12 +12,12 @@ use self::sync_cmd::{apply, compare_states, configure_projects};
 use super::args::{arg_gitlab_token, arg_gitlab_url};
 
 /// init cmd should be used to generate an empty gum-config
-pub(crate) fn add_sync_cmd() -> App<'static> {
+pub(crate) fn add_sync_cmd() -> Command<'static> {
     let dry_run = Arg::new("dry-run")
         .short('d')
         .takes_value(false)
         .help("Use if you wanna see what's gonna happen without applying new configuration");
-    return App::new("sync")
+    return Command::new("sync")
         .about("Sync your config file with GitLab and generate the state file")
         .arg(dry_run)
         .arg(arg_gitlab_token())

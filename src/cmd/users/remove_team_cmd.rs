@@ -1,6 +1,6 @@
 use std::io::{Error, ErrorKind};
 
-use clap::{arg, App, ArgMatches};
+use clap::{arg, Command, ArgMatches};
 
 use crate::cmd::Cmd;
 use crate::{cmd::args::arg_team_name, files};
@@ -9,8 +9,8 @@ pub(crate) struct RemoveTeamCmd {
     gitlab_user_id: u64,
     team_name: String,
 }
-pub(crate) fn add_remove_team_cmd() -> App<'static> {
-    return App::new("remove-team")
+pub(crate) fn add_remove_team_cmd() -> Command<'static> {
+    return Command::new("remove-team")
         .alias("rt")
         .about("Remove a user from the team")
         .arg(arg!(<GITLAB_USER_ID> "Provide the GitLab user ID"))

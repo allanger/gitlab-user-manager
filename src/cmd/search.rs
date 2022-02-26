@@ -4,7 +4,7 @@ mod users_cmd;
 
 use std::io::{Error, ErrorKind};
 
-use clap::{App, ArgMatches};
+use clap::{Command, ArgMatches};
 
 use gitlab::Gitlab;
 
@@ -14,8 +14,8 @@ use crate::{
 };
 
 /// Register search cmd
-pub(crate) fn add_search_cmd() -> App<'static> {
-    return App::new("search")
+pub(crate) fn add_search_cmd() -> Command<'static> {
+    return Command::new("search")
         .aliases(&["s", "find"])
         .about("Search for GitLab entities")
         .arg(arg_gitlab_token())
