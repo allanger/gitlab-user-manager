@@ -33,7 +33,7 @@ pub(crate) trait GitlabActions {
         uid: u64,
         pid: u64,
         access_level: AccessLevel,
-    ) -> Result<(), Error>;
+    ) -> Result<String, Error>;
     fn add_user_to_group(&self, uid: u64, gid: u64, access_level: AccessLevel)
         -> Result<(), Error>;
     fn remove_user_from_project(&self, uid: u64, pid: u64) -> Result<(), Error>;
@@ -157,7 +157,7 @@ impl GitlabActions for GitlabClient {
         uid: u64,
         pid: u64,
         access_level: AccessLevel,
-    ) -> Result<(), Error> {
+    ) -> Result<String, Error> {
         let q = match projects::members::AddProjectMember::builder()
             .access_level(access_level.to_gitlab_access_level())
             .user(uid)
@@ -170,12 +170,11 @@ impl GitlabActions for GitlabClient {
             }
         };
         let _: () = match api::ignore(q).query(&self.gitlab_client) {
-            Ok(_) => return Ok(()),
+            Ok(_) => return Ok("Added".to_string()),
             Err(err) => {
                 if let ApiError::Gitlab { msg } = err {
                     if msg == "Member already exists" {
-                        println!("Already added");
-                        return Ok(());
+                        return Ok("Already added".to_string());
                     }
                     return Err(Error::new(ErrorKind::AddrNotAvailable, msg));
                 } else {

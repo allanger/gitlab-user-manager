@@ -6,7 +6,7 @@ use crate::{
     gitlab::GitlabActions,
     types::{self, access_level::AccessLevel},
 };
-use clap::{Command, ArgMatches};
+use clap::{ArgMatches, Command};
 use gitlab::Gitlab;
 use std::{
     io::{Error, ErrorKind},

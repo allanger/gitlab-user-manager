@@ -1,6 +1,6 @@
 use std::io::{Error, ErrorKind};
 
-use clap::{Command, Arg, ArgMatches};
+use clap::{Arg, ArgMatches, Command};
 use gitlab::Gitlab;
 
 use crate::files::state_exists;
@@ -118,6 +118,7 @@ mod sync_cmd {
     use ::gitlab::Gitlab;
 
     use crate::gitlab::{GitlabActions, GitlabClient};
+    use crate::output::OutSpinner;
     use crate::types::access_level::AccessLevel;
 
     use crate::types::{
@@ -148,17 +149,27 @@ mod sync_cmd {
                     };
                     match a.action {
                         Action::CREATE => {
-                            println!(
-                                "Adding {} to {} as {}",
-                                username.name, project.name, a.access
+                            let spinner = OutSpinner::spinner_start(
+                                format!(
+                                    "Adding {} to {} as {}",
+                                    username.name, project.name, a.access
+                                )
+                                .to_string(),
                             );
                             if !dry {
-                                let r =
-                                    gitlab.add_user_to_project(a.user_id, a.entity_id, a.access);
-                                if r.is_err() {
-                                    return r;
+                                match gitlab.add_user_to_project(a.user_id, a.entity_id, a.access) {
+                                    Err(err) => {
+                                        spinner.spinner_failure(err.to_string());
+                                        return Err(err);
+                                    }
+                                    Ok(msg) => {
+                                        spinner.spinner_success(msg.to_string());
+                                    }
                                 }
+                            } else {
+                                spinner.spinner_close();
                             }
+
                             let mut exist = false;
                             for (i, _) in state.clone().iter().enumerate() {
                                 if state[i].user_id == a.user_id {

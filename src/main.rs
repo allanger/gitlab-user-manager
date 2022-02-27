@@ -1,13 +1,10 @@
 mod cmd;
 mod files;
 mod gitlab;
+mod output;
 pub mod types;
 
-use std::io::Error;
-use std::process::exit;
-
 use clap::Command;
-
 use cmd::{
     init::{self, add_init_cmd},
     search::{self, add_search_cmd},
@@ -16,6 +13,8 @@ use cmd::{
     users::{self, add_users_cmd},
     Cmd,
 };
+use std::process::exit;
+use std::{io::Error, thread::sleep, time::Duration};
 
 fn main() {
     let matches = Command::new("gum")

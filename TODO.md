@@ -34,6 +34,21 @@ What needs to be done before the tool can actually be used.
 - [ ] Async actions
 - [ ] Get rid of state file
 - [ ] Use spinners for output (EG https://github.com/console-rs/indicatif)
+  Comparing 
+  
+  @ Adding Nikolai Rodionov to optima-backend as developer
+  🤙 Adding Nikolai Rodionov to optima-backend as developer: Added
+  🤙 Adding Nikolai Rodionov to project optima-backend as developer: Already a member
+  🖕 Adding Nikolai Rodionov to optima-backend as developer: $ERROR_MESSAGE
+  
+  @ Updating Nikolai Rodionov in optima-backend to developer
+  🤙 Updating Nikolai Rodionov in optima-backend to developer: Updated
+  🖕 Updating Nikolai Rodionov in optima-backend to developer: $ERROR_MESSAGE
+  
+  @ Removing Nikolai Rodionov from optima-backend
+  🤙 Removing Nikolai Rodionov from optima-backend: Removed
+  🖕 Removing Nikolai Rodionov from optima-backend: $ERROR_MESSAGE
+
 - [ ] Add auto suggestions for every command
 - [ ] Start versioning the config file and add possibility to migrate from to a newer version. And add kinda annotation to let gum know it's a gum-config. Something like that
   ```
