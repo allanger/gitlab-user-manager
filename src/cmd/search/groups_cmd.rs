@@ -1,12 +1,17 @@
 use std::io::{Error, ErrorKind};
 
-use clap::{arg, Command, ArgMatches};
+use clap::{arg, ArgMatches, Command};
 use gitlab::{
     api::{groups, Query},
     Gitlab,
 };
+use tabled::Table;
 
-use crate::{cmd::Cmd, gitlab::Project};
+use crate::{
+    cmd::Cmd,
+    gitlab::{Group, Project},
+    output::{OutMessage, OutSpinner},
+};
 
 pub(crate) fn find_groups<'a>() -> Command<'a> {
     return Command::new("groups")
@@ -20,8 +25,8 @@ pub(crate) fn prepare<'a>(
     gitlab_client: &'a Gitlab,
 ) -> Result<impl Cmd<'a>, Error> {
     let search_string = sub_matches.value_of("SEARCH").ok_or(Error::new(
-        std::io::ErrorKind::PermissionDenied,
-        "whatcha lookin' for, mate?",
+        std::io::ErrorKind::InvalidInput,
+        "Whatcha lookin' for, mate?",
     ));
     if search_string.is_err() {
         return Err(search_string.err().unwrap());
@@ -39,17 +44,21 @@ struct GroupsCmd<'a> {
 
 impl<'a> Cmd<'a> for GroupsCmd<'a> {
     fn exec(&self) -> Result<(), Error> {
-        let users = match groups::Groups::builder()
+        let spinner = OutSpinner::spinner_start("Looking for groups".to_string());
+        let groups = match groups::Groups::builder()
             .search(&self.search_string)
             .build()
         {
             Ok(q) => q,
-            Err(_err) => return Err(Error::new(ErrorKind::ConnectionRefused, _err)),
+            Err(err) => {
+                spinner.spinner_failure(err.to_string());
+                return Err(Error::new(ErrorKind::ConnectionRefused, err));
+            }
         };
-        let output: Vec<Project> = users.query(self.gitlab_client).unwrap();
-        output.iter().enumerate().for_each(|(_, u)| {
-            println!("{} | {}", u.name, u.id);
-        });
+        let output: Vec<Group> = groups.query(self.gitlab_client).unwrap();
+        spinner.spinner_success("That's what we've got for ya".to_string());
+        let table = Table::new(&output);
+        OutMessage::message_empty(format!("{}", table).as_str());
         Ok(())
     }
 }

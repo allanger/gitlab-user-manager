@@ -12,6 +12,7 @@ clippy
 codegen
 cpus
 darwin
+dawg
 demangle
 fastrand
 gimli
@@ -24,6 +25,7 @@ ipnet
 itertools
 itoa
 libc
+lookin
 memchr
 miniz
 miow
@@ -44,5 +46,6 @@ tinyvec
 uuid
 Uuid
 vcpkg
+whatcha
 winapi
 winreg

@@ -9,6 +9,7 @@ use gitlab::{
     Gitlab,
 };
 use serde::Deserialize;
+use tabled::Tabled;
 
 use crate::types::access_level::AccessLevel;
 
@@ -34,36 +35,43 @@ pub(crate) trait GitlabActions {
         pid: u64,
         access_level: AccessLevel,
     ) -> Result<String, Error>;
-    fn add_user_to_group(&self, uid: u64, gid: u64, access_level: AccessLevel)
-        -> Result<(), Error>;
-    fn remove_user_from_project(&self, uid: u64, pid: u64) -> Result<(), Error>;
-    fn remove_user_from_group(&self, uid: u64, gid: u64) -> Result<(), Error>;
+    fn add_user_to_group(
+        &self,
+        uid: u64,
+        gid: u64,
+        access_level: AccessLevel,
+    ) -> Result<String, Error>;
+    fn remove_user_from_project(&self, uid: u64, pid: u64) -> Result<String, Error>;
+    fn remove_user_from_group(&self, uid: u64, gid: u64) -> Result<String, Error>;
     fn edit_user_in_project(
         &self,
         uid: u64,
         pid: u64,
         access_level: AccessLevel,
-    ) -> Result<(), Error>;
+    ) -> Result<String, Error>;
     fn edit_user_in_group(
         &self,
         uid: u64,
         gid: u64,
         access_level: AccessLevel,
-    ) -> Result<(), Error>;
+    ) -> Result<String, Error>;
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Tabled)]
 pub(crate) struct Project {
     pub(crate) id: u64,
     pub(crate) name: String,
+    pub(crate) web_url: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Tabled)]
 pub(crate) struct User {
     pub(crate) id: u64,
+    pub(crate) username: String,
     pub(crate) name: String,
+    pub(crate) web_url: String,
 }
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Tabled)]
 
 pub(crate) struct Group {
     pub(crate) id: u64,
@@ -189,7 +197,7 @@ impl GitlabActions for GitlabClient {
         uid: u64,
         gid: u64,
         access_level: AccessLevel,
-    ) -> Result<(), Error> {
+    ) -> Result<String, Error> {
         let q = match groups::members::AddGroupMember::builder()
             .access_level(access_level.to_gitlab_access_level())
             .user(uid)
@@ -202,12 +210,11 @@ impl GitlabActions for GitlabClient {
             }
         };
         let _: () = match api::ignore(q).query(&self.gitlab_client) {
-            Ok(_) => return Ok(()),
+            Ok(_) => return Ok("Added".to_string()),
             Err(err) => {
                 if let ApiError::Gitlab { msg } = err {
                     if msg == "Member already exists" {
-                        println!("Already added");
-                        return Ok(());
+                        return Ok("Already exists".to_string());
                     }
                     return Err(Error::new(ErrorKind::AddrNotAvailable, msg));
                 } else {
@@ -217,7 +224,7 @@ impl GitlabActions for GitlabClient {
         };
     }
 
-    fn remove_user_from_project(&self, uid: u64, pid: u64) -> Result<(), Error> {
+    fn remove_user_from_project(&self, uid: u64, pid: u64) -> Result<String, Error> {
         let q = match projects::members::RemoveProjectMember::builder()
             .user(uid)
             .project(pid)
@@ -229,13 +236,13 @@ impl GitlabActions for GitlabClient {
             }
         };
         let _: () = match api::ignore(q).query(&self.gitlab_client) {
-            Ok(_) => return Ok(()),
+            Ok(_) => return Ok("Removed".to_string()),
             Err(err) => {
                 match err {
                     ApiError::Gitlab { msg } => {
                         if msg == "404 Not found" {
                             println!("Not a member");
-                            return Ok(());
+                            return Ok("Not found".to_string());
                         }
                         return Err(Error::new(ErrorKind::AddrNotAvailable, msg));
                     }
@@ -245,7 +252,7 @@ impl GitlabActions for GitlabClient {
         };
     }
 
-    fn remove_user_from_group(&self, uid: u64, gid: u64) -> Result<(), Error> {
+    fn remove_user_from_group(&self, uid: u64, gid: u64) -> Result<String, Error> {
         let q = match groups::members::RemoveGroupMember::builder()
             .user(uid)
             .group(gid)
@@ -257,13 +264,12 @@ impl GitlabActions for GitlabClient {
             }
         };
         let _: () = match api::ignore(q).query(&self.gitlab_client) {
-            Ok(_) => return Ok(()),
+            Ok(_) => return Ok("Removed".to_string()),
             Err(err) => {
                 match err {
                     ApiError::Gitlab { msg } => {
                         if msg == "404 Not found" {
-                            println!("Not a member");
-                            return Ok(());
+                            return Ok("Not found".to_string());
                         }
                         return Err(Error::new(ErrorKind::AddrNotAvailable, msg));
                     }
@@ -278,7 +284,7 @@ impl GitlabActions for GitlabClient {
         uid: u64,
         pid: u64,
         access_level: AccessLevel,
-    ) -> Result<(), Error> {
+    ) -> Result<String, Error> {
         let q = match projects::members::EditProjectMember::builder()
             .access_level(access_level.to_gitlab_access_level())
             .user(uid)
@@ -291,10 +297,9 @@ impl GitlabActions for GitlabClient {
             }
         };
         let _: () = match api::ignore(q).query(&self.gitlab_client) {
-            Ok(_) => print!("Fuck yeah, done"),
+            Ok(_) => return Ok("Updated".to_string()),
             Err(_) => return Err(Error::new(ErrorKind::AddrNotAvailable, "asd")),
         };
-        Ok(())
     }
 
     fn edit_user_in_group(
@@ -302,7 +307,7 @@ impl GitlabActions for GitlabClient {
         uid: u64,
         gid: u64,
         access_level: AccessLevel,
-    ) -> Result<(), Error> {
+    ) -> Result<String, Error> {
         let q = match groups::members::EditGroupMember::builder()
             .access_level(access_level.to_gitlab_access_level())
             .user(uid)
@@ -315,9 +320,8 @@ impl GitlabActions for GitlabClient {
             }
         };
         let _: () = match api::ignore(q).query(&self.gitlab_client) {
-            Ok(_) => print!("Fuck yeah, done"),
+            Ok(_) => return Ok("Updated".to_string()),
             Err(_) => return Err(Error::new(ErrorKind::AddrNotAvailable, "asd")),
         };
-        Ok(())
     }
 }

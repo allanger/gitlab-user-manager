@@ -1,12 +1,13 @@
 use std::io::{Error, ErrorKind};
 
-use clap::{arg, Command, ArgMatches};
+use clap::{arg, ArgMatches, Command};
 use gitlab::{
     api::{users, Query},
     Gitlab,
 };
+use tabled::Table;
 
-use crate::{cmd::Cmd, gitlab::User};
+use crate::{cmd::Cmd, gitlab::User, output::{OutMessage, OutSpinner}};
 
 pub(crate) fn find_users<'a>() -> Command<'a> {
     return Command::new("users")
@@ -39,14 +40,18 @@ struct UsersCmd<'a> {
 
 impl<'a> Cmd<'a> for UsersCmd<'a> {
     fn exec(&self) -> Result<(), Error> {
+        let spinner = OutSpinner::spinner_start("Looking for users".to_string());
         let users = match users::Users::builder().search(&self.search_string).build() {
             Ok(q) => q,
-            Err(_err) => return Err(Error::new(ErrorKind::ConnectionRefused, _err)),
+            Err(err) => {
+                spinner.spinner_failure(err.to_string());
+                return Err(Error::new(ErrorKind::ConnectionRefused, err));
+            }
         };
         let output: Vec<User> = users.query(self.gitlab_client).unwrap();
-        output.iter().enumerate().for_each(|(_, u)| {
-            println!("{} | {}", u.name, u.id);
-        });
+        spinner.spinner_success("That's what we've got for ya".to_string());
+        let table = Table::new(&output);
+        OutMessage::message_empty(format!("{}", table).as_str());
         Ok(())
     }
 }

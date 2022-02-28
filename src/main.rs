@@ -13,8 +13,9 @@ use cmd::{
     users::{self, add_users_cmd},
     Cmd,
 };
+use output::OutSum;
+use std::io::Error;
 use std::process::exit;
-use std::{io::Error, thread::sleep, time::Duration};
 
 fn main() {
     let matches = Command::new("gum")
@@ -63,10 +64,12 @@ fn main() {
         _ => unreachable!(), // If all subcommands are defined above, anything else is unreachable
     }
     match result {
-        Ok(()) => println!("cool, huh?"),
-        Err(_error) => {
-            println!("ERROR: {}", _error);
+        Err(err) => {
+            OutSum::sum_failure(&err.to_string());
             exit(1);
+        }
+        Ok(_) => {
+            OutSum::sum_success("Cool, huh?");
         }
     }
 }
