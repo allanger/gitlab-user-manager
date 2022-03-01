@@ -5,6 +5,6 @@ COPY ./ .
 RUN cargo build --release
 
 FROM ubuntu:latest
-WORKDIR /bin
 COPY --from=builder /src/target/release/gum /bin/gum
+WORKDIR /config
 ENTRYPOINT ["/bin/gum"]
