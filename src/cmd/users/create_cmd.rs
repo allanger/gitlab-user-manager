@@ -5,6 +5,7 @@ use gitlab::Gitlab;
 
 use crate::cmd::Cmd;
 use crate::gitlab::GitlabClient;
+use crate::output::OutMessage;
 use crate::{
     cmd::args::{arg_gitlab_token, arg_gitlab_url},
     files,
@@ -70,6 +71,7 @@ impl<'a> Cmd<'a> for CreateCmd {
         };
 
         let gitlab = GitlabClient::new(self.gitlab_client.to_owned());
+        OutMessage::message_info_with_alias("I'm getting data about the user from Gitlab");
         let user = match gitlab.get_user_data_by_id(self.gitlab_user_id) {
             Ok(u) => u,
             Err(err) => return Err(err),
@@ -84,10 +86,11 @@ impl<'a> Cmd<'a> for CreateCmd {
         if config.users.iter().any(|i| i.id == self.gitlab_user_id) {
             return Err(Error::new(
                 ErrorKind::AlreadyExists,
-                format!("user {} is already in the config file", new_user.name),
+                format!("User {} is already in the config file", new_user.name),
             ));
         } else {
             config.users.extend([new_user]);
+            OutMessage::message_info_clean(format!("User {} is added to the config", user.name).as_str());
         }
 
         let _ = match files::write_config(config) {

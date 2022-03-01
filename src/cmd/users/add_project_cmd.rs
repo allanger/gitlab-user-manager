@@ -3,13 +3,14 @@ use std::{
     str::FromStr,
 };
 
-use clap::{arg, Command, ArgMatches};
+use clap::{arg, ArgMatches, Command};
 use gitlab::Gitlab;
 
 use crate::{
     cmd::args::{arg_access, arg_gitlab_token, arg_gitlab_url, arg_project_id},
     files,
     gitlab::GitlabActions,
+    output::{OutMessage, OutSpinner},
     types::{self, access_level::AccessLevel},
 };
 use crate::{cmd::Cmd, gitlab::GitlabClient};
@@ -95,6 +96,7 @@ impl<'a> Cmd<'a> for AddProjectCmd {
             Err(err) => return Err(err),
         };
         let gitlab = GitlabClient::new(self.gitlab_client.to_owned());
+        OutMessage::message_info_with_alias("I'm getting data about the project from Gitlab");
 
         let project = match gitlab.get_project_data_by_id(self.gitlab_project_id) {
             Ok(p) => p,
@@ -103,6 +105,11 @@ impl<'a> Cmd<'a> for AddProjectCmd {
 
         for user in config.users.iter_mut() {
             if user.id == self.gitlab_user_id {
+                let spinner = OutSpinner::spinner_start(format!(
+                    "Adding {} to {} as {}",
+                    user.name, project.name, self.access_level,
+                ));
+
                 let p = types::project::Project {
                     access_level: self.access_level,
                     id: project.id,
@@ -119,6 +126,7 @@ impl<'a> Cmd<'a> for AddProjectCmd {
                 }
 
                 user.projects.extend([p]);
+                spinner.spinner_success("Added".to_string());
                 break;
             }
         }

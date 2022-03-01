@@ -494,7 +494,6 @@ mod sync_cmd {
             }
         });
 
-        // actions.iter().for_each(|f| println!("{:?}", f));
         actions
     }
 

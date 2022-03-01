@@ -1,8 +1,9 @@
 use std::io::{Error, ErrorKind};
 
-use clap::{arg, Command, ArgMatches};
+use clap::{arg, ArgMatches, Command};
 
 use crate::cmd::Cmd;
+use crate::output::OutMessage;
 use crate::{
     cmd::args::{arg_gitlab_token, arg_gitlab_url, arg_project_id},
     files,
@@ -48,7 +49,10 @@ impl<'a> Cmd<'a> for RemoveProjectCmd {
             if u.id == self.gitlab_user_id {
                 for (i, p) in u.projects.iter().enumerate() {
                     if p.id == self.gitlab_project_id {
-                        println!("removing user {} from project {}", u.name, p.name);
+                        OutMessage::message_info_clean(
+                            format!("removing user {} from project {}", u.name, p.name).as_str(),
+                        );
+
                         u.projects.remove(i);
                         break;
                     }

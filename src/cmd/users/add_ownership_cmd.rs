@@ -4,7 +4,7 @@ use clap::{arg, ArgMatches, Command};
 use gitlab::Gitlab;
 
 use crate::cmd::Cmd;
-use crate::output::OutMessage;
+use crate::output::{OutMessage, OutSpinner};
 use crate::{
     cmd::args::{arg_gitlab_token, arg_gitlab_url, arg_group_id},
     files,
@@ -80,6 +80,8 @@ impl<'a> Cmd<'a> for AddOwnershipCmd {
         };
         let gitlab = GitlabClient::new(self.gitlab_client.to_owned());
 
+        OutMessage::message_info_with_alias("I'm getting data about the group from Gitlab");
+
         let group = match gitlab.get_group_data_by_id(self.gitlab_group_id) {
             Ok(p) => p,
             Err(err) => return Err(err),
@@ -87,6 +89,10 @@ impl<'a> Cmd<'a> for AddOwnershipCmd {
 
         for user in config.users.iter_mut() {
             if user.id == self.gitlab_user_id {
+                let spinner = OutSpinner::spinner_start(format!(
+                    "Adding {} to {} as owner",
+                    user.name, group.name
+                ));
                 let o = types::ownership::Ownership {
                     id: group.id,
                     name: group.name.to_string(),
@@ -102,19 +108,11 @@ impl<'a> Cmd<'a> for AddOwnershipCmd {
                     ));
                 }
                 user.ownerships.extend([o]);
+                spinner.spinner_success("Added".to_string());
             }
         }
         let _ = match files::write_config(config) {
-            Ok(()) => {
-                OutMessage::message_info_clean(
-                    format!(
-                        "{} is now owner of the {} group",
-                        self.gitlab_user_id, self.gitlab_group_id
-                    )
-                    .as_str(),
-                );
-                return Ok(());
-            }
+            Ok(()) => return Ok(()),
             Err(err) => return Err(err),
         };
     }

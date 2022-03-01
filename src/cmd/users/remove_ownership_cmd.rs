@@ -1,8 +1,9 @@
 use std::io::{Error, ErrorKind};
 
-use clap::{arg, Command, ArgMatches};
+use clap::{arg, ArgMatches, Command};
 
 use crate::cmd::Cmd;
+use crate::output::OutMessage;
 use crate::{
     cmd::args::{arg_gitlab_token, arg_gitlab_url, arg_group_id},
     files,
@@ -23,7 +24,7 @@ pub(crate) fn add_remove_ownership_cmd() -> Command<'static> {
 }
 
 pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
-    let gitlab_group_id: u64 = match sub_matches.value_of_t("project-id") {
+    let gitlab_group_id: u64 = match sub_matches.value_of_t("group-id") {
         Ok(pid) => pid,
         Err(err) => return Err(Error::new(ErrorKind::InvalidInput, err.to_string())),
     };
@@ -48,7 +49,11 @@ impl<'a> Cmd<'a> for RemoveOwnershipCmd {
             if u.id == self.gitlab_user_id {
                 for (i, o) in u.ownerships.iter().enumerate() {
                     if o.id == self.gitlab_group_id {
-                        println!("removing ownership on {} for user {}", o.name, u.name);
+                        OutMessage::message_info_clean(
+                            format!("Removing ownership on {} for user {}", o.name, u.name)
+                                .as_str(),
+                        );
+
                         u.ownerships.remove(i);
                         break;
                     }

@@ -1,8 +1,8 @@
 use std::io::{Error, ErrorKind};
 
-use clap::{arg, Command, ArgMatches};
+use clap::{arg, ArgMatches, Command};
 
-use crate::{cmd::Cmd, files, types::user::User};
+use crate::{cmd::Cmd, files, output::OutMessage, types::user::User};
 
 pub(crate) fn add_remove_cmd() -> Command<'static> {
     return Command::new("remove")
@@ -38,7 +38,9 @@ impl<'a> Cmd<'a> for RemoveCmd {
                     name: user.name.to_string(),
                     ..Default::default()
                 };
-                println!("removing user {} from config", u.name);
+                OutMessage::message_info_clean(
+                    format!("removing user {} from config", u.name).as_str(),
+                );
                 config.users.remove(i);
                 break;
             }

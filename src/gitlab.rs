@@ -251,7 +251,6 @@ impl GitlabActions for GitlabClient {
                 match err {
                     ApiError::Gitlab { msg } => {
                         if msg == "404 Not found" {
-                            println!("Not a member");
                             return Ok("Not found".to_string());
                         }
                         return Err(Error::new(ErrorKind::AddrNotAvailable, msg));

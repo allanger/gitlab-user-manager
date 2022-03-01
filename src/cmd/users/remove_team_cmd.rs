@@ -1,8 +1,9 @@
 use std::io::{Error, ErrorKind};
 
-use clap::{arg, Command, ArgMatches};
+use clap::{arg, ArgMatches, Command};
 
 use crate::cmd::Cmd;
+use crate::output::OutMessage;
 use crate::{cmd::args::arg_team_name, files};
 
 pub(crate) struct RemoveTeamCmd {
@@ -46,7 +47,10 @@ impl<'a> Cmd<'a> for RemoveTeamCmd {
             if u.id == self.gitlab_user_id {
                 for (i, p) in u.teams.iter().enumerate() {
                     if p == &self.team_name {
-                        println!("removing user {} from team {}", u.name, p);
+                        OutMessage::message_info_clean(
+                            format!("removing user {} from team {}", u.name, p).as_str(),
+                        );
+
                         u.teams.remove(i);
                         break;
                     }

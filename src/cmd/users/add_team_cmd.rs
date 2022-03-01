@@ -1,8 +1,9 @@
 use std::io::{Error, ErrorKind};
 
-use clap::{arg, Command, ArgMatches};
+use clap::{arg, ArgMatches, Command};
 
 use crate::cmd::Cmd;
+use crate::output::OutSpinner;
 use crate::{cmd::args::arg_team_name, files};
 
 pub(crate) struct AddTeamCmd {
@@ -44,6 +45,11 @@ impl<'a> Cmd<'a> for AddTeamCmd {
         };
         for user in config.users.iter_mut() {
             if user.id == self.gitlab_user_id {
+                let spinner = OutSpinner::spinner_start(format!(
+                    "Adding {} to {}",
+                    user.name, self.team_name
+                ));
+
                 if user.teams.iter().any(|t| t.to_string() == self.team_name) {
                     return Err(Error::new(
                         ErrorKind::AlreadyExists,
@@ -54,6 +60,7 @@ impl<'a> Cmd<'a> for AddTeamCmd {
                     ));
                 }
                 user.teams.extend([self.team_name.to_string()]);
+                spinner.spinner_success("Added".to_string());
 
                 break;
             }
