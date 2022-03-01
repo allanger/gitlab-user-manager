@@ -2,7 +2,7 @@
 name: "Version build"
 
 on:
-  create:
+  push:
     tags:
       - "v*.*.*"
 

@@ -1,8 +1,9 @@
 use std::io::{Error, ErrorKind};
 
-use clap::{arg, Command, ArgMatches};
+use clap::{arg, ArgMatches, Command};
 
 use crate::cmd::Cmd;
+use crate::output::OutMessage;
 use crate::{cmd::args::arg_team_name, files};
 
 pub(crate) struct RemoveTeamCmd {
@@ -20,7 +21,7 @@ pub(crate) fn add_remove_team_cmd() -> Command<'static> {
 pub(crate) fn prepare(sub_matches: &'_ ArgMatches) -> Result<impl Cmd<'_>, Error> {
     let gitlab_user_id: u64 = match sub_matches.value_of_t("GITLAB_USER_ID") {
         Ok(pid) => pid,
-        Err(_error) => return Err(Error::new(ErrorKind::InvalidInput, _error.to_string())),
+        Err(err) => return Err(Error::new(ErrorKind::InvalidInput, err.to_string())),
     };
     let team_name = sub_matches.value_of("team-name").ok_or(Error::new(
         std::io::ErrorKind::PermissionDenied,
@@ -40,13 +41,16 @@ impl<'a> Cmd<'a> for RemoveTeamCmd {
     fn exec(&self) -> Result<(), Error> {
         let mut config = match files::read_config() {
             Ok(c) => c,
-            Err(_error) => return Err(_error),
+            Err(err) => return Err(err),
         };
         for u in config.users.iter_mut() {
             if u.id == self.gitlab_user_id {
                 for (i, p) in u.teams.iter().enumerate() {
                     if p == &self.team_name {
-                        println!("removing user {} from team {}", u.name, p);
+                        OutMessage::message_info_clean(
+                            format!("removing user {} from team {}", u.name, p).as_str(),
+                        );
+
                         u.teams.remove(i);
                         break;
                     }
@@ -56,7 +60,7 @@ impl<'a> Cmd<'a> for RemoveTeamCmd {
 
         let _ = match files::write_config(config) {
             Ok(()) => return Ok(()),
-            Err(_error) => return Err(_error),
+            Err(err) => return Err(err),
         };
     }
 }

@@ -5,6 +5,7 @@ use gitlab::Gitlab;
 
 use crate::cmd::Cmd;
 use crate::gitlab::GitlabClient;
+use crate::output::OutMessage;
 use crate::{
     cmd::args::{arg_gitlab_token, arg_gitlab_url},
     files,
@@ -53,7 +54,7 @@ pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, E
 
     let gitlab_user_id: u64 = match sub_matches.value_of_t("GITLAB_USER_ID") {
         Ok(uid) => uid,
-        Err(_error) => return Err(Error::new(ErrorKind::InvalidInput, _error.to_string())),
+        Err(err) => return Err(Error::new(ErrorKind::InvalidInput, err.to_string())),
     };
 
     Ok(CreateCmd {
@@ -66,13 +67,14 @@ impl<'a> Cmd<'a> for CreateCmd {
     fn exec(&self) -> Result<(), Error> {
         let mut config = match files::read_config() {
             Ok(c) => c,
-            Err(_error) => return Err(_error),
+            Err(err) => return Err(err),
         };
 
         let gitlab = GitlabClient::new(self.gitlab_client.to_owned());
+        OutMessage::message_info_with_alias("I'm getting data about the user from Gitlab");
         let user = match gitlab.get_user_data_by_id(self.gitlab_user_id) {
             Ok(u) => u,
-            Err(_error) => return Err(_error),
+            Err(err) => return Err(err),
         };
 
         let new_user = types::user::User {
@@ -84,15 +86,16 @@ impl<'a> Cmd<'a> for CreateCmd {
         if config.users.iter().any(|i| i.id == self.gitlab_user_id) {
             return Err(Error::new(
                 ErrorKind::AlreadyExists,
-                format!("user {} is already in the config file", new_user.name),
+                format!("User {} is already in the config file", new_user.name),
             ));
         } else {
             config.users.extend([new_user]);
+            OutMessage::message_info_clean(format!("User {} is added to the config", user.name).as_str());
         }
 
         let _ = match files::write_config(config) {
             Ok(()) => return Ok(()),
-            Err(_error) => return Err(_error),
+            Err(err) => return Err(err),
         };
     }
 }

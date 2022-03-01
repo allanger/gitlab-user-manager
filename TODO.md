@@ -1,6 +1,6 @@
 # MVP
 What needs to be done before the tool can actually be used.
-- [ ] Implement all required gitlab API
+- [X] Implement all required gitlab API
   - APIs
     - Add members
     - Delete members
@@ -11,7 +11,7 @@ What needs to be done before the tool can actually be used.
 
 - [ ] Get rid of billions of loops and start using HashMaps
 - [ ] Add tests
-- [x] Create a Dockerfile and GitHub Actions for tests and releases
+- [X] Create a Dockerfile and GitHub Actions for tests and releases
 - [ ] Refactor whole arguments module. Maybe rewrite it to methods or something
 - [ ] Refactor error handling
 - [ ] Write good documentation in README.md
@@ -33,7 +33,7 @@ What needs to be done before the tool can actually be used.
 
 - [ ] Async actions
 - [ ] Get rid of state file
-- [ ] Use spinners for output (EG https://github.com/console-rs/indicatif)
+- [X] Use spinners for output
 - [ ] Add auto suggestions for every command
 - [ ] Start versioning the config file and add possibility to migrate from to a newer version. And add kinda annotation to let gum know it's a gum-config. Something like that
   ```

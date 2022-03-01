@@ -1,9 +1,10 @@
 use std::io::{Error, ErrorKind};
 
-use clap::{arg, Command, ArgMatches};
+use clap::{arg, ArgMatches, Command};
 use gitlab::Gitlab;
 
 use crate::cmd::Cmd;
+use crate::output::{OutMessage, OutSpinner};
 use crate::{
     cmd::args::{arg_gitlab_token, arg_gitlab_url, arg_group_id},
     files,
@@ -56,12 +57,12 @@ pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, E
 
     let gitlab_group_id: u64 = match sub_matches.value_of_t("group-id") {
         Ok(pid) => pid,
-        Err(_error) => return Err(Error::new(ErrorKind::InvalidInput, _error.to_string())),
+        Err(err) => return Err(Error::new(ErrorKind::InvalidInput, err.to_string())),
     };
 
     let gitlab_user_id: u64 = match sub_matches.value_of_t("GITLAB_USER_ID") {
         Ok(pid) => pid,
-        Err(_error) => return Err(Error::new(ErrorKind::InvalidInput, _error.to_string())),
+        Err(err) => return Err(Error::new(ErrorKind::InvalidInput, err.to_string())),
     };
 
     Ok(AddOwnershipCmd {
@@ -75,21 +76,27 @@ impl<'a> Cmd<'a> for AddOwnershipCmd {
     fn exec(&self) -> Result<(), Error> {
         let mut config = match files::read_config() {
             Ok(c) => c,
-            Err(_error) => return Err(_error),
+            Err(err) => return Err(err),
         };
         let gitlab = GitlabClient::new(self.gitlab_client.to_owned());
 
+        OutMessage::message_info_with_alias("I'm getting data about the group from Gitlab");
+
         let group = match gitlab.get_group_data_by_id(self.gitlab_group_id) {
             Ok(p) => p,
-            Err(_error) => return Err(_error),
+            Err(err) => return Err(err),
         };
 
         for user in config.users.iter_mut() {
             if user.id == self.gitlab_user_id {
+                let spinner = OutSpinner::spinner_start(format!(
+                    "Adding {} to {} as owner",
+                    user.name, group.name
+                ));
                 let o = types::ownership::Ownership {
                     id: group.id,
-                    name: group.name,
-                    url: group.web_url,
+                    name: group.name.to_string(),
+                    url: group.web_url.to_string(),
                 };
                 if user.ownerships.iter().any(|i| i.id == o.id) {
                     return Err(Error::new(
@@ -100,15 +107,13 @@ impl<'a> Cmd<'a> for AddOwnershipCmd {
                         ),
                     ));
                 }
-
                 user.ownerships.extend([o]);
-                break;
+                spinner.spinner_success("Added".to_string());
             }
         }
-
         let _ = match files::write_config(config) {
             Ok(()) => return Ok(()),
-            Err(_error) => return Err(_error),
+            Err(err) => return Err(err),
         };
     }
 }

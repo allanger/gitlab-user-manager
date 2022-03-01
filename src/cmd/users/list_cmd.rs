@@ -1,4 +1,4 @@
-use crate::{cmd::Cmd, files};
+use crate::{cmd::Cmd, files, output::OutMessage};
 use clap::Command;
 
 use std::io::Error;
@@ -18,11 +18,14 @@ impl<'a> Cmd<'a> for ListCmd {
     fn exec(&self) -> Result<(), Error> {
         let config = match files::read_config() {
             Ok(c) => c,
-            Err(_error) => return Err(_error),
+            Err(err) => return Err(err),
         };
-
         for user in config.users {
-            println!("{} - {}", user.id, user.name);
+            let message = format!(
+                "{} - {}:\nprojects: {:?}\nteams: {:?}\nownerships: {:?}\n",
+                user.id, user.name, user.projects, user.teams, user.ownerships
+            );
+            OutMessage::message_empty(message.as_str());
         }
         Ok(())
     }

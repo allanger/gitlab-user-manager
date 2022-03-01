@@ -1,10 +1,11 @@
 use std::io::{Error, ErrorKind};
 
-use clap::{Command, Arg, ArgMatches};
+use clap::{Arg, ArgMatches, Command};
 use gitlab::Gitlab;
 
 use crate::files::state_exists;
 
+use crate::output::OutMessage;
 use crate::{cmd::Cmd, files, types::state};
 
 use self::sync_cmd::{apply, compare_states, configure_projects};
@@ -14,6 +15,7 @@ use super::args::{arg_gitlab_token, arg_gitlab_url};
 /// init cmd should be used to generate an empty gum-config
 pub(crate) fn add_sync_cmd() -> Command<'static> {
     let dry_run = Arg::new("dry-run")
+        .long("dry-run")
         .short('d')
         .takes_value(false)
         .help("Use if you wanna see what's gonna happen without applying new configuration");
@@ -66,7 +68,7 @@ impl<'a> Cmd<'a> for SyncCmd {
     fn exec(&self) -> Result<(), Error> {
         let config = match files::read_config() {
             Ok(c) => c,
-            Err(_error) => return Err(_error),
+            Err(err) => return Err(err),
         };
         // Generate new state
         let mut new_state: Vec<state::State> = Vec::new();
@@ -80,13 +82,15 @@ impl<'a> Cmd<'a> for SyncCmd {
             };
             new_state.extend([user_state]);
         }
-        // Read the old state
+
         if state_exists() {
+            OutMessage::message_info_with_alias("State file is found");
             old_state = match files::read_state() {
                 Ok(s) => s,
-                Err(_error) => return Err(_error),
+                Err(err) => return Err(err),
             };
         } else {
+            OutMessage::message_info_with_alias("State file not found, I will create a new one");
             old_state = Vec::new();
         }
 
@@ -118,14 +122,11 @@ mod sync_cmd {
     use ::gitlab::Gitlab;
 
     use crate::gitlab::{GitlabActions, GitlabClient};
+    use crate::output::{OutMessage, OutSpinner, OutSum};
     use crate::types::access_level::AccessLevel;
 
     use crate::types::{
-        config::Config,
-        ownership::Ownership,
-        project::Project,
-        state::State,
-        user::{self},
+        config::Config, ownership::Ownership, project::Project, state::State, user,
     };
 
     pub(crate) fn apply(
@@ -138,27 +139,37 @@ mod sync_cmd {
             let gitlab = GitlabClient::new(gitlab_client.to_owned());
             let username = match gitlab.get_user_data_by_id(a.user_id) {
                 Ok(r) => r,
-                Err(_error) => return Err(_error),
+                Err(err) => return Err(err),
             };
             match a.entity_type {
                 EntityType::PROJECT => {
                     let project = match gitlab.get_project_data_by_id(a.entity_id) {
                         Ok(r) => r,
-                        Err(_error) => return Err(_error),
+                        Err(err) => return Err(err),
                     };
                     match a.action {
                         Action::CREATE => {
-                            println!(
-                                "Adding {} to {} as {}",
-                                username.name, project.name, a.access
+                            let spinner = OutSpinner::spinner_start(
+                                format!(
+                                    "Adding {} to {} as {}",
+                                    username.name, project.name, a.access
+                                )
+                                .to_string(),
                             );
                             if !dry {
-                                let r =
-                                    gitlab.add_user_to_project(a.user_id, a.entity_id, a.access);
-                                if r.is_err() {
-                                    return r;
+                                match gitlab.add_user_to_project(a.user_id, a.entity_id, a.access) {
+                                    Err(err) => {
+                                        spinner.spinner_failure(err.to_string());
+                                        return Err(err);
+                                    }
+                                    Ok(msg) => {
+                                        spinner.spinner_success(msg.to_string());
+                                    }
                                 }
+                            } else {
+                                spinner.spinner_close();
                             }
+
                             let mut exist = false;
                             for (i, _) in state.clone().iter().enumerate() {
                                 if state[i].user_id == a.user_id {
@@ -183,15 +194,22 @@ mod sync_cmd {
                             }
                         }
                         Action::DELETE => {
-                            println!(
-                                "Deleting {} from {} as {}",
-                                username.name, project.name, a.access
+                            let spinner = OutSpinner::spinner_start(
+                                format!("Removing {} from {}", username.name, project.name)
+                                    .to_string(),
                             );
                             if !dry {
-                                let r = gitlab.remove_user_from_project(a.user_id, a.entity_id);
-                                if r.is_err() {
-                                    return r;
+                                match gitlab.remove_user_from_project(a.user_id, a.entity_id) {
+                                    Err(err) => {
+                                        spinner.spinner_failure(err.to_string());
+                                        return Err(err);
+                                    }
+                                    Ok(msg) => {
+                                        spinner.spinner_success(msg.to_string());
+                                    }
                                 }
+                            } else {
+                                spinner.spinner_close();
                             }
                             for (i, s) in state.clone().iter().enumerate() {
                                 if s.user_id == a.user_id {
@@ -207,16 +225,26 @@ mod sync_cmd {
                             }
                         }
                         Action::UPDATE => {
-                            println!(
-                                "Updating {} in {} to {}",
-                                username.name, project.name, a.access
+                            let spinner = OutSpinner::spinner_start(
+                                format!(
+                                    "Updating {} in {} to {}",
+                                    username.name, project.name, a.access
+                                )
+                                .to_string(),
                             );
                             if !dry {
-                                let r =
-                                    gitlab.edit_user_in_project(a.user_id, a.entity_id, a.access);
-                                if r.is_err() {
-                                    return r;
+                                match gitlab.edit_user_in_project(a.user_id, a.entity_id, a.access)
+                                {
+                                    Err(err) => {
+                                        spinner.spinner_failure(err.to_string());
+                                        return Err(err);
+                                    }
+                                    Ok(msg) => {
+                                        spinner.spinner_success(msg.to_string());
+                                    }
                                 }
+                            } else {
+                                spinner.spinner_close();
                             }
                             for (i, s) in state.clone().iter().enumerate() {
                                 if s.user_id == a.user_id {
@@ -233,17 +261,31 @@ mod sync_cmd {
                 EntityType::GROUP => {
                     let group = match gitlab.get_group_data_by_id(a.entity_id) {
                         Ok(r) => r,
-                        Err(_error) => return Err(_error),
+                        Err(err) => return Err(err),
                     };
                     match a.action {
                         Action::CREATE => {
-                            println!("Adding {} to {} as {}", username.name, group.name, a.access);
+                            let spinner = OutSpinner::spinner_start(
+                                format!(
+                                    "Adding {} to {} as {}",
+                                    username.name, group.name, a.access
+                                )
+                                .to_string(),
+                            );
                             if !dry {
-                                let r = gitlab.add_user_to_group(a.user_id, a.entity_id, a.access);
-                                if r.is_err() {
-                                    return r;
+                                match gitlab.add_user_to_group(a.user_id, a.entity_id, a.access) {
+                                    Err(err) => {
+                                        spinner.spinner_failure(err.to_string());
+                                        return Err(err);
+                                    }
+                                    Ok(msg) => {
+                                        spinner.spinner_success(msg.to_string());
+                                    }
                                 }
+                            } else {
+                                spinner.spinner_close();
                             }
+
                             let mut exist = false;
                             for (i, _) in state.clone().iter().enumerate() {
                                 if state[i].user_id == a.user_id {
@@ -268,16 +310,24 @@ mod sync_cmd {
                             }
                         }
                         Action::DELETE => {
-                            println!(
-                                "Deleting {} from {} as {}",
-                                username.name, group.name, a.access
+                            let spinner = OutSpinner::spinner_start(
+                                format!("Removing {} from {}", username.name, group.name)
+                                    .to_string(),
                             );
                             if !dry {
-                                let r = gitlab.remove_user_from_group(a.user_id, a.entity_id);
-                                if r.is_err() {
-                                    return r;
+                                match gitlab.remove_user_from_group(a.user_id, a.entity_id) {
+                                    Err(err) => {
+                                        spinner.spinner_failure(err.to_string());
+                                        return Err(err);
+                                    }
+                                    Ok(msg) => {
+                                        spinner.spinner_success(msg.to_string());
+                                    }
                                 }
+                            } else {
+                                spinner.spinner_close();
                             }
+
                             for (i, s) in state.clone().iter().enumerate() {
                                 if s.user_id == a.user_id {
                                     let mut ui = 0;
@@ -292,12 +342,13 @@ mod sync_cmd {
                             }
                         }
                         Action::UPDATE => {
-                            println!("Groups can't be updated yet, because only owner access is allowed for groups");
+                            OutSum::sum_failure("Groups can't be updated yet, because only owner access is allowed for groups");
                         }
                     }
                 }
             }
         }
+        OutMessage::message_info_with_alias("You are synchronized, now but not forever");
         Ok(())
     }
     pub(crate) fn configure_projects<'a>(u: &user::User, c: Config) -> Vec<Project> {
@@ -443,7 +494,6 @@ mod sync_cmd {
             }
         });
 
-        // actions.iter().for_each(|f| println!("{:?}", f));
         actions
     }
 

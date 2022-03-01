@@ -3,13 +3,14 @@ use std::{
     str::FromStr,
 };
 
-use clap::{arg, Command, ArgMatches};
+use clap::{arg, ArgMatches, Command};
 use gitlab::Gitlab;
 
 use crate::{
     cmd::args::{arg_access, arg_gitlab_token, arg_gitlab_url, arg_project_id},
     files,
     gitlab::GitlabActions,
+    output::{OutMessage, OutSpinner},
     types::{self, access_level::AccessLevel},
 };
 use crate::{cmd::Cmd, gitlab::GitlabClient};
@@ -59,7 +60,7 @@ pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, E
 
     let gitlab_project_id: u64 = match sub_matches.value_of_t("project-id") {
         Ok(pid) => pid,
-        Err(_error) => return Err(Error::new(ErrorKind::InvalidInput, _error.to_string())),
+        Err(err) => return Err(Error::new(ErrorKind::InvalidInput, err.to_string())),
     };
 
     let access_level: AccessLevel;
@@ -77,7 +78,7 @@ pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, E
 
     let gitlab_user_id: u64 = match sub_matches.value_of_t("GITLAB_USER_ID") {
         Ok(pid) => pid,
-        Err(_error) => return Err(Error::new(ErrorKind::InvalidInput, _error.to_string())),
+        Err(err) => return Err(Error::new(ErrorKind::InvalidInput, err.to_string())),
     };
 
     Ok(AddProjectCmd {
@@ -92,17 +93,23 @@ impl<'a> Cmd<'a> for AddProjectCmd {
     fn exec(&self) -> Result<(), Error> {
         let mut config = match files::read_config() {
             Ok(c) => c,
-            Err(_error) => return Err(_error),
+            Err(err) => return Err(err),
         };
         let gitlab = GitlabClient::new(self.gitlab_client.to_owned());
+        OutMessage::message_info_with_alias("I'm getting data about the project from Gitlab");
 
         let project = match gitlab.get_project_data_by_id(self.gitlab_project_id) {
             Ok(p) => p,
-            Err(_error) => return Err(_error),
+            Err(err) => return Err(err),
         };
 
         for user in config.users.iter_mut() {
             if user.id == self.gitlab_user_id {
+                let spinner = OutSpinner::spinner_start(format!(
+                    "Adding {} to {} as {}",
+                    user.name, project.name, self.access_level,
+                ));
+
                 let p = types::project::Project {
                     access_level: self.access_level,
                     id: project.id,
@@ -119,13 +126,14 @@ impl<'a> Cmd<'a> for AddProjectCmd {
                 }
 
                 user.projects.extend([p]);
+                spinner.spinner_success("Added".to_string());
                 break;
             }
         }
 
         let _ = match files::write_config(config) {
             Ok(()) => return Ok(()),
-            Err(_error) => return Err(_error),
+            Err(err) => return Err(err),
         };
     }
 }

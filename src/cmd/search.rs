@@ -74,19 +74,19 @@ impl<'a> Cmd<'a> for SearchCmd<'a> {
             Some(("users", sub_matches)) => {
                 result = match users_cmd::prepare(sub_matches, &self.gitlab_client) {
                     Ok(cmd) => cmd.exec(),
-                    Err(_error) => Err(_error),
+                    Err(err) => Err(err),
                 };
             }
             Some(("projects", sub_matches)) => {
                 result = match projects_cmd::prepare(sub_matches, &self.gitlab_client) {
                     Ok(cmd) => cmd.exec(),
-                    Err(_error) => Err(_error),
+                    Err(err) => Err(err),
                 };
             }
             Some(("groups", sub_matches)) => {
                 result = match groups_cmd::prepare(sub_matches, &self.gitlab_client) {
                     Ok(cmd) => cmd.exec(),
-                    Err(_error) => Err(_error),
+                    Err(err) => Err(err),
                 };
             }
             _ => {
