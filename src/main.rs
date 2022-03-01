@@ -21,7 +21,7 @@ fn main() {
     OutMessage::message_empty("☮️  Fight war, not wars ☮️\n---");
     let matches = Command::new("gum")
         .about("Manager your GitLAb team access in a better way, dude")
-        .version("v0.0.1")
+        .version("v0.0.2")
         .author("allanger")
         .subcommand(add_init_cmd())
         .subcommand(add_users_cmd())
