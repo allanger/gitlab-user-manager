@@ -9,7 +9,7 @@ use tabled::Table;
 
 use crate::{
     cmd::Cmd,
-    gitlab::{Group, Project},
+    gitlab::Group,
     output::{OutMessage, OutSpinner},
 };
 

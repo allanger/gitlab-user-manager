@@ -44,31 +44,31 @@ impl<'a> Cmd<'a> for TeamsCmd<'a> {
             Some(("create", sub_matches)) => {
                 result = match create_cmd::prepare(sub_matches) {
                     Ok(cmd) => cmd.exec(),
-                    Err(_error) => Err(_error),
+                    Err(err) => Err(err),
                 }
             }
             Some(("remove", sub_matches)) => {
                 result = match remove_cmd::prepare(sub_matches) {
                     Ok(cmd) => cmd.exec(),
-                    Err(_error) => Err(_error),
+                    Err(err) => Err(err),
                 }
             }
             Some(("list", _)) => {
                 result = match list_cmd::prepare() {
                     Ok(cmd) => cmd.exec(),
-                    Err(_error) => Err(_error),
+                    Err(err) => Err(err),
                 }
             }
             Some(("add-project", sub_matches)) => {
                 result = match add_project_cmd::prepare(sub_matches) {
                     Ok(cmd) => cmd.exec(),
-                    Err(_error) => Err(_error),
+                    Err(err) => Err(err),
                 }
             }
             Some(("remove-project", sub_matches)) => {
                 result = match remove_project_cmd::prepare(sub_matches) {
                     Ok(cmd) => cmd.exec(),
-                    Err(_error) => Err(_error),
+                    Err(err) => Err(err),
                 }
             }
 

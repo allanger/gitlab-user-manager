@@ -27,7 +27,7 @@ impl OutSpinner {
         };
     }
     pub(crate) fn spinner_start(msg: String) -> Self {
-        let spinner = Spinner::new(Spinners::Weather, msg.to_owned());
+        let spinner = Spinner::new(Spinners::Christmas, msg.to_owned());
         return OutSpinner { spinner, msg };
     }
     pub(crate) fn spinner_success(self, status: String) {
@@ -48,7 +48,7 @@ impl OutSpinner {
     }
     pub(crate) fn spinner_close(self) {
         self.spinner
-            .stop_with_message(format!("{}🤞 {}\n", color::Fg(color::LightGreen), self.msg).into())
+            .stop_with_message(format!("{}🤞 {}\n", color::Fg(color::Cyan), self.msg).into())
     }
 }
 
@@ -71,7 +71,7 @@ impl OutMessage {
         print!("{}{}\n", color::Fg(color::LightBlue), msg,);
     }
 
-    pub(crate) fn message_info(msg: &str) {
+    pub(crate) fn message_info_with_alias(msg: &str) {
         print!(
             "{}INFO: {}, {}\n",
             color::Fg(color::LightBlue),
@@ -79,12 +79,15 @@ impl OutMessage {
             ALIAS.choose(&mut rand::thread_rng()).unwrap()
         );
     }
-    pub(crate) fn message_error(msg: &str) {
+    pub(crate) fn message_info_clean(msg: &str) {
         print!(
-            "{}ERROR: {}, {}\n",
-            color::Fg(color::LightRed),
+            "{}INFO: {}\n",
+            color::Fg(color::LightBlue),
             msg,
-            ALIAS.choose(&mut rand::thread_rng()).unwrap()
         );
+    }
+
+    pub(crate) fn messageerr(msg: &str) {
+        print!("{}ERROR: {}\n", color::Fg(color::LightRed), msg);
     }
 }

@@ -53,7 +53,7 @@ pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, E
 
     let gitlab_user_id: u64 = match sub_matches.value_of_t("GITLAB_USER_ID") {
         Ok(uid) => uid,
-        Err(_error) => return Err(Error::new(ErrorKind::InvalidInput, _error.to_string())),
+        Err(err) => return Err(Error::new(ErrorKind::InvalidInput, err.to_string())),
     };
 
     Ok(CreateCmd {
@@ -66,13 +66,13 @@ impl<'a> Cmd<'a> for CreateCmd {
     fn exec(&self) -> Result<(), Error> {
         let mut config = match files::read_config() {
             Ok(c) => c,
-            Err(_error) => return Err(_error),
+            Err(err) => return Err(err),
         };
 
         let gitlab = GitlabClient::new(self.gitlab_client.to_owned());
         let user = match gitlab.get_user_data_by_id(self.gitlab_user_id) {
             Ok(u) => u,
-            Err(_error) => return Err(_error),
+            Err(err) => return Err(err),
         };
 
         let new_user = types::user::User {
@@ -92,7 +92,7 @@ impl<'a> Cmd<'a> for CreateCmd {
 
         let _ = match files::write_config(config) {
             Ok(()) => return Ok(()),
-            Err(_error) => return Err(_error),
+            Err(err) => return Err(err),
         };
     }
 }

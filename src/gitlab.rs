@@ -11,7 +11,10 @@ use gitlab::{
 use serde::Deserialize;
 use tabled::Tabled;
 
-use crate::types::access_level::AccessLevel;
+use crate::{
+    output::{OutMessage, OutSpinner},
+    types::access_level::AccessLevel,
+};
 
 pub(crate) struct GitlabClient {
     gitlab_client: Gitlab,
@@ -83,24 +86,27 @@ impl GitlabActions for GitlabClient {
     fn get_project_data_by_id(&self, id: u64) -> Result<Project, Error> {
         let project = match projects::Project::builder().project(id).build() {
             Ok(project) => project,
-            Err(_error) => {
-                return Err(Error::new(std::io::ErrorKind::Other, _error.to_string()));
+            Err(err) => {
+                return Err(Error::new(std::io::ErrorKind::Other, err.to_string()));
             }
         };
+
         let output: Project = match project.query(&self.gitlab_client) {
             Err(err) => {
                 match err {
-                    ApiError::GitlabObject { obj } => {
+                    ApiError::GitlabObject { ref obj } => {
                         if format!("{}", obj) == "{\"error\":\"This endpoint has been requested too many times. Try again later.\"}" {
-                                println!("Gitlab is screw by amount of our requests. I'm sorry, buy you need to wait, mate");
+                                OutMessage::message_info_with_alias("Gitlab is screwed by amount of your requests. You need to wait");
+                                let spinner = OutSpinner::spinner_start("Waiting 30s".to_string());
                                 let await_time = time::Duration::from_secs(30);
                                 thread::sleep(await_time);
+                                spinner.spinner_success("Let's try again".to_string());
                                 return self.get_project_data_by_id(id);
                             };
                     }
                     _ => return Err(Error::new(ErrorKind::AddrNotAvailable, err)),
                 };
-                return Err(Error::new(ErrorKind::AddrNotAvailable, "asd"));
+                return Err(Error::new(ErrorKind::AddrNotAvailable, err));
             }
             Ok(res) => res,
         };
@@ -109,24 +115,26 @@ impl GitlabActions for GitlabClient {
     fn get_user_data_by_id(&self, id: u64) -> Result<User, Error> {
         let user = match users::User::builder().user(id).build() {
             Ok(user) => user,
-            Err(_error) => {
-                return Err(Error::new(std::io::ErrorKind::Other, _error.to_string()));
+            Err(err) => {
+                return Err(Error::new(std::io::ErrorKind::Other, err.to_string()));
             }
         };
         let output: User = match user.query(&self.gitlab_client) {
             Err(err) => {
                 match err {
-                    ApiError::GitlabObject { obj } => {
+                    ApiError::GitlabObject { ref obj } => {
                         if format!("{}", obj) == "{\"error\":\"This endpoint has been requested too many times. Try again later.\"}" {
-                                println!("Gitlab is screw by amount of our requests. I'm sorry, buy you need to wait, mate");
-                                let await_time = time::Duration::from_secs(30);
-                                thread::sleep(await_time);
-                                return self.get_user_data_by_id(id);
-                            };
+                            OutMessage::message_info_with_alias("Gitlab is screwed by amount of your requests. You need to wait");
+                            let spinner = OutSpinner::spinner_start("Waiting 30s".to_string());
+                            let await_time = time::Duration::from_secs(30);
+                            thread::sleep(await_time);
+                            spinner.spinner_success("Let's try again".to_string());
+                            return self.get_user_data_by_id(id);
+                        };
                     }
                     _ => return Err(Error::new(ErrorKind::AddrNotAvailable, err)),
                 };
-                return Err(Error::new(ErrorKind::AddrNotAvailable, "asd"));
+                return Err(Error::new(ErrorKind::AddrNotAvailable, err));
             }
             Ok(res) => res,
         };
@@ -136,24 +144,26 @@ impl GitlabActions for GitlabClient {
     fn get_group_data_by_id(&self, id: u64) -> Result<Group, Error> {
         let group = match groups::Group::builder().group(id).build() {
             Ok(group) => group,
-            Err(_error) => {
-                return Err(Error::new(std::io::ErrorKind::Other, _error.to_string()));
+            Err(err) => {
+                return Err(Error::new(std::io::ErrorKind::Other, err.to_string()));
             }
         };
         let output: Group = match group.query(&self.gitlab_client) {
             Err(err) => {
                 match err {
-                    ApiError::GitlabObject { obj } => {
+                    ApiError::GitlabObject { ref obj } => {
                         if format!("{}", obj) == "{\"error\":\"This endpoint has been requested too many times. Try again later.\"}" {
-                                println!("Gitlab is screw by amount of our requests. I'm sorry, buy you need to wait, mate");
-                                let await_time = time::Duration::from_secs(30);
-                                thread::sleep(await_time);
-                                return self.get_group_data_by_id(id);
+                            OutMessage::message_info_with_alias("Gitlab is screwed by amount of your requests. You need to wait");
+                            let spinner = OutSpinner::spinner_start("Waiting 30s".to_string());
+                            let await_time = time::Duration::from_secs(30);
+                            thread::sleep(await_time);
+                            spinner.spinner_success("Let's try again".to_string());
+                            return self.get_group_data_by_id(id);
                             };
                     }
                     _ => return Err(Error::new(ErrorKind::AddrNotAvailable, err)),
                 };
-                return Err(Error::new(ErrorKind::AddrNotAvailable, "asd"));
+                return Err(Error::new(ErrorKind::AddrNotAvailable, err));
             }
             Ok(res) => res,
         };
@@ -173,8 +183,8 @@ impl GitlabActions for GitlabClient {
             .build()
         {
             Ok(q) => q,
-            Err(_error) => {
-                return Err(Error::new(std::io::ErrorKind::Other, _error.to_string()));
+            Err(err) => {
+                return Err(Error::new(std::io::ErrorKind::Other, err.to_string()));
             }
         };
         let _: () = match api::ignore(q).query(&self.gitlab_client) {
@@ -205,8 +215,8 @@ impl GitlabActions for GitlabClient {
             .build()
         {
             Ok(q) => q,
-            Err(_error) => {
-                return Err(Error::new(std::io::ErrorKind::Other, _error.to_string()));
+            Err(err) => {
+                return Err(Error::new(std::io::ErrorKind::Other, err.to_string()));
             }
         };
         let _: () = match api::ignore(q).query(&self.gitlab_client) {
@@ -231,8 +241,8 @@ impl GitlabActions for GitlabClient {
             .build()
         {
             Ok(q) => q,
-            Err(_error) => {
-                return Err(Error::new(std::io::ErrorKind::Other, _error.to_string()));
+            Err(err) => {
+                return Err(Error::new(std::io::ErrorKind::Other, err.to_string()));
             }
         };
         let _: () = match api::ignore(q).query(&self.gitlab_client) {
@@ -259,8 +269,8 @@ impl GitlabActions for GitlabClient {
             .build()
         {
             Ok(q) => q,
-            Err(_error) => {
-                return Err(Error::new(std::io::ErrorKind::Other, _error.to_string()));
+            Err(err) => {
+                return Err(Error::new(std::io::ErrorKind::Other, err.to_string()));
             }
         };
         let _: () = match api::ignore(q).query(&self.gitlab_client) {
@@ -292,8 +302,8 @@ impl GitlabActions for GitlabClient {
             .build()
         {
             Ok(q) => q,
-            Err(_error) => {
-                return Err(Error::new(std::io::ErrorKind::Other, _error.to_string()));
+            Err(err) => {
+                return Err(Error::new(std::io::ErrorKind::Other, err.to_string()));
             }
         };
         let _: () = match api::ignore(q).query(&self.gitlab_client) {
@@ -315,8 +325,8 @@ impl GitlabActions for GitlabClient {
             .build()
         {
             Ok(q) => q,
-            Err(_error) => {
-                return Err(Error::new(std::io::ErrorKind::Other, _error.to_string()));
+            Err(err) => {
+                return Err(Error::new(std::io::ErrorKind::Other, err.to_string()));
             }
         };
         let _: () = match api::ignore(q).query(&self.gitlab_client) {

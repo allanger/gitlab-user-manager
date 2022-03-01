@@ -1,10 +1,11 @@
 use crate::cmd::Cmd;
+use crate::output::OutMessage;
 use crate::{
     cmd::args::{arg_project_id, arg_team_name},
     files,
     types::project::Project,
 };
-use clap::{Command, ArgMatches};
+use clap::{ArgMatches, Command};
 
 use std::io::{Error, ErrorKind};
 
@@ -23,7 +24,7 @@ struct RemoveProjectCmd {
 pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
     let gitlab_project_id: u64 = match sub_matches.value_of_t("project-id") {
         Ok(pid) => pid,
-        Err(_error) => return Err(Error::new(ErrorKind::InvalidInput, _error.to_string())),
+        Err(err) => return Err(Error::new(ErrorKind::InvalidInput, err.to_string())),
     };
 
     let team_name = sub_matches.value_of("team-name").ok_or(Error::new(
@@ -44,30 +45,44 @@ impl<'a> Cmd<'a> for RemoveProjectCmd {
     fn exec(&self) -> Result<(), Error> {
         let mut config = match files::read_config() {
             Ok(c) => c,
-            Err(_error) => return Err(_error),
+            Err(err) => return Err(err),
         };
         // TODO: This should be refactored
         for team in config.teams.iter_mut() {
             if team.name == self.team_name {
-                let project;
                 for (i, p) in team.projects.iter().enumerate() {
                     if self.gitlab_project_id == p.id {
-                        project = Project {
+                        let project = Project {
                             name: p.name.to_string(),
                             id: p.id,
                             ..Default::default()
                         };
-                        println!("removing {} from {}", project.name, self.team_name);
                         team.projects.remove(i);
-                        break;
+                        let _ = match files::write_config(config) {
+                            Ok(()) => {
+                                OutMessage::message_info_clean(
+                                    format!(
+                                        "The project {} is removed from the team {}",
+                                        project.name, self.team_name
+                                    )
+                                    .as_str(),
+                                );
+                                return Ok(());
+                            }
+                            Err(err) => return Err(err),
+                        };
                     }
                 }
+                let error_message = format!(
+                    "The team {} doesn't have access to the this project",
+                    self.team_name
+                );
+                OutMessage::messageerr(error_message.as_str());
+                return Err(Error::new(ErrorKind::NotFound, error_message));
             }
         }
-
-        let _ = match files::write_config(config) {
-            Ok(()) => return Ok(()),
-            Err(_error) => return Err(_error),
-        };
+        let error_message = format!("The team with this name can't be found: {}", self.team_name);
+        OutMessage::messageerr(error_message.as_str());
+        return Err(Error::new(ErrorKind::NotFound, error_message));
     }
 }

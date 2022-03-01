@@ -1,5 +1,6 @@
 use crate::cmd::Cmd;
 use crate::gitlab::GitlabClient;
+use crate::output::OutMessage;
 use crate::{
     cmd::args::{arg_access, arg_gitlab_token, arg_gitlab_url, arg_project_id, arg_team_name},
     files,
@@ -58,7 +59,7 @@ pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, E
 
     let gitlab_project_id: u64 = match sub_matches.value_of_t("project-id") {
         Ok(pid) => pid,
-        Err(_error) => return Err(Error::new(ErrorKind::InvalidInput, _error.to_string())),
+        Err(err) => return Err(Error::new(ErrorKind::InvalidInput, err.to_string())),
     };
 
     let access_level: AccessLevel;
@@ -95,18 +96,17 @@ impl<'a> Cmd<'a> for AddProjectCmd {
     fn exec(&self) -> Result<(), Error> {
         let mut config = match files::read_config() {
             Ok(c) => c,
-            Err(_error) => return Err(_error),
+            Err(err) => return Err(err),
         };
         let gitlab = GitlabClient::new(self.gitlab_client.to_owned());
         let project = match gitlab.get_project_data_by_id(self.gitlab_project_id) {
             Ok(p) => p,
-            Err(_error) => return Err(_error),
+            Err(err) => return Err(err),
         };
-
         for team in config.teams.iter_mut() {
             if team.name == self.team_name {
                 let p = types::project::Project {
-                    name: project.name,
+                    name: project.name.to_string(),
                     id: project.id,
                     access_level: self.access_level,
                 };
@@ -114,18 +114,29 @@ impl<'a> Cmd<'a> for AddProjectCmd {
                     return Err(Error::new(
                         ErrorKind::AlreadyExists,
                         format!(
-                            "the team '{}' already has an access to this project: '{}'",
+                            "The team '{}' already has an access to this project: '{}'",
                             team.name, p.name
                         ),
                     ));
                 }
                 team.projects.extend([p]);
-                break;
+                let _ = match files::write_config(config) {
+                    Ok(()) => {
+                        OutMessage::message_info_clean(
+                            format!(
+                                "The project {} is added to the team {}",
+                                project.name, self.team_name
+                            )
+                            .as_str(),
+                        );
+                        return Ok(());
+                    }
+                    Err(err) => return Err(err),
+                };
             }
         }
-        let _ = match files::write_config(config) {
-            Ok(()) => return Ok(()),
-            Err(_error) => return Err(_error),
-        };
+        let error_message = format!("The team with this name can't be found: {}", self.team_name);
+        OutMessage::messageerr(error_message.as_str());
+        return Err(Error::new(ErrorKind::NotFound, error_message));
     }
 }

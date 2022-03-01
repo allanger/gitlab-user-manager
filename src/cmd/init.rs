@@ -2,7 +2,7 @@ use std::io::{Error, ErrorKind};
 
 use clap::Command;
 
-use crate::{cmd::Cmd, types::config::Config};
+use crate::{cmd::Cmd, output::OutMessage, types::config::Config};
 
 /// init cmd should be used to generate an empty gum-config
 pub(crate) fn add_init_cmd() -> Command<'static> {
@@ -18,7 +18,6 @@ pub(crate) fn prepare<'a>() -> Result<impl Cmd<'a>, Error> {
 impl<'a> Cmd<'a> for InitCmd {
     fn exec(&self) -> Result<(), Error> {
         let f = "gum-config.yaml";
-        println!("Initializing gum config {:?}", f);
 
         let file = match std::fs::OpenOptions::new()
             .write(true)
@@ -26,16 +25,15 @@ impl<'a> Cmd<'a> for InitCmd {
             .open(f)
         {
             Ok(file) => file,
-            // TODO: Should be more informative
-            Err(_error) => {
-                return match _error.kind() {
+            Err(err) => {
+                return match err.kind() {
                     ErrorKind::AlreadyExists => {
                         return Err(Error::new(
-                            _error.kind(),
+                            err.kind(),
                             "config file already exists in specified directory",
                         ))
                     }
-                    _ => Err(Error::new(ErrorKind::AlreadyExists, _error)),
+                    _ => Err(Error::new(ErrorKind::AlreadyExists, err)),
                 }
             }
         };
@@ -43,6 +41,7 @@ impl<'a> Cmd<'a> for InitCmd {
         let new_config: Config = Default::default();
 
         serde_yaml::to_writer(file, &new_config).unwrap();
+        OutMessage::message_empty("Config file is generated, check it out\n $ cat gum-config.yaml");
         Ok(())
     }
 }

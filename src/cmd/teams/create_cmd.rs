@@ -1,8 +1,8 @@
 use std::io::{Error, ErrorKind};
 
-use clap::{arg, Command, ArgMatches};
+use clap::{arg, ArgMatches, Command};
 
-use crate::{cmd::Cmd, files, types};
+use crate::{cmd::Cmd, files, output::OutMessage, types};
 
 pub(crate) fn add_create_cmd() -> Command<'static> {
     return Command::new("create")
@@ -33,14 +33,13 @@ impl<'a> Cmd<'a> for CreateCmd {
     fn exec(&self) -> Result<(), Error> {
         let mut config = match files::read_config() {
             Ok(c) => c,
-            Err(_error) => return Err(_error),
+            Err(err) => return Err(err),
         };
 
         let new_team = types::team::Team {
             name: self.team_name.to_string(),
             ..Default::default()
         };
-        //  TODO: It shouldn't look that bad, I hope
         if config.teams.iter().any(|i| i.name == new_team.name) {
             return Err(Error::new(
                 ErrorKind::AlreadyExists,
@@ -51,8 +50,13 @@ impl<'a> Cmd<'a> for CreateCmd {
         config.teams.extend([new_team]);
 
         let _ = match files::write_config(config) {
-            Ok(()) => return Ok(()),
-            Err(_error) => return Err(_error),
+            Ok(()) => {
+                OutMessage::message_info_clean(
+                    format!("New team is created: {}", self.team_name).as_str(),
+                );
+                return Ok(());
+            }
+            Err(err) => return Err(err),
         };
     }
 }

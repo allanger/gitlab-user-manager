@@ -16,16 +16,16 @@ pub(crate) fn read_config() -> Result<Config, Error> {
 
     let f = match f {
         Ok(file) => file,
-        Err(_error) => {
-            return Err(_error);
+        Err(err) => {
+            return Err(err);
         }
     };
     let d: Result<Config, _> = serde_yaml::from_reader(&f);
     // return d
     let _ = match d {
         Ok(r) => return Ok(r),
-        Err(_error) => {
-            return Err(Error::new(ErrorKind::Other, _error.to_string()));
+        Err(err) => {
+            return Err(Error::new(ErrorKind::Other, err.to_string()));
         }
     };
 }
@@ -42,15 +42,15 @@ pub(crate) fn write_config(config: Config) -> Result<(), Error> {
 
     let f = match f {
         Ok(file) => file,
-        Err(_error) => {
-            return Err(_error);
+        Err(err) => {
+            return Err(err);
         }
     };
 
     let _ = match serde_yaml::to_writer(&f, &config) {
         Ok(()) => return Ok(()),
-        Err(_error) => {
-            return Err(Error::new(ErrorKind::Other, _error.to_string()));
+        Err(err) => {
+            return Err(Error::new(ErrorKind::Other, err.to_string()));
         }
     };
 }
@@ -62,8 +62,8 @@ pub(crate) fn read_state() -> Result<Vec<State>, Error> {
     // TODO: Handle different reader errors
     let f = match f {
         Ok(file) => file,
-        Err(_error) => {
-            return Err(_error);
+        Err(err) => {
+            return Err(err);
         }
     };
 
@@ -71,8 +71,8 @@ pub(crate) fn read_state() -> Result<Vec<State>, Error> {
 
     let _ = match d {
         Ok(r) => return Ok(r),
-        Err(_error) => {
-            return Err(Error::new(ErrorKind::Other, _error.to_string()));
+        Err(err) => {
+            return Err(Error::new(ErrorKind::Other, err.to_string()));
         }
     };
 }
@@ -95,15 +95,15 @@ pub(crate) fn write_state(state: Vec<State>, dry: bool) -> Result<(), Error> {
 
     let f = match f {
         Ok(file) => file,
-        Err(_error) => {
-            return Err(_error);
+        Err(err) => {
+            return Err(err);
         }
     };
 
     let _ = match serde_yaml::to_writer(&f, &state) {
         Ok(()) => return Ok(()),
-        Err(_error) => {
-            return Err(Error::new(ErrorKind::Other, _error.to_string()));
+        Err(err) => {
+            return Err(Error::new(ErrorKind::Other, err.to_string()));
         }
     };
 }

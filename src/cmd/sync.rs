@@ -68,7 +68,7 @@ impl<'a> Cmd<'a> for SyncCmd {
     fn exec(&self) -> Result<(), Error> {
         let config = match files::read_config() {
             Ok(c) => c,
-            Err(_error) => return Err(_error),
+            Err(err) => return Err(err),
         };
         // Generate new state
         let mut new_state: Vec<state::State> = Vec::new();
@@ -84,13 +84,13 @@ impl<'a> Cmd<'a> for SyncCmd {
         }
 
         if state_exists() {
-            OutMessage::message_info("State file is found");
+            OutMessage::message_info_with_alias("State file is found");
             old_state = match files::read_state() {
                 Ok(s) => s,
-                Err(_error) => return Err(_error),
+                Err(err) => return Err(err),
             };
         } else {
-            OutMessage::message_info("State file not found, I will create a new one");
+            OutMessage::message_info_with_alias("State file not found, I will create a new one");
             old_state = Vec::new();
         }
 
@@ -139,13 +139,13 @@ mod sync_cmd {
             let gitlab = GitlabClient::new(gitlab_client.to_owned());
             let username = match gitlab.get_user_data_by_id(a.user_id) {
                 Ok(r) => r,
-                Err(_error) => return Err(_error),
+                Err(err) => return Err(err),
             };
             match a.entity_type {
                 EntityType::PROJECT => {
                     let project = match gitlab.get_project_data_by_id(a.entity_id) {
                         Ok(r) => r,
-                        Err(_error) => return Err(_error),
+                        Err(err) => return Err(err),
                     };
                     match a.action {
                         Action::CREATE => {
@@ -261,7 +261,7 @@ mod sync_cmd {
                 EntityType::GROUP => {
                     let group = match gitlab.get_group_data_by_id(a.entity_id) {
                         Ok(r) => r,
-                        Err(_error) => return Err(_error),
+                        Err(err) => return Err(err),
                     };
                     match a.action {
                         Action::CREATE => {
@@ -348,7 +348,7 @@ mod sync_cmd {
                 }
             }
         }
-        OutMessage::message_info("You are synchronized, now but not forever");
+        OutMessage::message_info_with_alias("You are synchronized, now but not forever");
         Ok(())
     }
     pub(crate) fn configure_projects<'a>(u: &user::User, c: Config) -> Vec<Project> {

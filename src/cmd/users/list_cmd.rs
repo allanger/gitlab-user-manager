@@ -18,7 +18,7 @@ impl<'a> Cmd<'a> for ListCmd {
     fn exec(&self) -> Result<(), Error> {
         let config = match files::read_config() {
             Ok(c) => c,
-            Err(_error) => return Err(_error),
+            Err(err) => return Err(err),
         };
 
         for user in config.users {

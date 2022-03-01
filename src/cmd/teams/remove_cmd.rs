@@ -1,8 +1,8 @@
 use std::io::Error;
 
-use clap::{arg, Command, ArgMatches};
+use clap::{arg, ArgMatches, Command};
 
-use crate::{cmd::Cmd, files};
+use crate::{cmd::Cmd, files, output::OutMessage};
 
 pub(crate) fn add_remove_cmd() -> Command<'static> {
     return Command::new("remove")
@@ -33,17 +33,18 @@ impl<'a> Cmd<'a> for RemoveCmd {
     fn exec(&self) -> Result<(), Error> {
         let mut config = match files::read_config() {
             Ok(c) => c,
-            Err(_error) => return Err(_error),
+            Err(err) => return Err(err),
         };
-
-        println!("Removing {} team", self.team_name);
-
-        //  TODO: It shouldn't look that bad, I hope
         config.teams.retain(|t| t.name != self.team_name);
 
         let _ = match files::write_config(config) {
-            Ok(()) => return Ok(()),
-            Err(_error) => return Err(_error),
+            Ok(()) => {
+                OutMessage::message_info_clean(
+                    format!("The team is removed: {}", self.team_name).as_str(),
+                );
+                return Ok(());
+            }
+            Err(err) => return Err(err),
         };
     }
 }

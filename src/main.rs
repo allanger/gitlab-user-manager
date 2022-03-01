@@ -13,13 +13,14 @@ use cmd::{
     users::{self, add_users_cmd},
     Cmd,
 };
-use output::OutSum;
+use output::{OutMessage, OutSum};
 use std::io::Error;
 use std::process::exit;
 
 fn main() {
+    OutMessage::message_empty("☮️  Fight war, not wars ☮️\n---");
     let matches = Command::new("gum")
-        .about("Manage gitlab users even in the free version, beoch!")
+        .about("Manager your GitLAb team access in a better way, dude")
         .version("v0.0.1")
         .author("allanger")
         .subcommand(add_init_cmd())
@@ -34,31 +35,31 @@ fn main() {
         Some(("init", _)) => {
             result = match init::prepare() {
                 Ok(cmd) => cmd.exec(),
-                Err(_error) => Err(_error),
+                Err(err) => Err(err),
             };
         }
         Some(("sync", sub_matches)) => {
             result = match sync::prepare(sub_matches) {
                 Ok(cmd) => cmd.exec(),
-                Err(_error) => Err(_error),
+                Err(err) => Err(err),
             };
         }
         Some(("users", sub_matches)) => {
             result = match users::prepare(sub_matches) {
                 Ok(cmd) => cmd.exec(),
-                Err(_error) => Err(_error),
+                Err(err) => Err(err),
             };
         }
         Some(("teams", sub_matches)) => {
             result = match teams::prepare(sub_matches) {
                 Ok(cmd) => cmd.exec(),
-                Err(_error) => Err(_error),
+                Err(err) => Err(err),
             };
         }
         Some(("search", sub_matches)) => {
             result = match search::prepare(sub_matches) {
                 Ok(cmd) => cmd.exec(),
-                Err(_error) => Err(_error),
+                Err(err) => Err(err),
             };
         }
         _ => unreachable!(), // If all subcommands are defined above, anything else is unreachable

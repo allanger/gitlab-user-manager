@@ -18,7 +18,7 @@ struct RemoveCmd {
 pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
     let gitlab_user_id: u64 = match sub_matches.value_of_t("GITLAB_USER_ID") {
         Ok(uid) => uid,
-        Err(_error) => return Err(Error::new(ErrorKind::InvalidInput, _error.to_string())),
+        Err(err) => return Err(Error::new(ErrorKind::InvalidInput, err.to_string())),
     };
 
     Ok(RemoveCmd { gitlab_user_id })
@@ -28,7 +28,7 @@ impl<'a> Cmd<'a> for RemoveCmd {
     fn exec(&self) -> Result<(), Error> {
         let mut config = match files::read_config() {
             Ok(c) => c,
-            Err(_error) => return Err(_error),
+            Err(err) => return Err(err),
         };
 
         for (i, user) in config.users.iter().enumerate() {
@@ -46,7 +46,7 @@ impl<'a> Cmd<'a> for RemoveCmd {
 
         let _ = match files::write_config(config) {
             Ok(()) => return Ok(()),
-            Err(_error) => return Err(_error),
+            Err(err) => return Err(err),
         };
     }
 }
