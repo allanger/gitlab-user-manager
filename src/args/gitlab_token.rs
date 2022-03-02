@@ -10,11 +10,8 @@ pub(crate) struct ArgGitlabToken {
 }
 
 impl ArgGitlabToken {
-    pub(crate) fn value(&self) -> &str {
-        self.value.as_ref()
-    }
-    pub(crate) fn set_value(&mut self, value: String) {
-        self.value = value;
+    pub(crate) fn value(&self) -> String {
+        self.value.clone()
     }
 }
 

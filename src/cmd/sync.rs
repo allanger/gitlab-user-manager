@@ -1,8 +1,9 @@
 use std::io::{Error, ErrorKind};
 
-use clap::{Arg, ArgMatches, Command};
+use clap::{ArgMatches, Command};
 use gitlab::Gitlab;
 
+use crate::args::dry_run::ArgDryRun;
 use crate::args::gitlab_token::ArgGitlabToken;
 use crate::args::gitlab_url::ArgGitlabUrl;
 use crate::args::Args;
@@ -13,20 +14,12 @@ use crate::{cmd::Cmd, files, types::state};
 
 use self::sync_cmd::{apply, compare_states, configure_projects};
 
-use super::args::arg_gitlab_url;
-
-/// init cmd should be used to generate an empty gum-config
 pub(crate) fn add_sync_cmd() -> Command<'static> {
-    let dry_run = Arg::new("dry-run")
-        .long("dry-run")
-        .short('d')
-        .takes_value(false)
-        .help("Use if you wanna see what's gonna happen without applying new configuration");
-    return Command::new("sync")
+    Command::new("sync")
         .about("Sync your config file with GitLab and generate the state file")
-        .arg(dry_run)
+        .arg(ArgDryRun::add())
         .arg(ArgGitlabToken::add())
-        .arg(ArgGitlabUrl::add());
+        .arg(ArgGitlabUrl::add())
 }
 
 pub(crate) struct SyncCmd {
@@ -35,8 +28,7 @@ pub(crate) struct SyncCmd {
 }
 
 pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
-    let dry_run: bool = sub_matches.is_present("dry-run");
-    let gitlab_client: Gitlab;
+    let dry_run: bool = ArgDryRun::parse(sub_matches).unwrap().value();
 
     let gitlab_token = match ArgGitlabToken::parse(sub_matches) {
         Ok(v) => v.value(),
@@ -47,11 +39,11 @@ pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, E
         Err(err) => return Err(err),
     };
 
-    // Connect to gitlab
-    gitlab_client = match Gitlab::new(gitlab_url.to_string(), gitlab_token.to_string()) {
-        Ok(g) => g,
-        Err(_err) => return Err(Error::new(ErrorKind::Other, _err)),
+    let gitlab_client = match Gitlab::new(gitlab_url.to_string(), gitlab_token.to_string()) {
+    Ok(g) => g,
+        Err(err) => return Err(Error::new(ErrorKind::Other, err)),
     };
+
     Ok(SyncCmd {
         dry_run,
         gitlab_client,

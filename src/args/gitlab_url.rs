@@ -10,8 +10,8 @@ pub(crate) struct ArgGitlabUrl {
 }
 
 impl ArgGitlabUrl {
-    pub(crate) fn value(&self) -> &str {
-        self.value.as_ref()
+    pub(crate) fn value(&self) -> String {
+        self.value.clone()
     }
     pub(crate) fn set_value(&mut self, value: String) {
         self.value = value;
@@ -36,7 +36,7 @@ impl Args<'_> for ArgGitlabUrl {
         sub_matches
             .value_of(ARG)
             .ok_or_else(|| {
-                let err_msg = "GitLab token is not specified";
+                let err_msg = "GitLab url is not specified";
                 OutMessage::message_error(err_msg);
                 Error::new(std::io::ErrorKind::InvalidInput, err_msg)
             })
