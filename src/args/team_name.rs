@@ -3,41 +3,40 @@ use crate::output::OutMessage;
 use clap::{Arg, ArgMatches};
 use std::io::{Error, Result};
 
-static ARG: &str = "url";
+static ARG: &str = "team-name";
 
-pub(crate) struct ArgGitlabUrl {
+pub(crate) struct ArgTeamName {
     value: String,
 }
 
-impl ArgGitlabUrl {
+impl ArgTeamName {
     pub(crate) fn value(&self) -> String {
         self.value.clone()
     }
 }
 
-impl Args<'_> for ArgGitlabUrl {
-    type ArgType = ArgGitlabUrl;
+impl Args<'_> for ArgTeamName {
+    type ArgType = ArgTeamName;
 
     fn add() -> Arg<'static> {
-        return Arg::new(ARG)
-            .long(ARG)
+        Arg::new(ARG)
+            .short('n')
             .takes_value(true)
-            .value_name("GITLAB_URL")
-            .help("Provide the gitlab url if it's not gitlab.com")
-            .default_value("gitlab.com")
-            .global(true);
+            .value_name("TEAM_NAME")
+            .help("Provide a name of the team")
+            .default_value("default")
     }
 
     fn parse<'a>(sub_matches: &'a ArgMatches) -> Result<Self> {
         sub_matches
             .value_of(ARG)
             .ok_or_else(|| {
-                let err_msg = "GitLab url is not specified";
+                let err_msg = "GitLab token is not specified";
                 OutMessage::message_error(err_msg);
                 Error::new(std::io::ErrorKind::InvalidInput, err_msg)
             })
             .and_then(|value| {
-                return Ok(ArgGitlabUrl {
+                return Ok(ArgTeamName {
                     value: value.to_string(),
                 });
             })

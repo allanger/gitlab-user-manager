@@ -2,6 +2,8 @@ use std::io::{Error, ErrorKind};
 
 use clap::{arg, ArgMatches, Command};
 
+use crate::args::team_name::ArgTeamName;
+use crate::args::Args;
 use crate::cmd::Cmd;
 use crate::output::OutSpinner;
 use crate::{cmd::args::arg_team_name, files};
@@ -14,7 +16,7 @@ pub(crate) fn add_add_team_cmd() -> Command<'static> {
     return Command::new("add-team")
         .alias("at")
         .about("Add user to the team")
-        .arg(arg_team_name())
+        .arg(ArgTeamName::add())
         .arg(arg!(<GITLAB_USER_ID> "Provide the GitLab user ID"));
 }
 

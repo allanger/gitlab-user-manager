@@ -11,7 +11,6 @@ use crate::args::Args;
 use crate::cmd::Cmd;
 use crate::output::{OutMessage, OutSpinner};
 use crate::{
-    cmd::args::{arg_gitlab_token, arg_gitlab_url, arg_group_id},
     files,
     gitlab::{GitlabActions, GitlabClient},
     types,

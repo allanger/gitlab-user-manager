@@ -2,35 +2,34 @@ use super::Args;
 use clap::{Arg, ArgMatches};
 use std::io::{Error, ErrorKind, Result};
 
-  static ARG: &str = "user-id";
+static ARG: &str = "project-id";
 
-pub(crate) struct ArgUserId {
+pub(crate) struct ArgProjectId {
     value: u64,
 }
 
-impl ArgUserId {
+impl ArgProjectId {
     pub(crate) fn value(&self) -> u64 {
         self.value.clone()
     }
 }
 
-impl Args<'_> for ArgUserId {
-    type ArgType = ArgUserId;
+impl Args<'_> for ArgProjectId {
+    type ArgType = ArgProjectId;
 
     fn add() -> Arg<'static> {
         Arg::new(ARG)
-            .short('u')
-            .long(ARG)
+            .short('i')
             .takes_value(true)
-            .value_name("USER_ID")
-            .help("Provide the id of the GitLab user")
+            .value_name("PROJECT_ID")
+            .help("Provide the GitLab project ID")
             .default_value("-1")
             .global(true)
     }
 
     fn parse<'a>(sub_matches: &'a ArgMatches) -> Result<Self> {
         match sub_matches.value_of_t(ARG) {
-            Ok(value) => return Ok(ArgUserId { value }),
+            Ok(value) => return Ok(ArgProjectId { value }),
             Err(err) => return Err(Error::new(ErrorKind::InvalidInput, err.to_string())),
         };
     }
