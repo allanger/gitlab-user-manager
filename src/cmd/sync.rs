@@ -3,6 +3,9 @@ use std::io::{Error, ErrorKind};
 use clap::{Arg, ArgMatches, Command};
 use gitlab::Gitlab;
 
+use crate::args::gitlab_token::ArgGitlabToken;
+use crate::args::gitlab_url::ArgGitlabUrl;
+use crate::args::Args;
 use crate::files::state_exists;
 
 use crate::output::OutMessage;
@@ -10,7 +13,7 @@ use crate::{cmd::Cmd, files, types::state};
 
 use self::sync_cmd::{apply, compare_states, configure_projects};
 
-use super::args::{arg_gitlab_token, arg_gitlab_url};
+use super::args::arg_gitlab_url;
 
 /// init cmd should be used to generate an empty gum-config
 pub(crate) fn add_sync_cmd() -> Command<'static> {
@@ -22,8 +25,8 @@ pub(crate) fn add_sync_cmd() -> Command<'static> {
     return Command::new("sync")
         .about("Sync your config file with GitLab and generate the state file")
         .arg(dry_run)
-        .arg(arg_gitlab_token())
-        .arg(arg_gitlab_url());
+        .arg(ArgGitlabToken::add())
+        .arg(ArgGitlabUrl::add());
 }
 
 pub(crate) struct SyncCmd {
@@ -34,27 +37,18 @@ pub(crate) struct SyncCmd {
 pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
     let dry_run: bool = sub_matches.is_present("dry-run");
     let gitlab_client: Gitlab;
-    let gitlab_token = sub_matches.value_of("token").ok_or(Error::new(
-        std::io::ErrorKind::PermissionDenied,
-        "gitlab token is not specified",
-    ));
-    if gitlab_token.is_err() {
-        return Err(gitlab_token.err().unwrap());
-    }
-    // Get gitlab url from flags
-    let gitlab_url = sub_matches.value_of("url").ok_or(Error::new(
-        std::io::ErrorKind::PermissionDenied,
-        "gitlab url is not specified",
-    ));
-    if gitlab_url.is_err() {
-        return Err(gitlab_token.err().unwrap());
-    }
+
+    let gitlab_token = match ArgGitlabToken::parse(sub_matches) {
+        Ok(v) => v.value(),
+        Err(err) => return Err(err),
+    };
+    let gitlab_url = match ArgGitlabUrl::parse(sub_matches) {
+        Ok(v) => v.value(),
+        Err(err) => return Err(err),
+    };
 
     // Connect to gitlab
-    gitlab_client = match Gitlab::new(
-        gitlab_url.unwrap().to_string(),
-        gitlab_token.unwrap().to_string(),
-    ) {
+    gitlab_client = match Gitlab::new(gitlab_url.to_string(), gitlab_token.to_string()) {
         Ok(g) => g,
         Err(_err) => return Err(Error::new(ErrorKind::Other, _err)),
     };

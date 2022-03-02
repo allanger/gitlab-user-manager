@@ -20,6 +20,7 @@ pub(crate) fn add_search_cmd() -> Command<'static> {
         .about("Search for GitLab entities")
         .arg(arg_gitlab_token())
         .arg(arg_gitlab_url())
+        .arg_required_else_help(true)
         .subcommand(projects_cmd::find_projects())
         .subcommand(users_cmd::find_users())
         .subcommand(groups_cmd::find_groups());

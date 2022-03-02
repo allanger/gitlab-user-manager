@@ -37,7 +37,6 @@ pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, E
             )
         })
         .unwrap();
-
     let gitlab_url = sub_matches
         .value_of("url")
         .ok_or_else(|| {

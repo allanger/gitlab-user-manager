@@ -77,12 +77,12 @@ impl<'a> Cmd<'a> for RemoveProjectCmd {
                     "The team {} doesn't have access to the this project",
                     self.team_name
                 );
-                OutMessage::messageerr(error_message.as_str());
+                OutMessage::message_error(error_message.as_str());
                 return Err(Error::new(ErrorKind::NotFound, error_message));
             }
         }
         let error_message = format!("The team with this name can't be found: {}", self.team_name);
-        OutMessage::messageerr(error_message.as_str());
+        OutMessage::message_error(error_message.as_str());
         return Err(Error::new(ErrorKind::NotFound, error_message));
     }
 }

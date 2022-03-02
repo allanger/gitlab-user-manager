@@ -25,6 +25,7 @@ pub(crate) fn add_users_cmd() -> Command<'static> {
     return Command::new("users")
         .aliases(&["u", "users"])
         .about("Manage GitLab users")
+        .arg_required_else_help(true)
         .subcommand(add_create_cmd())
         .subcommand(add_list_cmd())
         .subcommand(add_remove_cmd())
@@ -104,7 +105,6 @@ impl<'a> Cmd<'a> for UsersCmd<'a> {
                     Err(err) => Err(err),
                 }
             }
-
             _ => return Ok(()),
         }
         result

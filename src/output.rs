@@ -87,7 +87,7 @@ impl OutMessage {
         );
     }
 
-    pub(crate) fn messageerr(msg: &str) {
+    pub(crate) fn message_error(msg: &str) {
         print!("{}ERROR: {}\n", color::Fg(color::LightRed), msg);
     }
 }
