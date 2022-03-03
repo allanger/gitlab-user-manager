@@ -3,20 +3,20 @@ use std::io::{Error, ErrorKind};
 use clap::{ArgMatches, Command};
 use gitlab::Gitlab;
 
+use crate::args::file_name::ArgFileName;
 use crate::args::gitlab_token::ArgGitlabToken;
 use crate::args::gitlab_url::ArgGitlabUrl;
 use crate::args::group_id::ArgGroupId;
 use crate::args::user_id::ArgUserId;
 use crate::args::Args;
 use crate::cmd::Cmd;
+use crate::gitlab::{GitlabActions, GitlabClient};
 use crate::output::{OutMessage, OutSpinner};
-use crate::{
-    files,
-    gitlab::{GitlabActions, GitlabClient},
-    types,
-};
+use crate::types::v1::config_file::ConfigFile;
+use crate::types::v1::ownership::Ownership;
 
 pub(crate) struct AddOwnershipCmd {
+    file_name: String,
     gitlab_user_id: u64,
     gitlab_group_id: u64,
     gitlab_client: Gitlab,
@@ -28,7 +28,8 @@ pub(crate) fn add_add_ownership_cmd() -> Command<'static> {
         .arg(ArgGitlabToken::add())
         .arg(ArgGitlabUrl::add())
         .arg(ArgGroupId::add())
-        .arg(ArgUserId::add());
+        .arg(ArgUserId::add())
+        .arg(ArgFileName::add());
 }
 
 pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
@@ -58,19 +59,26 @@ pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, E
         Err(err) => return Err(Error::new(ErrorKind::InvalidInput, err.to_string())),
     };
 
+    let file_name = match ArgFileName::parse(sub_matches) {
+        Ok(arg) => arg.value(),
+        Err(err) => return Err(err),
+    };
+
     Ok(AddOwnershipCmd {
         gitlab_group_id,
         gitlab_client,
         gitlab_user_id,
+        file_name,
     })
 }
 
 impl<'a> Cmd<'a> for AddOwnershipCmd {
     fn exec(&self) -> Result<(), Error> {
-        let mut config = match files::read_config() {
+        let mut config_file = match ConfigFile::read(self.file_name.clone()) {
             Ok(c) => c,
             Err(err) => return Err(err),
         };
+
         let gitlab = GitlabClient::new(self.gitlab_client.to_owned());
 
         OutMessage::message_info_with_alias("I'm getting data about the group from Gitlab");
@@ -80,13 +88,13 @@ impl<'a> Cmd<'a> for AddOwnershipCmd {
             Err(err) => return Err(err),
         };
 
-        for user in config.users.iter_mut() {
+        for user in config_file.config.users.iter_mut() {
             if user.id == self.gitlab_user_id {
                 let spinner = OutSpinner::spinner_start(format!(
                     "Adding {} to {} as owner",
                     user.name, group.name
                 ));
-                let o = types::ownership::Ownership {
+                let o = Ownership {
                     id: group.id,
                     name: group.name.to_string(),
                     url: group.web_url.to_string(),
@@ -104,7 +112,7 @@ impl<'a> Cmd<'a> for AddOwnershipCmd {
                 spinner.spinner_success("Added".to_string());
             }
         }
-        let _ = match files::write_config(config) {
+        let _ = match config_file.write(self.file_name.clone()) {
             Ok(()) => return Ok(()),
             Err(err) => return Err(err),
         };

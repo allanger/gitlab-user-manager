@@ -1,18 +1,27 @@
+use std::collections::HashMap;
+use std::fs::OpenOptions;
 use std::io::{Error, ErrorKind};
+use std::result::Result;
 
 use clap::{ArgMatches, Command};
 use gitlab::Gitlab;
+use serde::{Deserialize, Serialize};
 
 use crate::args::dry_run::ArgDryRun;
+use crate::args::file_name::ArgFileName;
 use crate::args::gitlab_token::ArgGitlabToken;
 use crate::args::gitlab_url::ArgGitlabUrl;
 use crate::args::Args;
-use crate::files::state_exists;
 
+use crate::args::state_destination::ArgStateDestination;
+use crate::args::state_source::ArgStateSource;
+use crate::args::write_state::ArgWriteState;
 use crate::output::OutMessage;
-use crate::{cmd::Cmd, files, types::state};
+use crate::types::v1::access_level::AccessLevel;
+use crate::types::v1::config_file::ConfigFile;
+use crate::{cmd::Cmd, types::v1::state};
 
-use self::sync_cmd::{apply, compare_states, configure_projects};
+use self::sync_cmd::{apply, compare_states, configure_groups, configure_projects};
 
 pub(crate) fn add_sync_cmd() -> Command<'static> {
     Command::new("sync")
@@ -20,15 +29,24 @@ pub(crate) fn add_sync_cmd() -> Command<'static> {
         .arg(ArgDryRun::add())
         .arg(ArgGitlabToken::add())
         .arg(ArgGitlabUrl::add())
+        .arg(ArgFileName::add())
+        .arg(ArgStateDestination::add())
+        .arg(ArgStateSource::add())
+        .arg(ArgWriteState::add())
 }
 
 pub(crate) struct SyncCmd {
     dry_run: bool,
     gitlab_client: Gitlab,
+    file_name: String,
+    write_state: bool,
+    state_destination: String,
+    state_source: String,
 }
 
 pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
     let dry_run: bool = ArgDryRun::parse(sub_matches).unwrap().value();
+    let write_state: bool = ArgWriteState::parse(sub_matches).unwrap().value();
 
     let gitlab_token = match ArgGitlabToken::parse(sub_matches) {
         Ok(v) => v.value(),
@@ -40,54 +58,150 @@ pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, E
     };
 
     let gitlab_client = match Gitlab::new(gitlab_url.to_string(), gitlab_token.to_string()) {
-    Ok(g) => g,
+        Ok(g) => g,
         Err(err) => return Err(Error::new(ErrorKind::Other, err)),
+    };
+
+    let file_name = match ArgFileName::parse(sub_matches) {
+        Ok(arg) => arg.value(),
+        Err(err) => return Err(err),
+    };
+
+    let state_destination = match ArgStateDestination::parse(sub_matches) {
+        Ok(arg) => arg.value(),
+        Err(err) => return Err(err),
+    };
+
+    let state_source = match ArgStateSource::parse(sub_matches) {
+        Ok(arg) => arg.value(),
+        Err(err) => return Err(err),
     };
 
     Ok(SyncCmd {
         dry_run,
         gitlab_client,
+        file_name,
+        state_destination,
+        state_source,
+        write_state,
     })
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+pub(crate) struct NewState {
+    projects: HashMap<u64, AccessLevel>,
+    groups: HashMap<u64, AccessLevel>,
+}
+
+impl NewState {
+    pub(crate) fn write_to_file(
+        state: HashMap<u64, NewState>,
+        file_name: String,
+    ) -> Result<(), Error> {
+        let f = OpenOptions::new()
+            .create(true)
+            .write(true)
+            .read(true)
+            .truncate(true)
+            .open(file_name);
+
+        let f = match f {
+            Ok(file) => file,
+            Err(err) => {
+                return Err(err);
+            }
+        };
+
+        let _ = match serde_json::to_writer(&f, &state) {
+            Ok(()) => return Ok(()),
+            Err(err) => {
+                return Err(Error::new(ErrorKind::Other, err.to_string()));
+            }
+        };
+    }
+    pub(crate) fn read_from_file(file_name: String) -> Result<HashMap<u64, NewState>, Error> {
+        let f = OpenOptions::new().write(true).read(true).open(file_name);
+
+        let f = match f {
+            Ok(file) => file,
+            Err(err) => {
+                return Err(err);
+            }
+        };
+        // TODO: Handle serde error
+        let d: std::result::Result<HashMap<u64, NewState>, _> = serde_json::from_reader(&f);
+        match d {
+            Ok(r) => return Ok(r),
+            Err(err) => {
+                return Err(Error::new(ErrorKind::Other, err.to_string()));
+            }
+        };
+    }
 }
 
 impl<'a> Cmd<'a> for SyncCmd {
     fn exec(&self) -> Result<(), Error> {
-        let config = match files::read_config() {
+        let mut config_file = match ConfigFile::read(self.file_name.clone()) {
             Ok(c) => c,
             Err(err) => return Err(err),
         };
-        // Generate new state
-        let mut new_state: Vec<state::State> = Vec::new();
-        let mut old_state: Vec<state::State>;
 
-        for u in config.users.iter().clone() {
-            let user_state = state::State {
-                projects: configure_projects(u, config.clone()),
-                ownerships: u.ownerships.clone(),
-                user_id: u.id,
-            };
-            new_state.extend([user_state]);
-        }
-
-        if state_exists() {
-            OutMessage::message_info_with_alias("State file is found");
-            old_state = match files::read_state() {
-                Ok(s) => s,
-                Err(err) => return Err(err),
-            };
+        // Read old state
+        let mut old_state: HashMap<u64, NewState> = HashMap::new();
+        if self.state_source != "" {
+            OutMessage::message_info_with_alias(
+                format!("I will try to use this file: {}", self.state_source.clone()).as_str(),
+            );
+            old_state = NewState::read_from_file(self.state_source.clone())?
         } else {
-            OutMessage::message_info_with_alias("State file not found, I will create a new one");
-            old_state = Vec::new();
+            if config_file.state.as_str() != "~" {
+                OutMessage::message_info_with_alias("State is found");
+                old_state = match serde_json::from_str(config_file.state.as_str()) {
+                    Ok(state) => state,
+                    Err(err) => return Err(Error::new(ErrorKind::InvalidData, err)),
+                };
+            } else {
+                OutMessage::message_info_with_alias(
+                    "State is not found, I will generate a new one",
+                );
+            }
+        }
+        let mut new_state: HashMap<u64, NewState> = HashMap::new();
+        for u in config_file.config.users.iter().clone() {
+            new_state.insert(
+                u.id,
+                NewState {
+                    projects: configure_projects(u, config_file.config.clone()),
+                    groups: configure_groups(u, config_file.config.clone()),
+                },
+            );
         }
 
         let actions = compare_states(old_state.clone(), new_state);
+        let state: String = match apply(actions, &self.gitlab_client, &mut old_state, self.dry_run)
+        {
+            Ok(_) => serde_json::to_string(&old_state).unwrap(),
+            Err(err) => {
+                OutMessage::message_error(
+                    format!(
+                        "This error happened while I was applying:\n {}\nI'll save the intermediate state",
+                        err
+                    )
+                    .as_str(),
+                );
+                serde_json::to_string(&old_state).unwrap()
+            }
+        };
+        if !self.dry_run {
+            config_file.state = state;
+        }
+        if self.write_state {
+            NewState::write_to_file(old_state, self.state_destination.clone());
+        }
 
-        match apply(actions, &self.gitlab_client, &mut old_state, self.dry_run) {
-            Ok(_) => match files::write_state(old_state, self.dry_run) {
-                Ok(_) => Ok(()),
-                Err(_err) => return Err(_err),
-            },
-            Err(_err) => return Err(_err),
+        match config_file.write(self.file_name.clone()) {
+            Ok(_) => return Ok(()),
+            Err(err) => return Err(err),
         }
     }
 }
@@ -107,18 +221,20 @@ mod sync_cmd {
 
     use ::gitlab::Gitlab;
 
-    use crate::gitlab::{GitlabActions, GitlabClient};
+    use crate::gitlab::{GitlabActions, GitlabClient, Group};
     use crate::output::{OutMessage, OutSpinner, OutSum};
-    use crate::types::access_level::AccessLevel;
 
-    use crate::types::{
-        config::Config, ownership::Ownership, project::Project, state::State, user,
+    use crate::types::v1::{
+        access_level::AccessLevel, config::Config, ownership::Ownership, project::Project,
+        state::State, user::User,
     };
+
+    use super::NewState;
 
     pub(crate) fn apply(
         actions: Vec<Actions>,
         gitlab_client: &Gitlab,
-        state: &mut Vec<State>,
+        state: &mut HashMap<u64, NewState>,
         dry: bool,
     ) -> Result<(), Error> {
         for a in actions.iter() {
@@ -155,28 +271,11 @@ mod sync_cmd {
                             } else {
                                 spinner.spinner_close();
                             }
-
-                            let mut exist = false;
-                            for (i, _) in state.clone().iter().enumerate() {
-                                if state[i].user_id == a.user_id {
-                                    exist = true;
-                                    state[i].projects.extend([Project {
-                                        name: project.name.to_string(),
-                                        id: project.id,
-                                        access_level: a.access,
-                                    }]);
-                                };
-                            }
-                            if !exist {
-                                state.extend([State {
-                                    user_id: a.user_id,
-                                    ownerships: vec![],
-                                    projects: vec![Project {
-                                        name: project.name.to_string(),
-                                        id: project.id,
-                                        access_level: a.access,
-                                    }],
-                                }])
+                            if !state.contains_key(&a.user_id) {
+                                state.insert(a.user_id, NewState::default());
+                            };
+                            if let Some(x) = state.get_mut(&a.user_id) {
+                                x.projects.insert(a.entity_id, a.access);
                             }
                         }
                         Action::DELETE => {
@@ -197,17 +296,19 @@ mod sync_cmd {
                             } else {
                                 spinner.spinner_close();
                             }
-                            for (i, s) in state.clone().iter().enumerate() {
-                                if s.user_id == a.user_id {
-                                    let mut ui = 0;
-                                    for p in s.projects.iter() {
-                                        if p.id != a.entity_id {
-                                            state[i].projects[ui] = p.clone();
-                                            ui += 1;
-                                        }
-                                    }
-                                    state[i].projects.drain(ui..);
-                                }
+                            if let Some(x) = state.get_mut(&a.user_id) {
+                                x.projects
+                                    .remove(&a.entity_id)
+                                    .ok_or_else(|| {
+                                        OutMessage::message_error(
+                                            format!(
+                                                "Project {} can't be found in state",
+                                                a.entity_id
+                                            )
+                                            .as_str(),
+                                        )
+                                    })
+                                    .unwrap();
                             }
                         }
                         Action::UPDATE => {
@@ -232,14 +333,8 @@ mod sync_cmd {
                             } else {
                                 spinner.spinner_close();
                             }
-                            for (i, s) in state.clone().iter().enumerate() {
-                                if s.user_id == a.user_id {
-                                    for (pi, p) in s.projects.iter().enumerate() {
-                                        if p.id == a.entity_id {
-                                            state[i].projects[pi].access_level = a.access;
-                                        }
-                                    }
-                                }
+                            if let Some(x) = state.get_mut(&a.user_id) {
+                                x.projects.insert(a.entity_id, a.access);
                             }
                         }
                     }
@@ -271,28 +366,11 @@ mod sync_cmd {
                             } else {
                                 spinner.spinner_close();
                             }
-
-                            let mut exist = false;
-                            for (i, _) in state.clone().iter().enumerate() {
-                                if state[i].user_id == a.user_id {
-                                    exist = true;
-                                    state[i].ownerships.extend([Ownership {
-                                        name: group.name.to_string(),
-                                        id: group.id,
-                                        url: group.web_url.to_string(),
-                                    }]);
-                                };
-                            }
-                            if !exist {
-                                state.extend([State {
-                                    user_id: a.user_id,
-                                    projects: vec![],
-                                    ownerships: vec![Ownership {
-                                        name: group.name.to_string(),
-                                        id: group.id,
-                                        url: group.web_url.to_string(),
-                                    }],
-                                }])
+                            if !state.contains_key(&a.user_id) {
+                                state.insert(a.user_id, NewState::default());
+                            };
+                            if let Some(x) = state.get_mut(&a.user_id) {
+                                x.groups.insert(a.entity_id, a.access);
                             }
                         }
                         Action::DELETE => {
@@ -312,19 +390,20 @@ mod sync_cmd {
                                 }
                             } else {
                                 spinner.spinner_close();
-                            }
-
-                            for (i, s) in state.clone().iter().enumerate() {
-                                if s.user_id == a.user_id {
-                                    let mut ui = 0;
-                                    for o in s.ownerships.iter() {
-                                        if o.id != a.entity_id {
-                                            state[i].ownerships[ui] = o.clone();
-                                            ui += 1;
-                                        }
-                                    }
-                                    state[i].ownerships.drain(ui..);
-                                }
+                            };
+                            if let Some(x) = state.get_mut(&a.user_id) {
+                                x.groups
+                                    .remove(&a.entity_id)
+                                    .ok_or_else(|| {
+                                        OutMessage::message_error(
+                                            format!(
+                                                "Project {} can't be found in state",
+                                                a.entity_id
+                                            )
+                                            .as_str(),
+                                        )
+                                    })
+                                    .unwrap();
                             }
                         }
                         Action::UPDATE => {
@@ -337,7 +416,42 @@ mod sync_cmd {
         OutMessage::message_info_with_alias("You are synchronized, now but not forever");
         Ok(())
     }
-    pub(crate) fn configure_projects<'a>(u: &user::User, c: Config) -> Vec<Project> {
+
+    pub(crate) fn configure_groups(u: &User, c: Config) -> HashMap<u64, AccessLevel> {
+        let mut groups_map: HashMap<u64, AccessLevel> = HashMap::new();
+        let mut groups: Vec<Ownership> = u.ownerships.clone();
+        for g in groups.iter() {
+            let mut group: HashMap<u64, AccessLevel> = HashMap::new();
+            groups_map.insert(g.id, AccessLevel::Owner);
+        }
+        return groups_map;
+    }
+
+    pub(crate) fn configure_projects(u: &User, c: Config) -> HashMap<u64, AccessLevel> {
+        let mut projects_map: HashMap<u64, AccessLevel> = HashMap::new();
+        let mut projects: Vec<Project> = u.projects.clone();
+        for t in c.teams.iter() {
+            if u.teams.contains(&t.name.to_string()) || t.name == "default" {
+                projects.extend(t.projects.clone());
+            }
+        }
+
+        let mut keys: HashMap<u64, Project> = HashMap::new();
+        for p in projects.iter() {
+            if !keys.contains_key(&p.id) {
+                keys.insert(p.id, p.clone());
+            } else {
+                keys.insert(p.id, higher_access(p, keys.get(&p.id).unwrap()));
+            }
+        }
+        projects.clear();
+        for p in keys.iter() {
+            projects_map.insert(p.1.id, p.1.access_level);
+        }
+        return projects_map;
+    }
+
+    pub(crate) fn configure_projects_old<'a>(u: &User, c: Config) -> Vec<Project> {
         // Get projects from user and from teams to which this user belongs
         let mut projects: Vec<Project> = u.projects.clone();
         for t in c.teams.iter() {
@@ -401,184 +515,144 @@ mod sync_cmd {
     }
 
     pub(crate) fn compare_states(
-        mut old_state: Vec<State>,
-        mut new_state: Vec<State>,
+        mut old_state: HashMap<u64, NewState>,
+        new_state: HashMap<u64, NewState>,
     ) -> Vec<Actions> {
         let mut actions: Vec<Actions> = Vec::new();
-        let mut tni = 0;
-        for n in new_state.clone().iter() {
-            let mut toi = 0;
-            let mut found = false;
-            for o in old_state.clone().iter() {
-                if o.user_id == n.user_id {
-                    found = true;
-                    compare_projects(
-                        o.projects.clone(),
-                        n.projects.clone(),
-                        &mut actions,
-                        n.user_id,
-                    );
-                    compare_ownerships(
-                        o.ownerships.clone(),
-                        n.ownerships.clone(),
-                        &mut actions,
-                        n.user_id,
-                    );
-                } else {
-                    old_state[toi] = o.clone();
-                    toi += 1;
+
+        for (id, state) in new_state.clone().iter() {
+            if old_state.contains_key(id) {
+                compare_projects(
+                    old_state[id].projects.clone(),
+                    state.projects.clone(),
+                    &mut actions,
+                    *id,
+                );
+                compare_ownerships(
+                    old_state[id].groups.clone(),
+                    state.groups.clone(),
+                    &mut actions,
+                    *id,
+                );
+                old_state.remove(id);
+            } else {
+                for (pid, access) in state.projects.iter() {
+                    actions.extend([Actions {
+                        user_id: id.clone(),
+                        entity_id: pid.clone(),
+                        entity_type: EntityType::PROJECT,
+                        access: access.clone(),
+                        action: Action::CREATE,
+                    }])
                 }
-                // If user is not found in the new state -> add remove action
-            }
-            old_state = old_state[..toi].to_vec();
-            if !found {
-                new_state[tni] = n.clone();
-                tni += 1;
+                for (gid, access) in state.groups.iter() {
+                    actions.extend([Actions {
+                        user_id: id.clone(),
+                        entity_id: gid.clone(),
+                        entity_type: EntityType::GROUP,
+                        access: access.clone(),
+                        action: Action::CREATE,
+                    }])
+                }
             }
         }
-        new_state = new_state[..tni].to_vec();
-
-        new_state.iter().for_each(|p| {
-            for np in p.projects.iter() {
+        for (id, state) in old_state.iter() {
+            for (pid, access) in state.projects.iter() {
                 actions.extend([Actions {
-                    user_id: p.user_id,
-                    entity_id: np.id,
+                    user_id: id.clone(),
+                    entity_id: pid.clone(),
                     entity_type: EntityType::PROJECT,
-                    access: np.access_level,
-                    action: Action::CREATE,
-                }])
-            }
-            for ng in p.ownerships.iter() {
-                actions.extend([Actions {
-                    user_id: p.user_id,
-                    entity_id: ng.id,
-                    entity_type: EntityType::GROUP,
-                    access: AccessLevel::Owner,
-                    action: Action::CREATE,
-                }])
-            }
-        });
-
-        old_state.iter().for_each(|p| {
-            for op in p.projects.iter() {
-                actions.extend([Actions {
-                    user_id: p.user_id,
-                    entity_id: op.id,
-                    entity_type: EntityType::PROJECT,
-                    access: op.access_level,
+                    access: access.clone(),
                     action: Action::DELETE,
                 }])
             }
-            for og in p.ownerships.iter() {
+            for (gid, access) in state.groups.iter() {
                 actions.extend([Actions {
-                    user_id: p.user_id,
-                    entity_id: og.id,
+                    user_id: id.clone(),
+                    entity_id: gid.clone(),
                     entity_type: EntityType::GROUP,
-                    access: AccessLevel::Owner,
+                    access: access.clone(),
                     action: Action::DELETE,
                 }])
             }
-        });
+        }
 
         actions
     }
 
     fn compare_ownerships(
-        mut old_state: Vec<Ownership>,
-        mut new_state: Vec<Ownership>,
+        mut old_state: HashMap<u64, AccessLevel>,
+        new_state: HashMap<u64, AccessLevel>,
         actions: &mut Vec<Actions>,
         user_id: u64,
     ) {
-        let mut tni = 0;
-        for nv in new_state.clone().iter() {
-            let mut found = false;
-            let mut toi = 0;
-            for ov in old_state.clone().iter_mut() {
-                if nv.id == ov.id {
-                    found = true;
-                } else {
-                    old_state[toi] = ov.clone();
-                    toi += 1;
+        for (id, access) in new_state.iter() {
+            if old_state.contains_key(id) {
+                if old_state[id] != new_state[id] {
+                    actions.extend([Actions {
+                        user_id,
+                        entity_id: id.clone(),
+                        entity_type: EntityType::GROUP,
+                        access: access.clone(),
+                        action: Action::UPDATE,
+                    }]);
                 }
-            }
-            old_state = old_state[..toi].to_vec();
-            if !found {
-                new_state[tni] = nv.clone();
-                tni += 1;
+                old_state.remove(id);
+            } else {
+                actions.extend([Actions {
+                    user_id,
+                    entity_id: id.clone(),
+                    entity_type: EntityType::GROUP,
+                    access: access.clone(),
+                    action: Action::CREATE,
+                }])
             }
         }
-        new_state = new_state[..tni].to_vec();
-        for nv in new_state.iter() {
+        for (id, access) in old_state.iter() {
             actions.extend([Actions {
                 user_id,
-                entity_id: nv.id,
+                entity_id: id.clone(),
                 entity_type: EntityType::GROUP,
-                access: AccessLevel::Owner,
-                action: Action::CREATE,
-            }])
-        }
-        for ov in old_state.iter() {
-            actions.extend([Actions {
-                user_id,
-                entity_id: ov.id,
-                entity_type: EntityType::GROUP,
-                access: AccessLevel::Owner,
+                access: access.clone(),
                 action: Action::DELETE,
             }])
         }
     }
 
     fn compare_projects(
-        mut old_state: Vec<Project>,
-        mut new_state: Vec<Project>,
+        mut old_state: HashMap<u64, AccessLevel>,
+        mut new_state: HashMap<u64, AccessLevel>,
         actions: &mut Vec<Actions>,
         user_id: u64,
     ) {
-        // Temporary new index
-        let mut tni = 0;
-        for nv in new_state.clone().iter() {
-            let mut found = false;
-            let mut toi = 0;
-            for ov in old_state.clone().iter_mut() {
-                if nv.id == ov.id {
-                    found = true;
-                    if nv.access_level != ov.access_level {
-                        actions.extend([Actions {
-                            user_id,
-                            entity_id: nv.id,
-                            entity_type: EntityType::PROJECT,
-                            access: nv.access_level,
-                            action: Action::UPDATE,
-                        }]);
-                    }
-                    // break;
-                } else {
-                    old_state[toi] = ov.clone();
-                    toi += 1;
+        for (id, access) in new_state.iter() {
+            if old_state.contains_key(id) {
+                if old_state[id] != new_state[id] {
+                    actions.extend([Actions {
+                        user_id,
+                        entity_id: id.clone(),
+                        entity_type: EntityType::PROJECT,
+                        access: access.clone(),
+                        action: Action::UPDATE,
+                    }]);
                 }
-            }
-            old_state = old_state[..toi].to_vec();
-            if !found {
-                new_state[tni] = nv.clone();
-                tni += 1;
+                old_state.remove(id);
+            } else {
+                actions.extend([Actions {
+                    user_id,
+                    entity_id: id.clone(),
+                    entity_type: EntityType::PROJECT,
+                    access: access.clone(),
+                    action: Action::CREATE,
+                }])
             }
         }
-        new_state = new_state[..tni].to_vec();
-        for nv in new_state.iter() {
+        for (id, access) in old_state.iter() {
             actions.extend([Actions {
                 user_id,
-                entity_id: nv.id,
+                entity_id: id.clone(),
                 entity_type: EntityType::PROJECT,
-                access: nv.access_level,
-                action: Action::CREATE,
-            }])
-        }
-        for ov in old_state.iter() {
-            actions.extend([Actions {
-                user_id,
-                entity_id: ov.id,
-                entity_type: EntityType::PROJECT,
-                access: ov.access_level,
+                access: access.clone(),
                 action: Action::DELETE,
             }])
         }

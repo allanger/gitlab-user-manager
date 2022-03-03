@@ -2,18 +2,20 @@ use std::io::Error;
 
 use clap::{ArgMatches, Command};
 
+use crate::args::file_name::ArgFileName;
 use crate::args::gitlab_token::ArgGitlabToken;
 use crate::args::gitlab_url::ArgGitlabUrl;
 use crate::args::project_id::ArgProjectId;
 use crate::args::user_id::ArgUserId;
 use crate::args::Args;
 use crate::cmd::Cmd;
-use crate::files;
 use crate::output::OutMessage;
+use crate::types::v1::config_file::ConfigFile;
 
 pub(crate) struct RemoveProjectCmd {
     gitlab_user_id: u64,
     gitlab_project_id: u64,
+    file_name: String,
 }
 pub(crate) fn add_remove_project_cmd() -> Command<'static> {
     return Command::new("remove-project")
@@ -22,7 +24,8 @@ pub(crate) fn add_remove_project_cmd() -> Command<'static> {
         .arg(ArgUserId::add())
         .arg(ArgGitlabToken::add())
         .arg(ArgGitlabUrl::add())
-        .arg(ArgProjectId::add());
+        .arg(ArgProjectId::add())
+        .arg(ArgFileName::add());
 }
 
 pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
@@ -36,19 +39,26 @@ pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, E
         Err(err) => return Err(err),
     };
 
+    let file_name = match ArgFileName::parse(sub_matches) {
+        Ok(arg) => arg.value(),
+        Err(err) => return Err(err),
+    };
+
     Ok(RemoveProjectCmd {
         gitlab_project_id,
         gitlab_user_id,
+        file_name,
     })
 }
 
 impl<'a> Cmd<'a> for RemoveProjectCmd {
     fn exec(&self) -> Result<(), Error> {
-        let mut config = match files::read_config() {
+        let mut config_file = match ConfigFile::read(self.file_name.clone()) {
             Ok(c) => c,
             Err(err) => return Err(err),
         };
-        for u in config.users.iter_mut() {
+
+        for u in config_file.config.users.iter_mut() {
             if u.id == self.gitlab_user_id {
                 for (i, p) in u.projects.iter().enumerate() {
                     if p.id == self.gitlab_project_id {
@@ -63,7 +73,7 @@ impl<'a> Cmd<'a> for RemoveProjectCmd {
             }
         }
 
-        let _ = match files::write_config(config) {
+        let _ = match config_file.write(self.file_name.clone()) {
             Ok(()) => return Ok(()),
             Err(err) => return Err(err),
         };

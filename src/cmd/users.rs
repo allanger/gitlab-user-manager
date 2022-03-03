@@ -57,14 +57,17 @@ impl<'a> Cmd<'a> for UsersCmd<'a> {
                     Err(err) => Err(err),
                 }
             }
-            Some(("remove", sub_matches)) => {
+            Some(("remove", sub_matches
+        )) => {
                 result = match remove_cmd::prepare(sub_matches) {
                     Ok(cmd) => cmd.exec(),
                     Err(err) => Err(err),
                 }
             }
-            Some(("list", _)) => {
-                result = match list_cmd::prepare() {
+            Some(("list", sub_matches
+        )) => {
+                result = match list_cmd::prepare(sub_matches
+                ) {
                     Ok(cmd) => cmd.exec(),
                     Err(err) => Err(err),
                 }

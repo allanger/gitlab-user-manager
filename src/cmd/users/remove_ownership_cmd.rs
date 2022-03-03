@@ -2,23 +2,26 @@ use std::io::{Error, ErrorKind};
 
 use clap::{ArgMatches, Command};
 
+use crate::args::file_name::ArgFileName;
 use crate::args::group_id::ArgGroupId;
 use crate::args::user_id::ArgUserId;
 use crate::args::Args;
 use crate::cmd::Cmd;
-use crate::files;
 use crate::output::OutMessage;
+use crate::types::v1::config_file::ConfigFile;
 
 pub(crate) struct RemoveOwnershipCmd {
     gitlab_user_id: u64,
     gitlab_group_id: u64,
+    file_name: String,
 }
 pub(crate) fn add_remove_ownership_cmd() -> Command<'static> {
     return Command::new("remove-ownership")
         .alias("ro")
         .about("Remove an ownership from the user")
         .arg(ArgUserId::add())
-        .arg(ArgGroupId::add());
+        .arg(ArgGroupId::add())
+        .arg(ArgFileName::add());
 }
 
 pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
@@ -31,20 +34,26 @@ pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, E
         Ok(arg) => arg.value(),
         Err(err) => return Err(err),
     };
+    let file_name = match ArgFileName::parse(sub_matches) {
+        Ok(arg) => arg.value(),
+        Err(err) => return Err(err),
+    };
 
     Ok(RemoveOwnershipCmd {
         gitlab_group_id,
         gitlab_user_id,
+        file_name,
     })
 }
 
 impl<'a> Cmd<'a> for RemoveOwnershipCmd {
     fn exec(&self) -> Result<(), Error> {
-        let mut config = match files::read_config() {
+        let mut config_file = match ConfigFile::read(self.file_name.clone()) {
             Ok(c) => c,
             Err(err) => return Err(err),
         };
-        for u in config.users.iter_mut() {
+
+        for u in config_file.config.users.iter_mut() {
             if u.id == self.gitlab_user_id {
                 for (i, o) in u.ownerships.iter().enumerate() {
                     if o.id == self.gitlab_group_id {
@@ -60,7 +69,7 @@ impl<'a> Cmd<'a> for RemoveOwnershipCmd {
             }
         }
 
-        let _ = match files::write_config(config) {
+        let _ = match config_file.write(self.file_name.clone()) {
             Ok(()) => return Ok(()),
             Err(err) => return Err(err),
         };

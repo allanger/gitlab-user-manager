@@ -13,7 +13,7 @@ use tabled::Tabled;
 
 use crate::{
     output::{OutMessage, OutSpinner},
-    types::access_level::AccessLevel,
+    types::v1::access_level::AccessLevel,
 };
 
 pub(crate) struct GitlabClient {

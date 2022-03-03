@@ -1,4 +1,5 @@
 use crate::args::access_level::ArgAccess;
+use crate::args::file_name::ArgFileName;
 use crate::args::gitlab_token::ArgGitlabToken;
 use crate::args::gitlab_url::ArgGitlabUrl;
 use crate::args::project_id::ArgProjectId;
@@ -7,11 +8,9 @@ use crate::args::Args;
 use crate::cmd::Cmd;
 use crate::gitlab::GitlabClient;
 use crate::output::OutMessage;
-use crate::{
-    files,
-    gitlab::GitlabActions,
-    types::{self, access_level::AccessLevel},
-};
+use crate::types::v1::config_file::ConfigFile;
+use crate::types::v1::project::Project;
+use crate::{gitlab::GitlabActions, types::v1::access_level::AccessLevel};
 use clap::{ArgMatches, Command};
 use gitlab::Gitlab;
 use std::io::{Error, ErrorKind};
@@ -24,9 +23,11 @@ pub(crate) fn add_add_project_cmd() -> Command<'static> {
         .arg(ArgAccess::add())
         .arg(ArgProjectId::add())
         .arg(ArgGitlabToken::add())
+        .arg(ArgFileName::add())
         .arg(ArgGitlabUrl::add());
 }
 struct AddProjectCmd {
+    file_name: String,
     team_name: String,
     access_level: AccessLevel,
     gitlab_project_id: u64,
@@ -64,7 +65,13 @@ pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, E
         Err(err) => return Err(err),
     };
 
+    let file_name = match ArgFileName::parse(sub_matches) {
+        Ok(arg) => arg.value(),
+        Err(err) => return Err(err),
+    };
+
     Ok(AddProjectCmd {
+        file_name,
         team_name,
         access_level,
         gitlab_project_id,
@@ -74,18 +81,19 @@ pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, E
 
 impl<'a> Cmd<'a> for AddProjectCmd {
     fn exec(&self) -> Result<(), Error> {
-        let mut config = match files::read_config() {
+        let mut config_file = match ConfigFile::read(self.file_name.clone()) {
             Ok(c) => c,
             Err(err) => return Err(err),
         };
+
         let gitlab = GitlabClient::new(self.gitlab_client.to_owned());
         let project = match gitlab.get_project_data_by_id(self.gitlab_project_id) {
             Ok(p) => p,
             Err(err) => return Err(err),
         };
-        for team in config.teams.iter_mut() {
+        for team in config_file.config.teams.iter_mut() {
             if team.name == self.team_name {
-                let p = types::project::Project {
+                let p = Project {
                     name: project.name.to_string(),
                     id: project.id,
                     access_level: self.access_level,
@@ -100,7 +108,7 @@ impl<'a> Cmd<'a> for AddProjectCmd {
                     ));
                 }
                 team.projects.extend([p]);
-                let _ = match files::write_config(config) {
+                match config_file.write(self.file_name.clone()) {
                     Ok(()) => {
                         OutMessage::message_info_clean(
                             format!(

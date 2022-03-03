@@ -6,7 +6,7 @@ mod remove_project_cmd;
 
 use std::io::Error;
 
-use clap::{Command, ArgMatches};
+use clap::{ArgMatches, Command};
 
 use self::{
     add_project_cmd::add_add_project_cmd, create_cmd::add_create_cmd, list_cmd::add_list_cmd,
@@ -54,8 +54,8 @@ impl<'a> Cmd<'a> for TeamsCmd<'a> {
                     Err(err) => Err(err),
                 }
             }
-            Some(("list", _)) => {
-                result = match list_cmd::prepare() {
+            Some(("list", sub_matches)) => {
+                result = match list_cmd::prepare(sub_matches) {
                     Ok(cmd) => cmd.exec(),
                     Err(err) => Err(err),
                 }

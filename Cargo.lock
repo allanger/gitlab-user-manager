@@ -470,6 +470,7 @@ dependencies = [
  "pbr",
  "rand",
  "serde",
+ "serde_json",
  "serde_yaml",
  "spinners",
  "tabled",
