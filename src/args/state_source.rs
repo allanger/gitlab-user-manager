@@ -2,7 +2,6 @@ use super::Args;
 use crate::output::OutMessage;
 use clap::{Arg, ArgMatches};
 use std::io::{Error, Result};
-use uuid::Uuid;
 
 static ARG: &str = "state-source";
 

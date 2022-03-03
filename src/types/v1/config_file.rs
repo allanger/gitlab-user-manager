@@ -55,9 +55,4 @@ impl ConfigFile {
             }
         };
     }
-
-    /// Get a mutable reference to the config file's config.
-    pub fn config_mut(&mut self) -> &mut Config {
-        &mut self.config
-    }
 }

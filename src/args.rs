@@ -5,7 +5,6 @@ pub(crate) mod gitlab_token;
 pub(crate) mod gitlab_url;
 pub(crate) mod group_id;
 pub(crate) mod project_id;
-pub(crate) mod search_string;
 pub(crate) mod state_destination;
 pub(crate) mod state_source;
 pub(crate) mod team_name;

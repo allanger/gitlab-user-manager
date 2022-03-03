@@ -2,7 +2,6 @@ use super::Args;
 use crate::output::OutMessage;
 use clap::{Arg, ArgMatches};
 use std::io::{Error, Result};
-use uuid::Uuid;
 
 static ARG: &str = "state-destination";
 
@@ -20,13 +19,12 @@ impl Args<'_> for ArgStateDestination {
     type ArgType = ArgStateDestination;
 
     fn add() -> Arg<'static> {
-        // let file_name = format!("/tmp/gum/gum-state-{}", Uuid::new_v4());
         return Arg::new(ARG)
             .long(ARG)
             .takes_value(true)
             .value_name("FILE_PATH")
             .help("Provide a path where you would like to save new state")
-            .default_value("/tmp/gum-state.json")
+            .default_value("/tmp/gum/gum-state.json")
             .global(true);
     }
 

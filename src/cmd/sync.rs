@@ -1,11 +1,9 @@
 use std::collections::HashMap;
-use std::fs::OpenOptions;
 use std::io::{Error, ErrorKind};
 use std::result::Result;
 
 use clap::{ArgMatches, Command};
 use gitlab::Gitlab;
-use serde::{Deserialize, Serialize};
 
 use crate::args::dry_run::ArgDryRun;
 use crate::args::file_name::ArgFileName;
@@ -16,10 +14,10 @@ use crate::args::Args;
 use crate::args::state_destination::ArgStateDestination;
 use crate::args::state_source::ArgStateSource;
 use crate::args::write_state::ArgWriteState;
+use crate::cmd::Cmd;
 use crate::output::OutMessage;
-use crate::types::v1::access_level::AccessLevel;
 use crate::types::v1::config_file::ConfigFile;
-use crate::{cmd::Cmd, types::v1::state};
+use crate::types::v1::state::State;
 
 use self::sync_cmd::{apply, compare_states, configure_groups, configure_projects};
 
@@ -87,58 +85,6 @@ pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, E
     })
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Default)]
-pub(crate) struct NewState {
-    projects: HashMap<u64, AccessLevel>,
-    groups: HashMap<u64, AccessLevel>,
-}
-
-impl NewState {
-    pub(crate) fn write_to_file(
-        state: HashMap<u64, NewState>,
-        file_name: String,
-    ) -> Result<(), Error> {
-        let f = OpenOptions::new()
-            .create(true)
-            .write(true)
-            .read(true)
-            .truncate(true)
-            .open(file_name);
-
-        let f = match f {
-            Ok(file) => file,
-            Err(err) => {
-                return Err(err);
-            }
-        };
-
-        let _ = match serde_json::to_writer(&f, &state) {
-            Ok(()) => return Ok(()),
-            Err(err) => {
-                return Err(Error::new(ErrorKind::Other, err.to_string()));
-            }
-        };
-    }
-    pub(crate) fn read_from_file(file_name: String) -> Result<HashMap<u64, NewState>, Error> {
-        let f = OpenOptions::new().write(true).read(true).open(file_name);
-
-        let f = match f {
-            Ok(file) => file,
-            Err(err) => {
-                return Err(err);
-            }
-        };
-        // TODO: Handle serde error
-        let d: std::result::Result<HashMap<u64, NewState>, _> = serde_json::from_reader(&f);
-        match d {
-            Ok(r) => return Ok(r),
-            Err(err) => {
-                return Err(Error::new(ErrorKind::Other, err.to_string()));
-            }
-        };
-    }
-}
-
 impl<'a> Cmd<'a> for SyncCmd {
     fn exec(&self) -> Result<(), Error> {
         let mut config_file = match ConfigFile::read(self.file_name.clone()) {
@@ -147,12 +93,12 @@ impl<'a> Cmd<'a> for SyncCmd {
         };
 
         // Read old state
-        let mut old_state: HashMap<u64, NewState> = HashMap::new();
+        let mut old_state: HashMap<u64, State> = HashMap::new();
         if self.state_source != "" {
             OutMessage::message_info_with_alias(
                 format!("I will try to use this file: {}", self.state_source.clone()).as_str(),
             );
-            old_state = NewState::read_from_file(self.state_source.clone())?
+            old_state = State::read_from_file(self.state_source.clone())?
         } else {
             if config_file.state.as_str() != "~" {
                 OutMessage::message_info_with_alias("State is found");
@@ -166,13 +112,13 @@ impl<'a> Cmd<'a> for SyncCmd {
                 );
             }
         }
-        let mut new_state: HashMap<u64, NewState> = HashMap::new();
+        let mut new_state: HashMap<u64, State> = HashMap::new();
         for u in config_file.config.users.iter().clone() {
             new_state.insert(
                 u.id,
-                NewState {
+                State {
                     projects: configure_projects(u, config_file.config.clone()),
-                    groups: configure_groups(u, config_file.config.clone()),
+                    groups: configure_groups(u),
                 },
             );
         }
@@ -196,7 +142,16 @@ impl<'a> Cmd<'a> for SyncCmd {
             config_file.state = state;
         }
         if self.write_state {
-            NewState::write_to_file(old_state, self.state_destination.clone());
+            match State::write_to_file(old_state, self.state_destination.clone()) {
+                Ok(_) => {
+                    let msg = format!(
+                        "State is saved, check it out\n $ cat {}",
+                        self.state_destination.clone()
+                    );
+                    OutMessage::message_empty(msg.as_str());
+                }
+                Err(_) => OutMessage::message_empty("Couldn't save state to file"),
+            };
         }
 
         match config_file.write(self.file_name.clone()) {
@@ -221,7 +176,7 @@ mod sync_cmd {
 
     use ::gitlab::Gitlab;
 
-    use crate::gitlab::{GitlabActions, GitlabClient, Group};
+    use crate::gitlab::{GitlabActions, GitlabClient};
     use crate::output::{OutMessage, OutSpinner, OutSum};
 
     use crate::types::v1::{
@@ -229,12 +184,10 @@ mod sync_cmd {
         state::State, user::User,
     };
 
-    use super::NewState;
-
     pub(crate) fn apply(
         actions: Vec<Actions>,
         gitlab_client: &Gitlab,
-        state: &mut HashMap<u64, NewState>,
+        state: &mut HashMap<u64, State>,
         dry: bool,
     ) -> Result<(), Error> {
         for a in actions.iter() {
@@ -272,7 +225,7 @@ mod sync_cmd {
                                 spinner.spinner_close();
                             }
                             if !state.contains_key(&a.user_id) {
-                                state.insert(a.user_id, NewState::default());
+                                state.insert(a.user_id, State::default());
                             };
                             if let Some(x) = state.get_mut(&a.user_id) {
                                 x.projects.insert(a.entity_id, a.access);
@@ -367,7 +320,7 @@ mod sync_cmd {
                                 spinner.spinner_close();
                             }
                             if !state.contains_key(&a.user_id) {
-                                state.insert(a.user_id, NewState::default());
+                                state.insert(a.user_id, State::default());
                             };
                             if let Some(x) = state.get_mut(&a.user_id) {
                                 x.groups.insert(a.entity_id, a.access);
@@ -417,11 +370,11 @@ mod sync_cmd {
         Ok(())
     }
 
-    pub(crate) fn configure_groups(u: &User, c: Config) -> HashMap<u64, AccessLevel> {
+    pub(crate) fn configure_groups(u: &User) -> HashMap<u64, AccessLevel> {
         let mut groups_map: HashMap<u64, AccessLevel> = HashMap::new();
-        let mut groups: Vec<Ownership> = u.ownerships.clone();
+        let groups: Vec<Ownership> = u.ownerships.clone();
         for g in groups.iter() {
-            let mut group: HashMap<u64, AccessLevel> = HashMap::new();
+            let mut _group: HashMap<u64, AccessLevel> = HashMap::new();
             groups_map.insert(g.id, AccessLevel::Owner);
         }
         return groups_map;
@@ -449,30 +402,6 @@ mod sync_cmd {
             projects_map.insert(p.1.id, p.1.access_level);
         }
         return projects_map;
-    }
-
-    pub(crate) fn configure_projects_old<'a>(u: &User, c: Config) -> Vec<Project> {
-        // Get projects from user and from teams to which this user belongs
-        let mut projects: Vec<Project> = u.projects.clone();
-        for t in c.teams.iter() {
-            if u.teams.contains(&t.name.to_string()) || t.name == "default" {
-                projects.extend(t.projects.clone());
-            }
-        }
-        let mut keys: HashMap<u64, Project> = HashMap::new();
-        for p in projects.iter() {
-            if !keys.contains_key(&p.id) {
-                keys.insert(p.id, p.clone());
-            } else {
-                keys.insert(p.id, higher_access(p, keys.get(&p.id).unwrap()));
-            }
-        }
-        projects.clear();
-        for p in keys.iter() {
-            projects.extend([p.1.clone()]);
-        }
-
-        projects
     }
 
     fn higher_access<'a>(project1: &'a Project, project2: &'a Project) -> Project {
@@ -515,8 +444,8 @@ mod sync_cmd {
     }
 
     pub(crate) fn compare_states(
-        mut old_state: HashMap<u64, NewState>,
-        new_state: HashMap<u64, NewState>,
+        mut old_state: HashMap<u64, State>,
+        new_state: HashMap<u64, State>,
     ) -> Vec<Actions> {
         let mut actions: Vec<Actions> = Vec::new();
 
@@ -621,7 +550,7 @@ mod sync_cmd {
 
     fn compare_projects(
         mut old_state: HashMap<u64, AccessLevel>,
-        mut new_state: HashMap<u64, AccessLevel>,
+        new_state: HashMap<u64, AccessLevel>,
         actions: &mut Vec<Actions>,
         user_id: u64,
     ) {
