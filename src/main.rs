@@ -2,7 +2,8 @@ mod cmd;
 mod files;
 mod gitlab;
 mod output;
-pub mod types;
+mod types;
+mod args;
 
 use clap::Command;
 use cmd::{
@@ -14,21 +15,23 @@ use cmd::{
     Cmd,
 };
 use output::{OutMessage, OutSum};
-use std::io::Error;
+use std::io::{Error, ErrorKind};
 use std::process::exit;
 
 fn main() {
-    OutMessage::message_empty("☮️  Fight war, not wars ☮️\n---");
+    OutMessage::message_empty("\n☮️  Fight war, not wars ☮️\n---");
     let matches = Command::new("gum")
-        .about("Manager your GitLAb team access in a better way, dude")
+        .about("Manage your GitLab team access in a better way, dude")
         .version("v0.0.3")
         .author("allanger")
+        .arg_required_else_help(true)
         .subcommand(add_init_cmd())
         .subcommand(add_users_cmd())
         .subcommand(add_teams_cmd())
         .subcommand(add_search_cmd())
         .subcommand(add_sync_cmd())
         .get_matches();
+
     let result: Result<(), Error>;
 
     match matches.subcommand() {
@@ -62,7 +65,7 @@ fn main() {
                 Err(err) => Err(err),
             };
         }
-        _ => unreachable!(), // If all subcommands are defined above, anything else is unreachable
+        _ => result = Err(Error::new(ErrorKind::InvalidInput, "No command provided")),
     }
     match result {
         Err(err) => {

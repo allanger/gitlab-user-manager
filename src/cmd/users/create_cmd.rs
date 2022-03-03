@@ -1,25 +1,24 @@
 use std::io::{Error, ErrorKind};
 
-use clap::{arg, Command, ArgMatches};
+use clap::{ArgMatches, Command};
 use gitlab::Gitlab;
 
+use crate::args::gitlab_token::ArgGitlabToken;
+use crate::args::gitlab_url::ArgGitlabUrl;
+use crate::args::user_id::ArgUserId;
+use crate::args::Args;
 use crate::cmd::Cmd;
 use crate::gitlab::GitlabClient;
 use crate::output::OutMessage;
-use crate::{
-    cmd::args::{arg_gitlab_token, arg_gitlab_url},
-    files,
-    gitlab::GitlabActions,
-    types,
-};
+use crate::{files, gitlab::GitlabActions, types};
 
 pub(crate) fn add_create_cmd() -> Command<'static> {
     return Command::new("create")
         .alias("c")
         .about("Add user to the config file")
-        .arg(arg!(<GITLAB_USER_ID> "Provide the GitLab user ID"))
-        .arg(arg_gitlab_token())
-        .arg(arg_gitlab_url());
+        .arg(ArgUserId::add())
+        .arg(ArgGitlabToken::add())
+        .arg(ArgGitlabUrl::add());
 }
 
 struct CreateCmd {
@@ -28,33 +27,24 @@ struct CreateCmd {
 }
 
 pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
-    let gitlab_token = sub_matches.value_of("token").ok_or(Error::new(
-        std::io::ErrorKind::PermissionDenied,
-        "gitlab token is not specified",
-    ));
-    if gitlab_token.is_err() {
-        return Err(gitlab_token.err().unwrap());
-    }
-    // Get gitlab url from flags
-    let gitlab_url = sub_matches.value_of("url").ok_or(Error::new(
-        std::io::ErrorKind::PermissionDenied,
-        "gitlab url is not specified",
-    ));
-    if gitlab_url.is_err() {
-        return Err(gitlab_token.err().unwrap());
-    }
+    let gitlab_token = match ArgGitlabToken::parse(sub_matches) {
+        Ok(arg) => arg.value(),
+        Err(err) => return Err(err),
+    };
+    let gitlab_url = match ArgGitlabUrl::parse(sub_matches) {
+        Ok(arg) => arg.value(),
+        Err(err) => return Err(err),
+    };
 
-    let gitlab_client: Gitlab = match Gitlab::new(
-        gitlab_url.unwrap().to_string(),
-        gitlab_token.unwrap().to_string(),
-    ) {
+    let gitlab_client: Gitlab = match Gitlab::new(gitlab_url.to_string(), gitlab_token.to_string())
+    {
         Ok(g) => g,
         Err(_err) => return Err(Error::new(ErrorKind::Other, _err)),
     };
 
-    let gitlab_user_id: u64 = match sub_matches.value_of_t("GITLAB_USER_ID") {
-        Ok(uid) => uid,
-        Err(err) => return Err(Error::new(ErrorKind::InvalidInput, err.to_string())),
+    let gitlab_user_id = match ArgUserId::parse(sub_matches) {
+        Ok(arg) => arg.value(),
+        Err(err) => return Err(err),
     };
 
     Ok(CreateCmd {
@@ -90,7 +80,9 @@ impl<'a> Cmd<'a> for CreateCmd {
             ));
         } else {
             config.users.extend([new_user]);
-            OutMessage::message_info_clean(format!("User {} is added to the config", user.name).as_str());
+            OutMessage::message_info_clean(
+                format!("User {} is added to the config", user.name).as_str(),
+            );
         }
 
         let _ = match files::write_config(config) {

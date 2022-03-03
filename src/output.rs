@@ -80,14 +80,10 @@ impl OutMessage {
         );
     }
     pub(crate) fn message_info_clean(msg: &str) {
-        print!(
-            "{}INFO: {}\n",
-            color::Fg(color::LightBlue),
-            msg,
-        );
+        print!("{}INFO: {}\n", color::Fg(color::LightBlue), msg,);
     }
 
-    pub(crate) fn messageerr(msg: &str) {
+    pub(crate) fn message_error(msg: &str) {
         print!("{}ERROR: {}\n", color::Fg(color::LightRed), msg);
     }
 }

@@ -1,8 +1,12 @@
 use std::io::{Error, ErrorKind};
 
-use clap::{Arg, ArgMatches, Command};
+use clap::{ArgMatches, Command};
 use gitlab::Gitlab;
 
+use crate::args::dry_run::ArgDryRun;
+use crate::args::gitlab_token::ArgGitlabToken;
+use crate::args::gitlab_url::ArgGitlabUrl;
+use crate::args::Args;
 use crate::files::state_exists;
 
 use crate::output::OutMessage;
@@ -10,20 +14,12 @@ use crate::{cmd::Cmd, files, types::state};
 
 use self::sync_cmd::{apply, compare_states, configure_projects};
 
-use super::args::{arg_gitlab_token, arg_gitlab_url};
-
-/// init cmd should be used to generate an empty gum-config
 pub(crate) fn add_sync_cmd() -> Command<'static> {
-    let dry_run = Arg::new("dry-run")
-        .long("dry-run")
-        .short('d')
-        .takes_value(false)
-        .help("Use if you wanna see what's gonna happen without applying new configuration");
-    return Command::new("sync")
+    Command::new("sync")
         .about("Sync your config file with GitLab and generate the state file")
-        .arg(dry_run)
-        .arg(arg_gitlab_token())
-        .arg(arg_gitlab_url());
+        .arg(ArgDryRun::add())
+        .arg(ArgGitlabToken::add())
+        .arg(ArgGitlabUrl::add())
 }
 
 pub(crate) struct SyncCmd {
@@ -32,32 +28,22 @@ pub(crate) struct SyncCmd {
 }
 
 pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
-    let dry_run: bool = sub_matches.is_present("dry-run");
-    let gitlab_client: Gitlab;
-    let gitlab_token = sub_matches.value_of("token").ok_or(Error::new(
-        std::io::ErrorKind::PermissionDenied,
-        "gitlab token is not specified",
-    ));
-    if gitlab_token.is_err() {
-        return Err(gitlab_token.err().unwrap());
-    }
-    // Get gitlab url from flags
-    let gitlab_url = sub_matches.value_of("url").ok_or(Error::new(
-        std::io::ErrorKind::PermissionDenied,
-        "gitlab url is not specified",
-    ));
-    if gitlab_url.is_err() {
-        return Err(gitlab_token.err().unwrap());
-    }
+    let dry_run: bool = ArgDryRun::parse(sub_matches).unwrap().value();
 
-    // Connect to gitlab
-    gitlab_client = match Gitlab::new(
-        gitlab_url.unwrap().to_string(),
-        gitlab_token.unwrap().to_string(),
-    ) {
-        Ok(g) => g,
-        Err(_err) => return Err(Error::new(ErrorKind::Other, _err)),
+    let gitlab_token = match ArgGitlabToken::parse(sub_matches) {
+        Ok(v) => v.value(),
+        Err(err) => return Err(err),
     };
+    let gitlab_url = match ArgGitlabUrl::parse(sub_matches) {
+        Ok(v) => v.value(),
+        Err(err) => return Err(err),
+    };
+
+    let gitlab_client = match Gitlab::new(gitlab_url.to_string(), gitlab_token.to_string()) {
+    Ok(g) => g,
+        Err(err) => return Err(Error::new(ErrorKind::Other, err)),
+    };
+
     Ok(SyncCmd {
         dry_run,
         gitlab_client,
@@ -249,7 +235,7 @@ mod sync_cmd {
                             for (i, s) in state.clone().iter().enumerate() {
                                 if s.user_id == a.user_id {
                                     for (pi, p) in s.projects.iter().enumerate() {
-                                        if p.id != a.entity_id {
+                                        if p.id == a.entity_id {
                                             state[i].projects[pi].access_level = a.access;
                                         }
                                     }

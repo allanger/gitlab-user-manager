@@ -20,6 +20,7 @@ pub(crate) fn add_teams_cmd() -> Command<'static> {
     return Command::new("teams")
         .aliases(&["t", "team"])
         .about("Manage GUM teams")
+        .arg_required_else_help(true)
         .subcommand(add_create_cmd())
         .subcommand(add_list_cmd())
         .subcommand(add_remove_cmd())

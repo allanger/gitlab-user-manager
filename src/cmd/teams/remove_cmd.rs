@@ -1,14 +1,19 @@
 use std::io::Error;
 
-use clap::{arg, ArgMatches, Command};
+use clap::{ArgMatches, Command};
 
-use crate::{cmd::Cmd, files, output::OutMessage};
+use crate::{
+    args::{team_name::ArgTeamName, Args},
+    cmd::Cmd,
+    files,
+    output::OutMessage,
+};
 
 pub(crate) fn add_remove_cmd() -> Command<'static> {
     return Command::new("remove")
         .alias("r")
         .about("Remove the team from the config file")
-        .arg(arg!(<TEAM_NAME> "Name the team you're removing"));
+        .arg(ArgTeamName::add());
 }
 
 struct RemoveCmd {
@@ -16,17 +21,12 @@ struct RemoveCmd {
 }
 
 pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
-    let team_name = sub_matches.value_of("TEAM_NAME").ok_or(Error::new(
-        std::io::ErrorKind::PermissionDenied,
-        "team name is not specified",
-    ));
-    if team_name.is_err() {
-        return Err(team_name.err().unwrap());
-    }
+    let team_name = match ArgTeamName::parse(sub_matches) {
+        Ok(arg) => arg.value(),
+        Err(err) => return Err(err),
+    };
 
-    Ok(RemoveCmd {
-        team_name: team_name.unwrap().to_string(),
-    })
+    Ok(RemoveCmd { team_name })
 }
 
 impl<'a> Cmd<'a> for RemoveCmd {

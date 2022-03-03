@@ -1,13 +1,13 @@
 use std::io::{Error, ErrorKind};
 
-use clap::{arg, ArgMatches, Command};
+use clap::{ArgMatches, Command};
 
+use crate::args::group_id::ArgGroupId;
+use crate::args::user_id::ArgUserId;
+use crate::args::Args;
 use crate::cmd::Cmd;
+use crate::files;
 use crate::output::OutMessage;
-use crate::{
-    cmd::args::{arg_gitlab_token, arg_gitlab_url, arg_group_id},
-    files,
-};
 
 pub(crate) struct RemoveOwnershipCmd {
     gitlab_user_id: u64,
@@ -17,20 +17,19 @@ pub(crate) fn add_remove_ownership_cmd() -> Command<'static> {
     return Command::new("remove-ownership")
         .alias("ro")
         .about("Remove an ownership from the user")
-        .arg(arg!(<GITLAB_USER_ID> "Provide the GitLab user ID"))
-        .arg(arg_gitlab_token())
-        .arg(arg_gitlab_url())
-        .arg(arg_group_id());
+        .arg(ArgUserId::add())
+        .arg(ArgGroupId::add());
 }
 
 pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
-    let gitlab_group_id: u64 = match sub_matches.value_of_t("group-id") {
-        Ok(pid) => pid,
+    let gitlab_group_id = match ArgGroupId::parse(sub_matches) {
+        Ok(arg) => arg.value(),
         Err(err) => return Err(Error::new(ErrorKind::InvalidInput, err.to_string())),
     };
-    let gitlab_user_id: u64 = match sub_matches.value_of_t("GITLAB_USER_ID") {
-        Ok(pid) => pid,
-        Err(err) => return Err(Error::new(ErrorKind::InvalidInput, err.to_string())),
+
+    let gitlab_user_id = match ArgUserId::parse(sub_matches) {
+        Ok(arg) => arg.value(),
+        Err(err) => return Err(err),
     };
 
     Ok(RemoveOwnershipCmd {
