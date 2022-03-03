@@ -1,6 +1,6 @@
 use std::io::{Error, ErrorKind};
 
-use clap::{arg, ArgMatches, Command};
+use clap::{ArgMatches, Command};
 
 use crate::{
     args::{team_name::ArgTeamName, Args},

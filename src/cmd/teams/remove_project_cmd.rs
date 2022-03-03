@@ -3,11 +3,7 @@ use crate::args::team_name::ArgTeamName;
 use crate::args::Args;
 use crate::cmd::Cmd;
 use crate::output::OutMessage;
-use crate::{
-    cmd::args::{arg_project_id, arg_team_name},
-    files,
-    types::project::Project,
-};
+use crate::{files, types::project::Project};
 use clap::{ArgMatches, Command};
 
 use std::io::{Error, ErrorKind};

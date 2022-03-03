@@ -4,13 +4,13 @@ mod users_cmd;
 
 use std::io::{Error, ErrorKind};
 
-use clap::{Command, ArgMatches};
+use clap::{ArgMatches, Command};
 
 use gitlab::Gitlab;
 
 use crate::{
+    args::{gitlab_token::ArgGitlabToken, gitlab_url::ArgGitlabUrl, Args},
     cmd::Cmd,
-    cmd::args::{arg_gitlab_token, arg_gitlab_url},
 };
 
 /// Register search cmd
@@ -18,8 +18,8 @@ pub(crate) fn add_search_cmd() -> Command<'static> {
     return Command::new("search")
         .aliases(&["s", "find"])
         .about("Search for GitLab entities")
-        .arg(arg_gitlab_token())
-        .arg(arg_gitlab_url())
+        .arg(ArgGitlabToken::add())
+        .arg(ArgGitlabUrl::add())
         .arg_required_else_help(true)
         .subcommand(projects_cmd::find_projects())
         .subcommand(users_cmd::find_users())
@@ -33,27 +33,19 @@ pub(crate) struct SearchCmd<'a> {
 }
 
 pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
-    // Get gitlab token from flags
-    let gitlab_token = sub_matches.value_of("token").ok_or(Error::new(
-        std::io::ErrorKind::PermissionDenied,
-        "gitlab token is not specified",
-    ));
-    if gitlab_token.is_err() {
-        return Err(gitlab_token.err().unwrap());
-    }
-    // Get gitlab url from flags
-    let gitlab_url = sub_matches.value_of("url").ok_or(Error::new(
-        std::io::ErrorKind::PermissionDenied,
-        "gitlab url is not specified",
-    ));
-    if gitlab_url.is_err() {
-        return Err(gitlab_token.err().unwrap());
-    }
+    let gitlab_token = match ArgGitlabToken::parse(sub_matches) {
+        Ok(arg) => arg.value(),
+        Err(err) => return Err(err),
+    };
+    let gitlab_url = match ArgGitlabUrl::parse(sub_matches) {
+        Ok(arg) => arg.value(),
+        Err(err) => return Err(err),
+    };
 
     // Connect to gitlab
     let gitlab_client: Gitlab = match Gitlab::new(
-        gitlab_url.unwrap().to_string(),
-        gitlab_token.unwrap().to_string(),
+        gitlab_url.to_string(),
+        gitlab_token.to_string(),
     ) {
         Ok(g) => g,
         Err(_err) => return Err(Error::new(ErrorKind::Other, _err)),

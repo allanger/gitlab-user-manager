@@ -1,6 +1,6 @@
 use std::io::{Error, ErrorKind};
 
-use clap::{arg, ArgMatches, Command};
+use clap::{ArgMatches, Command};
 use gitlab::Gitlab;
 
 use crate::args::gitlab_token::ArgGitlabToken;
@@ -10,12 +10,7 @@ use crate::args::Args;
 use crate::cmd::Cmd;
 use crate::gitlab::GitlabClient;
 use crate::output::OutMessage;
-use crate::{
-    cmd::args::{arg_gitlab_token, arg_gitlab_url},
-    files,
-    gitlab::GitlabActions,
-    types,
-};
+use crate::{files, gitlab::GitlabActions, types};
 
 pub(crate) fn add_create_cmd() -> Command<'static> {
     return Command::new("create")

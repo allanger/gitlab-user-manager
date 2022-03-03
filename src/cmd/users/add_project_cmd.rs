@@ -1,9 +1,8 @@
 use std::{
     io::{Error, ErrorKind},
-    str::FromStr,
 };
 
-use clap::{arg, ArgMatches, Command};
+use clap::{ArgMatches, Command};
 use gitlab::Gitlab;
 
 use crate::{

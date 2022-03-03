@@ -1,18 +1,13 @@
 use std::io::{Error, ErrorKind};
 
-use clap::{arg, ArgMatches, Command};
+use clap::{ArgMatches, Command};
 
-use crate::args::gitlab_token::ArgGitlabToken;
-use crate::args::gitlab_url::ArgGitlabUrl;
 use crate::args::group_id::ArgGroupId;
 use crate::args::user_id::ArgUserId;
 use crate::args::Args;
 use crate::cmd::Cmd;
+use crate::files;
 use crate::output::OutMessage;
-use crate::{
-    cmd::args::{arg_gitlab_token, arg_gitlab_url, arg_group_id},
-    files,
-};
 
 pub(crate) struct RemoveOwnershipCmd {
     gitlab_user_id: u64,

@@ -1,6 +1,6 @@
-use std::io::{Error, ErrorKind};
+use std::io::Error;
 
-use clap::{arg, ArgMatches, Command};
+use clap::{ArgMatches, Command};
 
 use crate::args::gitlab_token::ArgGitlabToken;
 use crate::args::gitlab_url::ArgGitlabUrl;
@@ -8,11 +8,8 @@ use crate::args::project_id::ArgProjectId;
 use crate::args::user_id::ArgUserId;
 use crate::args::Args;
 use crate::cmd::Cmd;
+use crate::files;
 use crate::output::OutMessage;
-use crate::{
-    cmd::args::{arg_gitlab_token, arg_gitlab_url, arg_project_id},
-    files,
-};
 
 pub(crate) struct RemoveProjectCmd {
     gitlab_user_id: u64,

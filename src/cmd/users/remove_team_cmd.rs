@@ -1,13 +1,13 @@
-use std::io::{Error, ErrorKind};
+use std::io::Error;
 
-use clap::{arg, ArgMatches, Command};
+use clap::{ArgMatches, Command};
 
 use crate::args::team_name::ArgTeamName;
 use crate::args::user_id::ArgUserId;
 use crate::args::Args;
 use crate::cmd::Cmd;
+use crate::files;
 use crate::output::OutMessage;
-use crate::{cmd::args::arg_team_name, files};
 
 pub(crate) struct RemoveTeamCmd {
     gitlab_user_id: u64,

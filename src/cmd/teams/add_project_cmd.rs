@@ -8,17 +8,13 @@ use crate::cmd::Cmd;
 use crate::gitlab::GitlabClient;
 use crate::output::OutMessage;
 use crate::{
-    cmd::args::{arg_access, arg_gitlab_token, arg_gitlab_url, arg_project_id, arg_team_name},
     files,
     gitlab::GitlabActions,
     types::{self, access_level::AccessLevel},
 };
 use clap::{ArgMatches, Command};
 use gitlab::Gitlab;
-use std::{
-    io::{Error, ErrorKind},
-    str::FromStr,
-};
+use std::io::{Error, ErrorKind};
 
 pub(crate) fn add_add_project_cmd() -> Command<'static> {
     return Command::new("add-project")
