@@ -3,30 +3,29 @@ use crate::output::OutMessage;
 use clap::{Arg, ArgMatches};
 use std::io::{Error, Result};
 
-static ARG: &str = "token";
+static ARG: &str = "file";
 
-pub(crate) struct ArgGitlabToken {
+pub(crate) struct ArgFileName {
     value: String,
 }
 
-impl ArgGitlabToken {
+impl ArgFileName {
     pub(crate) fn value(&self) -> String {
         self.value.clone()
     }
 }
 
-impl Args<'_> for ArgGitlabToken {
-    type ArgType = ArgGitlabToken;
+impl Args<'_> for ArgFileName {
+    type ArgType = ArgFileName;
 
     fn add() -> Arg<'static> {
         return Arg::new(ARG)
-            .short('t')
+            .short('f')
             .long(ARG)
             .takes_value(true)
-            .value_name("GITLAB_TOKEN")
-            .help("Provide your GitLab token")
-            .env("GITLAB_TOKEN")
-            .default_value("GITLAB_TOKEN")
+            .value_name("FILE_PATH")
+            .help("Provide a name of the config file")
+            .default_value("gum-config.yaml")
             .global(true);
     }
 
@@ -39,7 +38,7 @@ impl Args<'_> for ArgGitlabToken {
                 Error::new(std::io::ErrorKind::InvalidInput, err_msg)
             })
             .and_then(|value| {
-                return Ok(ArgGitlabToken {
+                return Ok(ArgFileName {
                     value: value.to_string(),
                 });
             })

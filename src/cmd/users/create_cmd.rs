@@ -3,14 +3,17 @@ use std::io::{Error, ErrorKind};
 use clap::{ArgMatches, Command};
 use gitlab::Gitlab;
 
+use crate::args::file_name::ArgFileName;
 use crate::args::gitlab_token::ArgGitlabToken;
 use crate::args::gitlab_url::ArgGitlabUrl;
 use crate::args::user_id::ArgUserId;
 use crate::args::Args;
 use crate::cmd::Cmd;
+use crate::gitlab::GitlabActions;
 use crate::gitlab::GitlabClient;
 use crate::output::OutMessage;
-use crate::{files, gitlab::GitlabActions, types};
+use crate::types::v1::config_file::ConfigFile;
+use crate::types::v1::user::User;
 
 pub(crate) fn add_create_cmd() -> Command<'static> {
     return Command::new("create")
@@ -18,12 +21,14 @@ pub(crate) fn add_create_cmd() -> Command<'static> {
         .about("Add user to the config file")
         .arg(ArgUserId::add())
         .arg(ArgGitlabToken::add())
-        .arg(ArgGitlabUrl::add());
+        .arg(ArgGitlabUrl::add())
+        .arg(ArgFileName::add());
 }
 
 struct CreateCmd {
     gitlab_user_id: u64,
     gitlab_client: Gitlab,
+    file_name: String,
 }
 
 pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
@@ -47,15 +52,21 @@ pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, E
         Err(err) => return Err(err),
     };
 
+    let file_name = match ArgFileName::parse(sub_matches) {
+        Ok(arg) => arg.value(),
+        Err(err) => return Err(err),
+    };
+
     Ok(CreateCmd {
         gitlab_user_id,
         gitlab_client,
+        file_name,
     })
 }
 
 impl<'a> Cmd<'a> for CreateCmd {
     fn exec(&self) -> Result<(), Error> {
-        let mut config = match files::read_config() {
+        let mut config_file = match ConfigFile::read(self.file_name.clone()) {
             Ok(c) => c,
             Err(err) => return Err(err),
         };
@@ -67,25 +78,30 @@ impl<'a> Cmd<'a> for CreateCmd {
             Err(err) => return Err(err),
         };
 
-        let new_user = types::user::User {
+        let new_user = User {
             id: self.gitlab_user_id,
             name: user.name.to_string(),
             ..Default::default()
         };
 
-        if config.users.iter().any(|i| i.id == self.gitlab_user_id) {
+        if config_file
+            .config
+            .users
+            .iter()
+            .any(|i| i.id == self.gitlab_user_id)
+        {
             return Err(Error::new(
                 ErrorKind::AlreadyExists,
                 format!("User {} is already in the config file", new_user.name),
             ));
         } else {
-            config.users.extend([new_user]);
+            config_file.config.users.extend([new_user]);
             OutMessage::message_info_clean(
                 format!("User {} is added to the config", user.name).as_str(),
             );
         }
 
-        let _ = match files::write_config(config) {
+        let _ = match config_file.write(self.file_name.clone()) {
             Ok(()) => return Ok(()),
             Err(err) => return Err(err),
         };

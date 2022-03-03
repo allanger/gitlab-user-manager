@@ -1,28 +1,40 @@
 use std::io::{Error, ErrorKind};
 
-use clap::Command;
+use clap::{ArgMatches, Command};
 
-use crate::{cmd::Cmd, output::OutMessage, types::config::Config};
+use crate::{
+    args::{file_name::ArgFileName, Args},
+    cmd::Cmd,
+    output::OutMessage,
+    types::v1::config_file::ConfigFile,
+};
 
 /// init cmd should be used to generate an empty gum-config
 pub(crate) fn add_init_cmd() -> Command<'static> {
-    return Command::new("init").about("Create a default yaml file in the current directory");
+    return Command::new("init")
+        .about("Create a default yaml file in the current directory")
+        .arg(ArgFileName::add());
 }
 
-pub(crate) struct InitCmd;
+pub(crate) struct InitCmd {
+    file_name: String,
+}
 
-pub(crate) fn prepare<'a>() -> Result<impl Cmd<'a>, Error> {
-    Ok(InitCmd)
+pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
+    let file_name = match ArgFileName::parse(sub_matches) {
+        Ok(arg) => arg.value(),
+        Err(err) => return Err(err),
+    };
+
+    Ok(InitCmd { file_name })
 }
 
 impl<'a> Cmd<'a> for InitCmd {
     fn exec(&self) -> Result<(), Error> {
-        let f = "gum-config.yaml";
-
-        let file = match std::fs::OpenOptions::new()
+        match std::fs::OpenOptions::new()
             .write(true)
             .create_new(true)
-            .open(f)
+            .open(self.file_name.clone())
         {
             Ok(file) => file,
             Err(err) => {
@@ -38,10 +50,19 @@ impl<'a> Cmd<'a> for InitCmd {
             }
         };
 
-        let new_config: Config = Default::default();
-
-        serde_yaml::to_writer(file, &new_config).unwrap();
-        OutMessage::message_empty("Config file is generated, check it out\n $ cat gum-config.yaml");
-        Ok(())
+        let new_config: ConfigFile = Default::default();
+        match new_config.write(self.file_name.clone()) {
+            Ok(_) => {
+                OutMessage::message_empty(
+                    format!(
+                        "Config file is generated, check it out\n $ cat {}",
+                        self.file_name.clone()
+                    )
+                    .as_str(),
+                );
+                return Ok(());
+            }
+            Err(err) => return Err(err),
+        }
     }
 }

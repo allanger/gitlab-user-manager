@@ -1,5 +1,5 @@
 use super::Args;
-use crate::{output::OutMessage, types::access_level::AccessLevel};
+use crate::{output::OutMessage, types::v1::access_level::AccessLevel};
 use clap::{Arg, ArgMatches};
 use std::{
     io::{Error, Result},

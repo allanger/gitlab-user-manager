@@ -1,0 +1,22 @@
+[
+  {
+    "user_id": {
+      "projects": [
+        {
+          "project_id": "access_level"
+        },
+        {
+          "project_id": "access_level"
+        }
+      ],
+      "groups": [
+        {
+          "group_id": "access_level"
+        },
+        {
+          "group_id": "access_level"
+        }
+      ]
+    }
+  }
+]

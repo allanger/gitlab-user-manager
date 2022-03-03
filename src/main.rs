@@ -1,9 +1,8 @@
+mod args;
 mod cmd;
-mod files;
 mod gitlab;
 mod output;
 mod types;
-mod args;
 
 use clap::Command;
 use cmd::{
@@ -35,8 +34,8 @@ fn main() {
     let result: Result<(), Error>;
 
     match matches.subcommand() {
-        Some(("init", _)) => {
-            result = match init::prepare() {
+        Some(("init", sub_matches)) => {
+            result = match init::prepare(sub_matches) {
                 Ok(cmd) => cmd.exec(),
                 Err(err) => Err(err),
             };
