@@ -2,6 +2,11 @@ use std::io::{Error, ErrorKind};
 
 use clap::{arg, ArgMatches, Command};
 
+use crate::args::gitlab_token::ArgGitlabToken;
+use crate::args::gitlab_url::ArgGitlabUrl;
+use crate::args::project_id::ArgProjectId;
+use crate::args::user_id::ArgUserId;
+use crate::args::Args;
 use crate::cmd::Cmd;
 use crate::output::OutMessage;
 use crate::{
@@ -17,20 +22,21 @@ pub(crate) fn add_remove_project_cmd() -> Command<'static> {
     return Command::new("remove-project")
         .alias("rp")
         .about("Remove user from the project")
-        .arg(arg!(<GITLAB_USER_ID> "Provide the GitLab user ID"))
-        .arg(arg_gitlab_token())
-        .arg(arg_gitlab_url())
-        .arg(arg_project_id());
+        .arg(ArgUserId::add())
+        .arg(ArgGitlabToken::add())
+        .arg(ArgGitlabUrl::add())
+        .arg(ArgProjectId::add());
 }
 
 pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
-    let gitlab_project_id: u64 = match sub_matches.value_of_t("project-id") {
-        Ok(pid) => pid,
-        Err(err) => return Err(Error::new(ErrorKind::InvalidInput, err.to_string())),
+    let gitlab_project_id: u64 = match ArgProjectId::parse(sub_matches) {
+        Ok(arg) => arg.value(),
+        Err(err) => return Err(err),
     };
-    let gitlab_user_id: u64 = match sub_matches.value_of_t("GITLAB_USER_ID") {
-        Ok(pid) => pid,
-        Err(err) => return Err(Error::new(ErrorKind::InvalidInput, err.to_string())),
+
+    let gitlab_user_id = match ArgUserId::parse(sub_matches) {
+        Ok(arg) => arg.value(),
+        Err(err) => return Err(err),
     };
 
     Ok(RemoveProjectCmd {

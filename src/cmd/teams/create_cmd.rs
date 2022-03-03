@@ -2,13 +2,19 @@ use std::io::{Error, ErrorKind};
 
 use clap::{arg, ArgMatches, Command};
 
-use crate::{cmd::Cmd, files, output::OutMessage, types};
+use crate::{
+    args::{team_name::ArgTeamName, Args},
+    cmd::Cmd,
+    files,
+    output::OutMessage,
+    types,
+};
 
 pub(crate) fn add_create_cmd() -> Command<'static> {
     return Command::new("create")
         .alias("c")
         .about("Add a team to the config file")
-        .arg(arg!(<TEAM_NAME> "Name the team you're creating"));
+        .arg(ArgTeamName::add());
 }
 
 struct CreateCmd {
@@ -16,17 +22,12 @@ struct CreateCmd {
 }
 
 pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
-    let team_name = sub_matches.value_of("TEAM_NAME").ok_or(Error::new(
-        std::io::ErrorKind::PermissionDenied,
-        "team name is not specified",
-    ));
-    if team_name.is_err() {
-        return Err(team_name.err().unwrap());
-    }
+    let team_name = match ArgTeamName::parse(sub_matches) {
+        Ok(arg) => arg.value(),
+        Err(err) => return Err(err),
+    };
 
-    Ok(CreateCmd {
-        team_name: team_name.unwrap().to_string(),
-    })
+    Ok(CreateCmd { team_name })
 }
 
 impl<'a> Cmd<'a> for CreateCmd {

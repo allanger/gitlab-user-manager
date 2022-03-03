@@ -2,7 +2,7 @@ use super::Args;
 use clap::{Arg, ArgMatches};
 use std::io::{Error, ErrorKind, Result};
 
-  static ARG: &str = "user-id";
+static ARG: &str = "user-id";
 
 pub(crate) struct ArgUserId {
     value: u64,

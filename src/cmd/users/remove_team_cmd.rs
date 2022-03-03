@@ -2,6 +2,9 @@ use std::io::{Error, ErrorKind};
 
 use clap::{arg, ArgMatches, Command};
 
+use crate::args::team_name::ArgTeamName;
+use crate::args::user_id::ArgUserId;
+use crate::args::Args;
 use crate::cmd::Cmd;
 use crate::output::OutMessage;
 use crate::{cmd::args::arg_team_name, files};
@@ -14,25 +17,23 @@ pub(crate) fn add_remove_team_cmd() -> Command<'static> {
     return Command::new("remove-team")
         .alias("rt")
         .about("Remove a user from the team")
-        .arg(arg!(<GITLAB_USER_ID> "Provide the GitLab user ID"))
-        .arg(arg_team_name());
+        .arg(ArgUserId::add())
+        .arg(ArgTeamName::add());
 }
 
 pub(crate) fn prepare(sub_matches: &'_ ArgMatches) -> Result<impl Cmd<'_>, Error> {
-    let gitlab_user_id: u64 = match sub_matches.value_of_t("GITLAB_USER_ID") {
-        Ok(pid) => pid,
-        Err(err) => return Err(Error::new(ErrorKind::InvalidInput, err.to_string())),
+    let gitlab_user_id = match ArgUserId::parse(sub_matches) {
+        Ok(arg) => arg.value(),
+        Err(err) => return Err(err),
     };
-    let team_name = sub_matches.value_of("team-name").ok_or(Error::new(
-        std::io::ErrorKind::PermissionDenied,
-        "team name is not specified",
-    ));
-    if team_name.is_err() {
-        return Err(team_name.err().unwrap());
-    }
+
+    let team_name = match ArgTeamName::parse(sub_matches) {
+        Ok(arg) => arg.value(),
+        Err(err) => return Err(err),
+    };
 
     Ok(RemoveTeamCmd {
-        team_name: team_name.unwrap().to_string(),
+        team_name,
         gitlab_user_id,
     })
 }

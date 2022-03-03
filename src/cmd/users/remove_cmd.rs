@@ -1,14 +1,20 @@
-use std::io::{Error, ErrorKind};
+use std::io::Error;
 
-use clap::{arg, ArgMatches, Command};
+use clap::{ArgMatches, Command};
 
-use crate::{cmd::Cmd, files, output::OutMessage, types::user::User};
+use crate::{
+    args::{user_id::ArgUserId, Args},
+    cmd::Cmd,
+    files,
+    output::OutMessage,
+    types::user::User,
+};
 
 pub(crate) fn add_remove_cmd() -> Command<'static> {
     return Command::new("remove")
         .alias("r")
         .about("Remove user from the config file")
-        .arg(arg!(<GITLAB_USER_ID> "Provide the GitLab user ID"));
+        .arg(ArgUserId::add());
 }
 
 struct RemoveCmd {
@@ -16,9 +22,9 @@ struct RemoveCmd {
 }
 
 pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
-    let gitlab_user_id: u64 = match sub_matches.value_of_t("GITLAB_USER_ID") {
-        Ok(uid) => uid,
-        Err(err) => return Err(Error::new(ErrorKind::InvalidInput, err.to_string())),
+    let gitlab_user_id = match ArgUserId::parse(sub_matches) {
+        Ok(arg) => arg.value(),
+        Err(err) => return Err(err),
     };
 
     Ok(RemoveCmd { gitlab_user_id })

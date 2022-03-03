@@ -28,7 +28,7 @@ pub(crate) fn add_add_project_cmd() -> Command<'static> {
     return Command::new("add-project")
         .alias("ap")
         .about("Add user to project")
-        .arg(arg!(<GITLAB_USER_ID> "Provide the GitLab user ID"))
+        .arg(ArgUserId::add())
         .arg(ArgGitlabToken::add())
         .arg(ArgGitlabUrl::add())
         .arg(ArgAccess::add())

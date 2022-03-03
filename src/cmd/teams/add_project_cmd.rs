@@ -1,3 +1,9 @@
+use crate::args::access_level::ArgAccess;
+use crate::args::gitlab_token::ArgGitlabToken;
+use crate::args::gitlab_url::ArgGitlabUrl;
+use crate::args::project_id::ArgProjectId;
+use crate::args::team_name::ArgTeamName;
+use crate::args::Args;
 use crate::cmd::Cmd;
 use crate::gitlab::GitlabClient;
 use crate::output::OutMessage;
@@ -18,11 +24,11 @@ pub(crate) fn add_add_project_cmd() -> Command<'static> {
     return Command::new("add-project")
         .alias("ap")
         .about("Remove the team from the config file")
-        .arg(arg_team_name())
-        .arg(arg_access())
-        .arg(arg_project_id())
-        .arg(arg_gitlab_token())
-        .arg(arg_gitlab_url());
+        .arg(ArgTeamName::add())
+        .arg(ArgAccess::add())
+        .arg(ArgProjectId::add())
+        .arg(ArgGitlabToken::add())
+        .arg(ArgGitlabUrl::add());
 }
 struct AddProjectCmd {
     team_name: String,
@@ -32,60 +38,38 @@ struct AddProjectCmd {
 }
 
 pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
-    let gitlab_token = sub_matches.value_of("token").ok_or(Error::new(
-        std::io::ErrorKind::PermissionDenied,
-        "gitlab token is not specified",
-    ));
-    if gitlab_token.is_err() {
-        return Err(gitlab_token.err().unwrap());
-    }
-    // Get gitlab url from flags
-    let gitlab_url = sub_matches.value_of("url").ok_or(Error::new(
-        std::io::ErrorKind::PermissionDenied,
-        "gitlab url is not specified",
-    ));
-    if gitlab_url.is_err() {
-        return Err(gitlab_token.err().unwrap());
-    }
-
+    let gitlab_token = match ArgGitlabToken::parse(sub_matches) {
+        Ok(arg) => arg.value(),
+        Err(err) => return Err(err),
+    };
+    let gitlab_url = match ArgGitlabUrl::parse(sub_matches) {
+        Ok(arg) => arg.value(),
+        Err(err) => return Err(err),
+    };
     // Connect to gitlab
-    let gitlab_client: Gitlab = match Gitlab::new(
-        gitlab_url.unwrap().to_string(),
-        gitlab_token.unwrap().to_string(),
-    ) {
+    let gitlab_client: Gitlab = match Gitlab::new(gitlab_url.to_string(), gitlab_token.to_string())
+    {
         Ok(g) => g,
         Err(_err) => return Err(Error::new(ErrorKind::Other, _err)),
     };
 
-    let gitlab_project_id: u64 = match sub_matches.value_of_t("project-id") {
-        Ok(pid) => pid,
-        Err(err) => return Err(Error::new(ErrorKind::InvalidInput, err.to_string())),
+    let gitlab_project_id: u64 = match ArgProjectId::parse(sub_matches) {
+        Ok(arg) => arg.value(),
+        Err(err) => return Err(err),
     };
 
-    let access_level: AccessLevel;
-    let access_level_str = sub_matches.value_of("access").ok_or(Error::new(
-        std::io::ErrorKind::PermissionDenied,
-        "team name is not specified",
-    ));
-    if access_level_str.is_err() {
-        return Err(access_level_str.err().unwrap());
-    }
-
-    access_level = match AccessLevel::from_str(&access_level_str.unwrap().to_string()) {
-        Ok(l) => l,
+    let access_level = match ArgAccess::parse(sub_matches) {
+        Ok(arg) => arg.value(),
         Err(e) => return Err(e),
     };
 
-    let team_name = sub_matches.value_of("team-name").ok_or(Error::new(
-        std::io::ErrorKind::PermissionDenied,
-        "team name is not s",
-    ));
-    if team_name.is_err() {
-        return Err(team_name.err().unwrap());
-    }
+    let team_name = match ArgTeamName::parse(sub_matches) {
+        Ok(arg) => arg.value(),
+        Err(err) => return Err(err),
+    };
 
     Ok(AddProjectCmd {
-        team_name: team_name.unwrap().to_string(),
+        team_name,
         access_level,
         gitlab_project_id,
         gitlab_client,

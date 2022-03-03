@@ -235,7 +235,7 @@ mod sync_cmd {
                             for (i, s) in state.clone().iter().enumerate() {
                                 if s.user_id == a.user_id {
                                     for (pi, p) in s.projects.iter().enumerate() {
-                                        if p.id != a.entity_id {
+                                        if p.id == a.entity_id {
                                             state[i].projects[pi].access_level = a.access;
                                         }
                                     }
