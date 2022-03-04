@@ -32,7 +32,7 @@ What needs to be done before the tool can actually be used.
   ```
 
 - [ ] Async actions
-- [ ] Get rid of state file
+- [X] Get rid of state file
 - [X] Use spinners for output
 - [ ] Add auto suggestions for every command
 - [ ] Start versioning the config file and add possibility to migrate from to a newer version. And add kinda annotation to let gum know it's a gum-config. Something like that
@@ -63,8 +63,8 @@ What needs to be done before the tool can actually be used.
   ```
 And remove each user, which is being updated anyhow, from groups provided via head_groups (remove from groups, sub groups and projects)
 
-- [ ] Remove extra fields from state. State should only contain IDs and access_level
-- [ ] Auto check for updates
+- [X] Remove extra fields from state. State should only contain IDs and access_level
+- [X] Auto check for updates
 - [ ] Add feature for inviting users, if it's possible. 
   When user is invited, he won't have an id until he confirms invitation. But after he confirms, he will be added to projects where he's been invited. So I think it should look like that:
   -  New object is added to config

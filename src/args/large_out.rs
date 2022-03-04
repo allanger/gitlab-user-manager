@@ -2,30 +2,30 @@ use clap::{Arg, ArgMatches};
 
 use super::Args;
 
-static ARG: &str = "dry-run";
-pub(crate) struct ArgDryRun {
+static ARG: &str = "large";
+pub(crate) struct ArgLargeOut {
     value: bool,
 }
 
-impl ArgDryRun {
+impl ArgLargeOut {
     pub(crate) fn value(&self) -> bool {
         self.value
     }
 }
 
-impl Args<'_> for ArgDryRun {
-    type ArgType = ArgDryRun;
+impl Args<'_> for ArgLargeOut {
+    type ArgType = ArgLargeOut;
 
     fn add() -> Arg<'static> {
         Arg::new(ARG)
             .long(ARG)
-            .short('d')
+            .short('l')
             .takes_value(false)
-            .help("Use if you wanna see what's gonna happen without actually applying a  new configuration")
+            .help("Display a lot of data")
     }
 
     fn parse<'b>(sub_matches: &'b ArgMatches) -> std::io::Result<Self::ArgType> {
-        Ok(ArgDryRun {
+        Ok(ArgLargeOut {
             value: sub_matches.is_present(ARG),
         })
     }
