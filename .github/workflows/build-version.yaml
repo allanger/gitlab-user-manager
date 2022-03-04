@@ -14,13 +14,10 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            system: x86_64-Linux
             target: x86_64-unknown-linux-gnu
           - os: macos-latest
-            system: x86_64-Darwin
             target: x86_64-apple-darwin
           - os: macos-latest
-            system: arm64-Darwin
             target: aarch64-apple-darwin
     steps:
       - name: Checkout
@@ -39,7 +36,7 @@ jobs:
       - name: Archive build artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: build-${{matrix.system}}
+          name: build-${{matrix.target}}
           path: ${{  github.workspace  }}/target/${{ matrix.target }}/release/gum
 
   release:
