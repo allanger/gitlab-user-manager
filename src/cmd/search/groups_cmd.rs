@@ -10,7 +10,7 @@ use tabled::Table;
 use crate::{
     cmd::Cmd,
     gitlab::Group,
-    output::{OutMessage, OutSpinner},
+    output::{out_message::OutMessage, out_spinner::OutSpinner},
 };
 
 pub(crate) fn find_groups<'a>() -> Command<'a> {

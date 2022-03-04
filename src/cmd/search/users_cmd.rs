@@ -7,7 +7,7 @@ use gitlab::{
 };
 use tabled::Table;
 
-use crate::{cmd::Cmd, gitlab::User, output::{OutMessage, OutSpinner}};
+use crate::{cmd::Cmd, gitlab::User, output::{out_message::OutMessage, out_spinner::OutSpinner}};
 
 pub(crate) fn find_users<'a>() -> Command<'a> {
     return Command::new("users")

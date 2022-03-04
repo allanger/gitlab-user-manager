@@ -12,7 +12,7 @@ use serde::Deserialize;
 use tabled::Tabled;
 
 use crate::{
-    output::{OutMessage, OutSpinner},
+    output::{out_message::OutMessage, out_spinner::OutSpinner},
     types::v1::access_level::AccessLevel,
 };
 
@@ -20,6 +20,24 @@ pub(crate) struct GitlabClient {
     gitlab_client: Gitlab,
 }
 
+impl GitlabClientApi for GitlabClient {
+    type Client = Gitlab;
+
+    fn get_client(&self) -> Self::Client {
+        return self.gitlab_client.clone();
+    }
+}
+
+pub(crate) trait GitlabClientApi {
+    type Client;
+    fn get_client(&self) -> Self::Client;
+}
+
+/*
+======================================================================================================================
+======================================================== LEGACY ======================================================
+======================================================================================================================
+*/
 impl GitlabClient {
     pub(crate) fn new(client: Gitlab) -> Self {
         Self {

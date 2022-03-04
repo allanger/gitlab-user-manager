@@ -3,7 +3,7 @@ use crate::args::project_id::ArgProjectId;
 use crate::args::team_name::ArgTeamName;
 use crate::args::Args;
 use crate::cmd::Cmd;
-use crate::output::OutMessage;
+use crate::output::out_message::OutMessage;
 use crate::types::v1::config_file::ConfigFile;
 use crate::types::v1::project::Project;
 use clap::{ArgMatches, Command};

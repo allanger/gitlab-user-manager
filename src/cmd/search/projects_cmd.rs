@@ -10,7 +10,7 @@ use tabled::Table;
 use crate::{
     cmd::Cmd,
     gitlab::Project,
-    output::{OutMessage, OutSpinner},
+    output::{out_message::OutMessage, out_spinner::OutSpinner},
 };
 
 pub(crate) fn find_projects<'a>() -> Command<'a> {

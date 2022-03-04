@@ -15,7 +15,7 @@ use crate::args::state_destination::ArgStateDestination;
 use crate::args::state_source::ArgStateSource;
 use crate::args::write_state::ArgWriteState;
 use crate::cmd::Cmd;
-use crate::output::OutMessage;
+use crate::output::out_message::OutMessage;
 use crate::types::v1::config_file::ConfigFile;
 use crate::types::v1::state::State;
 
@@ -177,7 +177,7 @@ mod sync_cmd {
     use ::gitlab::Gitlab;
 
     use crate::gitlab::{GitlabActions, GitlabClient};
-    use crate::output::{OutMessage, OutSpinner, OutSum};
+    use crate::output::{out_message::OutMessage, out_spinner::OutSpinner, out_sum::OutSum};
 
     use crate::types::v1::{
         access_level::AccessLevel, config::Config, ownership::Ownership, project::Project,

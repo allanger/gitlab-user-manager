@@ -14,7 +14,7 @@ use cmd::{
     users::{self, add_users_cmd},
     Cmd,
 };
-use output::{OutMessage, OutSum};
+use output::{out_message::OutMessage, out_sum::OutSum};
 use std::io::{Error, ErrorKind};
 use std::process::exit;
 
@@ -37,6 +37,7 @@ fn main() {
 
     match matches.subcommand() {
         Some(("init", sub_matches)) => {
+            println!("{:?}", sub_matches);
             result = match init::prepare(sub_matches) {
                 Ok(cmd) => cmd.exec(),
                 Err(err) => Err(err),
