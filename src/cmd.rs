@@ -1,6 +1,6 @@
 pub(crate) mod init;
 pub(crate) mod search;
-pub(crate) mod self_update;
+pub(crate) mod upgrade;
 pub(crate) mod sync;
 pub(crate) mod teams;
 pub(crate) mod users;

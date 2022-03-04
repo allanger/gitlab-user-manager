@@ -8,9 +8,9 @@ use clap::Command;
 use cmd::{
     init::{self, add_init_cmd},
     search::{self, add_search_cmd},
-    self_update::{self, add_self_update_cmd},
     sync::{self, add_sync_cmd},
     teams::{self, add_teams_cmd},
+    upgrade::{self, add_upgrade_cmd},
     users::{self, add_users_cmd},
     Cmd,
 };
@@ -30,7 +30,7 @@ fn main() {
         .subcommand(add_teams_cmd())
         .subcommand(add_search_cmd())
         .subcommand(add_sync_cmd())
-        .subcommand(add_self_update_cmd())
+        .subcommand(add_upgrade_cmd())
         .get_matches();
 
     let result: Result<(), Error>;
@@ -66,8 +66,8 @@ fn main() {
                 Err(err) => Err(err),
             };
         }
-        Some(("self-update", sub_matches)) => {
-            result = match self_update::prepare(sub_matches) {
+        Some(("upgrade", sub_matches)) => {
+            result = match upgrade::prepare(sub_matches) {
                 Ok(cmd) => cmd.exec(),
                 Err(err) => Err(err),
             };
@@ -75,6 +75,7 @@ fn main() {
 
         _ => result = Err(Error::new(ErrorKind::InvalidInput, "No command provided")),
     }
+
     match result {
         Err(err) => {
             OutSum::sum_failure(&err.to_string());
