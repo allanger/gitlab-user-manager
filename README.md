@@ -8,7 +8,7 @@
 
 Prebuilt binaries exist for **Linux x86_64** and **MacOS arm64** and **x86_64**
 ```
-$ export VERSION=v0.0.2 && curl -LJO  https://github.com/allanger/gitlab-user-manager/releases/download/$VERSION/gum-$VERSION-$(arch)-$(uname) && mv gum-$VERSION-$(arch)-$(uname) gum && chmod +x gum
+$ curl https://raw.githubusercontent.com/allanger/gitlab-user-manager/main/scripts/download_gum.sh | bash
 $ gum -h
 ```
 ### Docker
@@ -72,7 +72,7 @@ $ gum users add-team USER_ID team-1 team-2
 9. Apply config
 ```
 ## to see what's gonna happen
-$ gum sync --dry-run true 
+$ gum sync --dry-run
 ## to apply 
 $ gum sync 
 ```
