@@ -10,7 +10,7 @@ use crate::cmd::Cmd;
 use crate::output::out_message::OutMessage;
 use crate::types::v1::config_file::ConfigFile;
 
-pub(crate) struct RemoveOwnershipCmd {
+pub(crate) struct RemoveGroupCmd {
     gitlab_user_id: u64,
     gitlab_group_id: u64,
     file_name: String,
@@ -39,14 +39,14 @@ pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, E
         Err(err) => return Err(err),
     };
 
-    Ok(RemoveOwnershipCmd {
+    Ok(RemoveGroupCmd {
         gitlab_group_id,
         gitlab_user_id,
         file_name,
     })
 }
 
-impl<'a> Cmd<'a> for RemoveOwnershipCmd {
+impl<'a> Cmd<'a> for RemoveGroupCmd {
     fn exec(&self) -> Result<(), Error> {
         let mut config_file = match ConfigFile::read(self.file_name.clone()) {
             Ok(c) => c,
@@ -55,14 +55,14 @@ impl<'a> Cmd<'a> for RemoveOwnershipCmd {
 
         for u in config_file.config.users.iter_mut() {
             if u.id == self.gitlab_user_id {
-                for (i, o) in u.ownerships.iter().enumerate() {
+                for (i, o) in u.groups.iter().enumerate() {
                     if o.id == self.gitlab_group_id {
                         OutMessage::message_info_clean(
                             format!("Removing ownership on {} for user {}", o.name, u.name)
                                 .as_str(),
                         );
 
-                        u.ownerships.remove(i);
+                        u.groups.remove(i);
                         break;
                     }
                 }

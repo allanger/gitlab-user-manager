@@ -8,5 +8,5 @@ pub struct User {
     pub(crate) name: String,
     pub(crate) teams: Vec<String>,
     pub(crate) projects: Vec<Project>,
-    pub(crate) ownerships: Vec<Group>,
+    pub(crate) groups: Vec<Group>,
 }

@@ -45,8 +45,8 @@ impl<'a> Cmd<'a> for ListCmd {
             if self.large_out {
                 message.push_str(
                     format!(
-                        "\nprojects: {:?}\nteams: {:?}\nownerships: {:?}\n",
-                        user.projects, user.teams, user.ownerships
+                        "\nprojects: {:?}\nteams: {:?}\ngroups: {:?}\n",
+                        user.projects, user.teams, user.groups
                     )
                     .as_str(),
                 );

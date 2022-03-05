@@ -3,6 +3,7 @@ use std::io::{Error, ErrorKind};
 use clap::{ArgMatches, Command};
 use gitlab::Gitlab;
 
+use crate::args::access_level::ArgAccess;
 use crate::args::file_name::ArgFileName;
 use crate::args::gitlab_token::ArgGitlabToken;
 use crate::args::gitlab_url::ArgGitlabUrl;
@@ -12,14 +13,16 @@ use crate::args::Args;
 use crate::cmd::Cmd;
 use crate::gitlab::{GitlabActions, GitlabClient};
 use crate::output::{out_message::OutMessage, out_spinner::OutSpinner};
+use crate::types::v1::access_level::AccessLevel;
 use crate::types::v1::config_file::ConfigFile;
-use crate::types::v1::group::Ownership;
+use crate::types::v1::group::Group;
 
-pub(crate) struct AddOwnershipCmd {
+pub(crate) struct AddGroupCmd {
     file_name: String,
     gitlab_user_id: u64,
     gitlab_group_id: u64,
     gitlab_client: Gitlab,
+    access_level: AccessLevel,
 }
 pub(crate) fn add_add_ownership_cmd() -> Command<'static> {
     return Command::new("add-ownership")
@@ -29,6 +32,7 @@ pub(crate) fn add_add_ownership_cmd() -> Command<'static> {
         .arg(ArgGitlabUrl::add())
         .arg(ArgGroupId::add())
         .arg(ArgUserId::add())
+        .arg(ArgAccess::add())
         .arg(ArgFileName::add());
 }
 
@@ -59,20 +63,26 @@ pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, E
         Err(err) => return Err(Error::new(ErrorKind::InvalidInput, err.to_string())),
     };
 
+    let access_level = match ArgAccess::parse(sub_matches) {
+        Ok(arg) => arg.value(),
+        Err(e) => return Err(e),
+    };
+
     let file_name = match ArgFileName::parse(sub_matches) {
         Ok(arg) => arg.value(),
         Err(err) => return Err(err),
     };
 
-    Ok(AddOwnershipCmd {
+    Ok(AddGroupCmd {
         gitlab_group_id,
         gitlab_client,
         gitlab_user_id,
         file_name,
+        access_level,
     })
 }
 
-impl<'a> Cmd<'a> for AddOwnershipCmd {
+impl<'a> Cmd<'a> for AddGroupCmd {
     fn exec(&self) -> Result<(), Error> {
         let mut config_file = match ConfigFile::read(self.file_name.clone()) {
             Ok(c) => c,
@@ -94,12 +104,13 @@ impl<'a> Cmd<'a> for AddOwnershipCmd {
                     "Adding {} to {} as owner",
                     user.name, group.name
                 ));
-                let o = Ownership {
+                let o = Group {
                     id: group.id,
                     name: group.name.to_string(),
                     url: group.web_url.to_string(),
+                    access_level: self.access_level,
                 };
-                if user.ownerships.iter().any(|i| i.id == o.id) {
+                if user.groups.iter().any(|i| i.id == o.id) {
                     return Err(Error::new(
                         ErrorKind::AlreadyExists,
                         format!(
@@ -108,7 +119,7 @@ impl<'a> Cmd<'a> for AddOwnershipCmd {
                         ),
                     ));
                 }
-                user.ownerships.extend([o]);
+                user.groups.extend([o]);
                 spinner.spinner_success("Added".to_string());
             }
         }
