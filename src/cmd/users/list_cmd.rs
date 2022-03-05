@@ -41,11 +41,11 @@ impl<'a> Cmd<'a> for ListCmd {
         };
 
         for user in config_file.config.users {
-            let mut message = format!("{} - {}:\n", user.id, user.name);
+            let mut message = format!("{} - {}", user.id, user.name);
             if self.large_out {
                 message.push_str(
                     format!(
-                        "projects: {:?}\nteams: {:?}\nownerships: {:?}\n",
+                        "\nprojects: {:?}\nteams: {:?}\nownerships: {:?}\n",
                         user.projects, user.teams, user.ownerships
                     )
                     .as_str(),

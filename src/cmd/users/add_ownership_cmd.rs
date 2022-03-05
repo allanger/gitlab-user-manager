@@ -13,7 +13,7 @@ use crate::cmd::Cmd;
 use crate::gitlab::{GitlabActions, GitlabClient};
 use crate::output::{out_message::OutMessage, out_spinner::OutSpinner};
 use crate::types::v1::config_file::ConfigFile;
-use crate::types::v1::ownership::Ownership;
+use crate::types::v1::group::Ownership;
 
 pub(crate) struct AddOwnershipCmd {
     file_name: String,

@@ -1,20 +1,7 @@
 # MVP
 What needs to be done before the tool can actually be used.
-- [X] Implement all required gitlab API
-  - APIs
-    - Add members
-    - Delete members
-    - Update members
-  - On adding handle error User Already Exists
-  - On removing handle error User Not Found 
-  - Add corresponding output to error handling (Already Added, Not Found)
-
-- [ ] Get rid of billions of loops and start using HashMaps
 - [ ] Add tests
-- [X] Create a Dockerfile and GitHub Actions for tests and releases
-- [ ] Refactor whole arguments module. Maybe rewrite it to methods or something
 - [ ] Refactor error handling
-- [ ] Write good documentation in README.md
 
 # Nice to have
 - [ ] Add a `describe` command foreach config entity 
@@ -32,8 +19,6 @@ What needs to be done before the tool can actually be used.
   ```
 
 - [ ] Async actions
-- [X] Get rid of state file
-- [X] Use spinners for output
 - [ ] Add auto suggestions for every command
 - [ ] Start versioning the config file and add possibility to migrate from to a newer version. And add kinda annotation to let gum know it's a gum-config. Something like that
   ```
@@ -75,7 +60,7 @@ And remove each user, which is being updated anyhow, from groups provided via he
    teams: []
    groups: []
   ```
-  - On each sync this invites should be checked for confirmation (if there so no such possibility, the whole invite ting seems impossible)
+  - On each sync this invites should be checked for confirmation (if there so no such possibility, the whole invite thing seems impossible)h
   - If it's confirmed, the user should be automatically added to users and to state
 - [ ] Add patterns for checking users emails and usernames
 # Maybe nice to have

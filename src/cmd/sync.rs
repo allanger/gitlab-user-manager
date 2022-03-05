@@ -180,7 +180,7 @@ mod sync_cmd {
     use crate::output::{out_message::OutMessage, out_spinner::OutSpinner, out_sum::OutSum};
 
     use crate::types::v1::{
-        access_level::AccessLevel, config::Config, ownership::Ownership, project::Project,
+        access_level::AccessLevel, config::Config, group::Ownership, project::Project,
         state::State, user::User,
     };
 
