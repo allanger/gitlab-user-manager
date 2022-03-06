@@ -33,7 +33,6 @@ impl Args<'_> for ArgGroupList {
 
     fn parse<'a>(sub_matches: &'a ArgMatches) -> Result<Self> {
         let value = match sub_matches.values_of(ARG) {
-            // TODO: Handle parsing error
             Some(v) => v.map(|f| f.parse::<u64>().unwrap()).collect(),
             None => {
                 return Err(Error::new(
