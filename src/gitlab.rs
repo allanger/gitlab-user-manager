@@ -8,12 +8,13 @@ use gitlab::{
     api::{self, groups, projects, users, ApiError, Query},
     Gitlab,
 };
+// use gitlab::AccessLevel;
 use serde::Deserialize;
 use tabled::Tabled;
 
 use crate::{
     output::{out_message::OutMessage, out_spinner::OutSpinner},
-    types::v1::access_level::AccessLevel,
+    types::v1::{access_level::AccessLevel, group, project},
 };
 
 pub(crate) struct GitlabClient {
@@ -76,6 +77,11 @@ pub(crate) trait GitlabActions {
         gid: u64,
         access_level: AccessLevel,
     ) -> Result<String, Error>;
+
+    fn get_subgroups(&self, group_name: String, id: u64) -> Vec<Group>;
+    fn get_projects(&self, group_name: String, id: u64) -> Vec<Project>;
+    fn get_project_members(&self, name: String, id: u64) -> Vec<CustomMember>;
+    fn get_group_members(&self, name: String, id: u64) -> Vec<CustomMember>;
 }
 
 #[derive(Debug, Deserialize, Tabled)]
@@ -85,6 +91,17 @@ pub(crate) struct Project {
     pub(crate) web_url: String,
 }
 
+impl Project {
+    pub(crate) fn to_gum_project(&self, member: CustomMember) -> Result<project::Project, Error> {
+        let project = project::Project {
+            id: self.id,
+            name: self.name.clone(),
+            access_level: AccessLevel::from_gitlab_access_level(member.access_level),
+        };
+        Ok(project)
+    }
+}
+
 #[derive(Debug, Deserialize, Tabled)]
 pub(crate) struct User {
     pub(crate) id: u64,
@@ -92,12 +109,33 @@ pub(crate) struct User {
     pub(crate) name: String,
     pub(crate) web_url: String,
 }
-#[derive(Debug, Deserialize, Tabled)]
+#[derive(Debug, Deserialize, Tabled, Clone)]
+pub(crate) struct CustomMember {
+    pub(crate) id: u64,
+    pub(crate) access_level: gitlab::AccessLevel,
+    pub(crate) username: String,
+    pub(crate) name: String,
+    pub(crate) web_url: String,
+}
+
+#[derive(Debug, Deserialize, Tabled, Clone)]
 
 pub(crate) struct Group {
     pub(crate) id: u64,
     pub(crate) name: String,
     pub(crate) web_url: String,
+}
+
+impl Group {
+    pub(crate) fn to_gum_group(&self, member: CustomMember) -> Result<group::Group, Error> {
+        let group = group::Group {
+            id: self.id,
+            name: self.name.clone(),
+            url: self.web_url.clone(),
+            access_level: AccessLevel::from_gitlab_access_level(member.access_level),
+        };
+        Ok(group)
+    }
 }
 
 impl GitlabActions for GitlabClient {
@@ -350,5 +388,68 @@ impl GitlabActions for GitlabClient {
             Ok(_) => return Ok("Updated".to_string()),
             Err(_) => return Err(Error::new(ErrorKind::AddrNotAvailable, "asd")),
         };
+    }
+
+    fn get_subgroups(&self, group_name: String, id: u64) -> Vec<Group> {
+        let spinner = OutSpinner::spinner_start("Getting subgroups".to_string());
+
+        let mut groups: Vec<Group> = Vec::new();
+        let query = match groups::subgroups::GroupSubgroups::builder()
+            .group(id)
+            .all_available(true)
+            .build()
+        {
+            Ok(q) => q,
+            Err(_) => todo!(),
+        };
+        let head: Vec<Group> = query.query(&self.gitlab_client).unwrap();
+        if head.len() > 0 {
+            for g in head.iter() {
+                let sub: Vec<Group> = self.get_subgroups(g.name.clone(), g.id);
+                if sub.len() > 0 {
+                    groups.extend(sub);
+                }
+            }
+        }
+        OutSpinner::spinner_success(spinner, format!("{}", group_name));
+        groups.extend(head);
+        return groups;
+    }
+
+    fn get_projects(&self, group_name: String, id: u64) -> Vec<Project> {
+        let spinner = OutSpinner::spinner_start(format!("Getting projects from {}", group_name));
+        let query = match groups::projects::GroupProjects::builder().group(id).build() {
+            Ok(q) => q,
+            Err(_) => todo!(),
+        };
+        let projects: Vec<Project> = query.query(&self.gitlab_client).unwrap();
+        OutSpinner::spinner_success(spinner, format!("Got {}", projects.len() + 1));
+
+        return projects;
+    }
+
+    fn get_group_members(&self, name: String, id: u64) -> Vec<CustomMember> {
+        let spinner = OutSpinner::spinner_start(format!("Getting users from {}", name));
+        let query = match groups::members::GroupMembers::builder().group(id).build() {
+            Ok(q) => q,
+            Err(_) => todo!(),
+        };
+        let users: Vec<CustomMember> = query.query(&self.gitlab_client).unwrap();
+        OutSpinner::spinner_success(spinner, "Done".to_string());
+        return users;
+    }
+
+    fn get_project_members(&self, name: String, id: u64) -> Vec<CustomMember> {
+        let spinner = OutSpinner::spinner_start(format!("Getting projects from {}", name));
+        let query = match projects::members::ProjectMembers::builder()
+            .project(id)
+            .build()
+        {
+            Ok(q) => q,
+            Err(_) => todo!(),
+        };
+        let users: Vec<CustomMember> = query.query(&self.gitlab_client).unwrap();
+        OutSpinner::spinner_success(spinner, "Done".to_string());
+        return users;
     }
 }

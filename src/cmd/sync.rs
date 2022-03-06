@@ -177,7 +177,7 @@ mod sync_cmd {
     use ::gitlab::Gitlab;
 
     use crate::gitlab::{GitlabActions, GitlabClient};
-    use crate::output::{out_message::OutMessage, out_spinner::OutSpinner, out_sum::OutSum};
+    use crate::output::{out_message::OutMessage, out_spinner::OutSpinner};
 
     use crate::types::v1::{
         access_level::AccessLevel, config::Config, group::Group, project::Project, state::State,

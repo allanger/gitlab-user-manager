@@ -44,6 +44,17 @@ impl AccessLevel {
             AccessLevel::Admin => gitlab::api::common::AccessLevel::Admin,
         }
     }
+    pub(crate) fn from_gitlab_access_level(access_level: gitlab::AccessLevel) -> Self {
+        match access_level {
+            gitlab::AccessLevel::Guest => AccessLevel::Guest,
+            gitlab::AccessLevel::Reporter => AccessLevel::Reporter,
+            gitlab::AccessLevel::Developer => AccessLevel::Developer,
+            gitlab::AccessLevel::Maintainer => AccessLevel::Maintainer,
+            gitlab::AccessLevel::Owner => AccessLevel::Owner,
+            gitlab::AccessLevel::Admin => AccessLevel::Admin,
+            gitlab::AccessLevel::Anonymous => todo!(),
+        }
+    }
 }
 impl fmt::Display for AccessLevel {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
