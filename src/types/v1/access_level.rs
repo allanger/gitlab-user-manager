@@ -13,6 +13,7 @@ pub(crate) enum AccessLevel {
     Developer,
     Maintainer,
     Owner,
+    Admin,
 }
 impl FromStr for AccessLevel {
     fn from_str(input: &str) -> Result<AccessLevel, Error> {
@@ -21,6 +22,8 @@ impl FromStr for AccessLevel {
             "reporter" => Ok(AccessLevel::Reporter),
             "developer" => Ok(AccessLevel::Developer),
             "maintainer" => Ok(AccessLevel::Maintainer),
+            "owner" => Ok(AccessLevel::Owner),
+            "admin" => Ok(AccessLevel::Admin),
             _ => Err(Error::new(
                 ErrorKind::NotFound,
                 format!("access level {} can not be found", input),
@@ -38,6 +41,18 @@ impl AccessLevel {
             AccessLevel::Developer => gitlab::api::common::AccessLevel::Developer,
             AccessLevel::Maintainer => gitlab::api::common::AccessLevel::Maintainer,
             AccessLevel::Owner => gitlab::api::common::AccessLevel::Owner,
+            AccessLevel::Admin => gitlab::api::common::AccessLevel::Admin,
+        }
+    }
+    pub(crate) fn from_gitlab_access_level(access_level: gitlab::AccessLevel) -> Self {
+        match access_level {
+            gitlab::AccessLevel::Guest => AccessLevel::Guest,
+            gitlab::AccessLevel::Reporter => AccessLevel::Reporter,
+            gitlab::AccessLevel::Developer => AccessLevel::Developer,
+            gitlab::AccessLevel::Maintainer => AccessLevel::Maintainer,
+            gitlab::AccessLevel::Owner => AccessLevel::Owner,
+            gitlab::AccessLevel::Admin => AccessLevel::Admin,
+            gitlab::AccessLevel::Anonymous => todo!(),
         }
     }
 }

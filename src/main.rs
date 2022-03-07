@@ -14,15 +14,17 @@ use cmd::{
     users::{self, add_users_cmd},
     Cmd,
 };
-use output::{OutMessage, OutSum};
+use output::{out_message::OutMessage, out_sum::OutSum};
 use std::io::{Error, ErrorKind};
 use std::process::exit;
+
+static VERSION: &str = "v0.0.6";
 
 fn main() {
     OutMessage::message_empty("\n☮️  Fight war, not wars ☮️\n---");
     let matches = Command::new("gum")
         .about("Manage your GitLab team access in a better way, dude")
-        .version("v0.0.6")
+        .version(VERSION)
         .author("allanger")
         .arg_required_else_help(true)
         .subcommand(add_init_cmd())

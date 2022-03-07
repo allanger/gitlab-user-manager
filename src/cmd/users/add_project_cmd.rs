@@ -9,7 +9,7 @@ use crate::{
         gitlab_url::ArgGitlabUrl, project_id::ArgProjectId, user_id::ArgUserId, Args,
     },
     gitlab::GitlabActions,
-    output::{OutMessage, OutSpinner},
+    output::{out_message::OutMessage, out_spinner::OutSpinner},
     types::v1::{access_level::AccessLevel, config_file::ConfigFile, project::Project},
 };
 use crate::{cmd::Cmd, gitlab::GitlabClient};

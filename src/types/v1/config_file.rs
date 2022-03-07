@@ -48,7 +48,7 @@ impl ConfigFile {
             }
         };
 
-        let _ = match serde_yaml::to_writer(&f, &self) {
+        match serde_yaml::to_writer(&f, &self) {
             Ok(()) => return Ok(()),
             Err(err) => {
                 return Err(Error::new(ErrorKind::Other, err.to_string()));

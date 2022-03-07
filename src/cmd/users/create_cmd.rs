@@ -11,7 +11,7 @@ use crate::args::Args;
 use crate::cmd::Cmd;
 use crate::gitlab::GitlabActions;
 use crate::gitlab::GitlabClient;
-use crate::output::OutMessage;
+use crate::output::out_message::OutMessage;
 use crate::types::v1::config_file::ConfigFile;
 use crate::types::v1::user::User;
 

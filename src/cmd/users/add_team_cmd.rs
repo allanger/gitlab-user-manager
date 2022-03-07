@@ -7,7 +7,7 @@ use crate::args::team_name::ArgTeamName;
 use crate::args::user_id::ArgUserId;
 use crate::args::Args;
 use crate::cmd::Cmd;
-use crate::output::OutSpinner;
+use crate::output::out_spinner::OutSpinner;
 use crate::types::v1::config_file::ConfigFile;
 
 pub(crate) struct AddTeamCmd {

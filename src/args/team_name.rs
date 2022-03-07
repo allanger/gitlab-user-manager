@@ -1,5 +1,5 @@
 use super::Args;
-use crate::output::OutMessage;
+use crate::output::out_message::OutMessage;
 use clap::{Arg, ArgMatches};
 use std::io::{Error, Result};
 
@@ -15,7 +15,7 @@ impl ArgTeamName {
     }
 }
 
-impl Args<'_> for ArgTeamName {
+impl Args for ArgTeamName {
     type ArgType = ArgTeamName;
 
     fn add() -> Arg<'static> {

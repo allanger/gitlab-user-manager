@@ -9,7 +9,7 @@ use crate::args::project_id::ArgProjectId;
 use crate::args::user_id::ArgUserId;
 use crate::args::Args;
 use crate::cmd::Cmd;
-use crate::output::OutMessage;
+use crate::output::out_message::OutMessage;
 use crate::types::v1::config_file::ConfigFile;
 
 pub(crate) struct RemoveProjectCmd {

@@ -37,7 +37,6 @@ It will create an empty config file
 
 4. Work with teams
 
-`teams` commands takes team names as arguments, so if you want to modify not default team pass an argumanet with a team name
 ```
 $ gum teams help
 $ gum teams add-project -u PROJECT_ID # will add a project to the default team

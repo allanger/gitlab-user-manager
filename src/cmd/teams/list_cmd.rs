@@ -1,7 +1,7 @@
 use crate::{
     args::{file_name::ArgFileName, Args},
     cmd::Cmd,
-    output::OutMessage,
+    output::out_message::OutMessage,
     types::v1::config_file::ConfigFile,
 };
 use clap::{ArgMatches, Command};

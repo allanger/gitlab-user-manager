@@ -1,5 +1,5 @@
 use super::Args;
-use crate::output::OutMessage;
+use crate::output::out_message::OutMessage;
 use clap::{Arg, ArgMatches};
 use std::io::{Error, Result};
 
@@ -15,7 +15,7 @@ impl ArgGitlabUrl {
     }
 }
 
-impl Args<'_> for ArgGitlabUrl {
+impl Args for ArgGitlabUrl {
     type ArgType = ArgGitlabUrl;
 
     fn add() -> Arg<'static> {

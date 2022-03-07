@@ -5,7 +5,7 @@ use clap::{ArgMatches, Command};
 use crate::{
     args::{file_name::ArgFileName, user_id::ArgUserId, Args},
     cmd::Cmd,
-    output::OutMessage,
+    output::out_message::OutMessage,
     types::v1::{config_file::ConfigFile, user::User},
 };
 

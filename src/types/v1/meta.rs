@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use super::group::Group;
+
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub(crate) struct Meta {
     version: String,

@@ -1,0 +1,51 @@
+# How I think config should look like
+meta:
+  version: v2
+  groups:
+    - id: group_id
+      name: group_name
+    - id: group_id
+      name: group_name
+  patterns:
+    users:
+      name: regexp
+      username: regexp
+      email: regexp
+    projects:
+      name: regexp
+config:
+  teams:
+    name: default
+    projects: []
+    groups: []
+  users:
+    - user:
+        id: user_id
+        name: name
+        username: username
+        email: email
+      projects:
+        - data:
+            id: user_id
+            name: project_name
+            url: project_url
+          access: Developer
+      groups:
+        - data:
+            id: user_id
+            name: group_name
+            url: group_url
+          access: Developer
+      teams:
+        - team_1
+        - team_2
+        - team_3
+state:
+  last_sync:
+    - user_info:
+        id: user_id
+        name: name
+        username: username
+        email: email
+    - date: DATE
+  data: ~

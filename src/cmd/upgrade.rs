@@ -6,7 +6,7 @@ use self_update::{backends::github::Update, cargo_crate_version};
 use crate::{
     args::{no_confirm::ArgNoConfirm, Args},
     cmd::Cmd,
-    output::OutMessage,
+    output::out_message::OutMessage,
 };
 
 /// init cmd should be used to generate an empty gum-config

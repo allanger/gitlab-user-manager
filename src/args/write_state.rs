@@ -13,7 +13,7 @@ impl ArgWriteState {
     }
 }
 
-impl Args<'_> for ArgWriteState {
+impl Args for ArgWriteState {
     type ArgType = ArgWriteState;
 
     fn add() -> Arg<'static> {

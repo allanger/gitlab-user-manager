@@ -1,5 +1,5 @@
 use super::Args;
-use crate::output::OutMessage;
+use crate::output::out_message::OutMessage;
 use clap::{Arg, ArgMatches};
 use std::io::{Error, Result};
 
@@ -15,7 +15,7 @@ impl ArgStateSource {
     }
 }
 
-impl Args<'_> for ArgStateSource {
+impl Args for ArgStateSource {
     type ArgType = ArgStateSource;
 
     fn add() -> Arg<'static> {

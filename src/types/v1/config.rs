@@ -4,7 +4,9 @@ use super::{team::Team, user::User};
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct Config {
+    #[serde(default)] 
     pub(crate) teams: Vec<Team>,
+    #[serde(default)] 
     pub(crate) users: Vec<User>,
 }
 

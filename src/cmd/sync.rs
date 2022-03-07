@@ -15,7 +15,7 @@ use crate::args::state_destination::ArgStateDestination;
 use crate::args::state_source::ArgStateSource;
 use crate::args::write_state::ArgWriteState;
 use crate::cmd::Cmd;
-use crate::output::OutMessage;
+use crate::output::out_message::OutMessage;
 use crate::types::v1::config_file::ConfigFile;
 use crate::types::v1::state::State;
 
@@ -118,7 +118,7 @@ impl<'a> Cmd<'a> for SyncCmd {
                 u.id,
                 State {
                     projects: configure_projects(u, config_file.config.clone()),
-                    groups: configure_groups(u),
+                    groups: configure_groups(u, config_file.config.clone()),
                 },
             );
         }
@@ -177,11 +177,11 @@ mod sync_cmd {
     use ::gitlab::Gitlab;
 
     use crate::gitlab::{GitlabActions, GitlabClient};
-    use crate::output::{OutMessage, OutSpinner, OutSum};
+    use crate::output::{out_message::OutMessage, out_spinner::OutSpinner};
 
     use crate::types::v1::{
-        access_level::AccessLevel, config::Config, ownership::Ownership, project::Project,
-        state::State, user::User,
+        access_level::AccessLevel, config::Config, group::Group, project::Project, state::State,
+        user::User,
     };
 
     pub(crate) fn apply(
@@ -360,7 +360,30 @@ mod sync_cmd {
                             }
                         }
                         Action::UPDATE => {
-                            OutSum::sum_failure("Groups can't be updated yet, because only owner access is allowed for groups");
+                            let spinner = OutSpinner::spinner_start(
+                                format!(
+                                    "Updating {} in {} to {}",
+                                    username.name, group.name, a.access
+                                )
+                                .to_string(),
+                            );
+                            if !dry {
+                                match gitlab.edit_user_in_group(a.user_id, a.entity_id, a.access)
+                                {
+                                    Err(err) => {
+                                        spinner.spinner_failure(err.to_string());
+                                        return Err(err);
+                                    }
+                                    Ok(msg) => {
+                                        spinner.spinner_success(msg.to_string());
+                                    }
+                                }
+                            } else {
+                                spinner.spinner_close();
+                            }
+                            if let Some(x) = state.get_mut(&a.user_id) {
+                                x.groups.insert(a.entity_id, a.access);
+                            }
                         }
                     }
                 }
@@ -370,12 +393,39 @@ mod sync_cmd {
         Ok(())
     }
 
-    pub(crate) fn configure_groups(u: &User) -> HashMap<u64, AccessLevel> {
+    // pub(crate) fn configure_groups(u: &User) -> HashMap<u64, AccessLevel> {
+    // let mut groups_map: HashMap<u64, AccessLevel> = HashMap::new();
+    // let groups: Vec<Group> = u.groups.clone();
+    // for g in groups.iter() {
+    // let mut _group: HashMap<u64, AccessLevel> = HashMap::new();
+    // groups_map.insert(g.id, AccessLevel::Owner);
+    // }
+    // return groups_map;
+    // }
+
+    pub(crate) fn configure_groups(u: &User, c: Config) -> HashMap<u64, AccessLevel> {
         let mut groups_map: HashMap<u64, AccessLevel> = HashMap::new();
-        let groups: Vec<Ownership> = u.ownerships.clone();
+        let mut groups: Vec<Group> = u.groups.clone();
+        for t in c.teams.iter() {
+            if u.teams.contains(&t.name.to_string()) || t.name == "default" {
+                groups.extend(t.groups.clone());
+            }
+        }
+
+        let mut keys: HashMap<u64, AccessLevel> = HashMap::new();
         for g in groups.iter() {
-            let mut _group: HashMap<u64, AccessLevel> = HashMap::new();
-            groups_map.insert(g.id, AccessLevel::Owner);
+            if !keys.contains_key(&g.id) {
+                keys.insert(g.id, g.clone().access_level);
+            } else {
+                keys.insert(
+                    g.id,
+                    higher_access(g.access_level, keys.get(&g.id).unwrap().clone()),
+                );
+            }
+        }
+        groups.clear();
+        for (k, v) in keys.iter() {
+            groups_map.insert(*k, *v);
         }
         return groups_map;
     }
@@ -389,46 +439,34 @@ mod sync_cmd {
             }
         }
 
-        let mut keys: HashMap<u64, Project> = HashMap::new();
+        let mut keys: HashMap<u64, AccessLevel> = HashMap::new();
         for p in projects.iter() {
             if !keys.contains_key(&p.id) {
-                keys.insert(p.id, p.clone());
+                keys.insert(p.id, p.clone().access_level);
             } else {
-                keys.insert(p.id, higher_access(p, keys.get(&p.id).unwrap()));
+                keys.insert(
+                    p.id,
+                    higher_access(p.access_level, keys.get(&p.id).unwrap().clone()),
+                );
             }
         }
         projects.clear();
-        for p in keys.iter() {
-            projects_map.insert(p.1.id, p.1.access_level);
+        for (k, v) in keys.iter() {
+            projects_map.insert(*k, *v);
         }
         return projects_map;
     }
 
-    fn higher_access<'a>(project1: &'a Project, project2: &'a Project) -> Project {
-        let access_level: AccessLevel;
-
-        if project1.access_level == AccessLevel::Maintainer
-            || project2.access_level == AccessLevel::Maintainer
-        {
-            access_level = AccessLevel::Maintainer;
-        } else if project1.access_level == AccessLevel::Developer
-            || project2.access_level == AccessLevel::Developer
-        {
-            access_level = AccessLevel::Developer;
-        } else if project1.access_level == AccessLevel::Reporter
-            || project2.access_level == AccessLevel::Reporter
-        {
-            access_level = AccessLevel::Reporter;
+    fn higher_access<'a>(a1: AccessLevel, a2: AccessLevel) -> AccessLevel {
+        if a1 == AccessLevel::Maintainer || a2 == AccessLevel::Maintainer {
+            AccessLevel::Maintainer
+        } else if a1 == AccessLevel::Developer || a2 == AccessLevel::Developer {
+            AccessLevel::Developer
+        } else if a1 == AccessLevel::Reporter || a2 == AccessLevel::Reporter {
+            AccessLevel::Reporter
         } else {
-            access_level = AccessLevel::Guest;
+            AccessLevel::Guest
         }
-
-        let p = Project {
-            name: project1.name.clone(),
-            id: project1.id.clone(),
-            access_level,
-        };
-        p
     }
 
     #[derive(Debug, Clone)]

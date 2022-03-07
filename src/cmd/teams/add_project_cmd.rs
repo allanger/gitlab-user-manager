@@ -7,7 +7,7 @@ use crate::args::team_name::ArgTeamName;
 use crate::args::Args;
 use crate::cmd::Cmd;
 use crate::gitlab::GitlabClient;
-use crate::output::OutMessage;
+use crate::output::out_message::OutMessage;
 use crate::types::v1::config_file::ConfigFile;
 use crate::types::v1::project::Project;
 use crate::{gitlab::GitlabActions, types::v1::access_level::AccessLevel};
@@ -87,6 +87,7 @@ impl<'a> Cmd<'a> for AddProjectCmd {
         };
 
         let gitlab = GitlabClient::new(self.gitlab_client.to_owned());
+        // let project = match gitlab.projects.get(self.gitlab_project_id) {
         let project = match gitlab.get_project_data_by_id(self.gitlab_project_id) {
             Ok(p) => p,
             Err(err) => return Err(err),
@@ -128,3 +129,4 @@ impl<'a> Cmd<'a> for AddProjectCmd {
         return Err(Error::new(ErrorKind::NotFound, error_message));
     }
 }
+
