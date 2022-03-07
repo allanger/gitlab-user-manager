@@ -15,7 +15,7 @@ impl ArgStateDestination {
     }
 }
 
-impl Args<'_> for ArgStateDestination {
+impl Args for ArgStateDestination {
     type ArgType = ArgStateDestination;
 
     fn add() -> Arg<'static> {

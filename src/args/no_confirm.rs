@@ -13,7 +13,7 @@ impl ArgNoConfirm {
     }
 }
 
-impl Args<'_> for ArgNoConfirm {
+impl Args for ArgNoConfirm {
     type ArgType = ArgNoConfirm;
 
     fn add() -> Arg<'static> {

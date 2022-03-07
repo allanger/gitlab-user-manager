@@ -15,7 +15,7 @@ impl ArgGitlabUrl {
     }
 }
 
-impl Args<'_> for ArgGitlabUrl {
+impl Args for ArgGitlabUrl {
     type ArgType = ArgGitlabUrl;
 
     fn add() -> Arg<'static> {

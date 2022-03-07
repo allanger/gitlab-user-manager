@@ -15,7 +15,7 @@ impl ArgFileName {
     }
 }
 
-impl Args<'_> for ArgFileName {
+impl Args for ArgFileName {
     type ArgType = ArgFileName;
 
     fn add() -> Arg<'static> {

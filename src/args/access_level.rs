@@ -18,7 +18,7 @@ impl ArgAccess {
     }
 }
 
-impl Args<'_> for ArgAccess {
+impl Args for ArgAccess {
     type ArgType = ArgAccess;
 
     fn add() -> Arg<'static> {

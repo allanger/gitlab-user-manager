@@ -15,7 +15,7 @@ impl ArgTeamName {
     }
 }
 
-impl Args<'_> for ArgTeamName {
+impl Args for ArgTeamName {
     type ArgType = ArgTeamName;
 
     fn add() -> Arg<'static> {

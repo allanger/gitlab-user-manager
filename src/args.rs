@@ -17,7 +17,7 @@ pub(crate) mod write_state;
 use clap::{Arg, ArgMatches};
 use std::io::Result;
 
-pub(crate) trait Args<'a> {
+pub(crate) trait Args {
     type ArgType;
     fn add() -> Arg<'static>;
     fn parse<'b>(sub_matches: &'b ArgMatches) -> Result<Self::ArgType>;

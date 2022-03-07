@@ -15,7 +15,7 @@ impl ArgGitlabToken {
     }
 }
 
-impl Args<'_> for ArgGitlabToken {
+impl Args for ArgGitlabToken {
     type ArgType = ArgGitlabToken;
 
     fn add() -> Arg<'static> {

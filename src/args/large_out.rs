@@ -13,7 +13,7 @@ impl ArgLargeOut {
     }
 }
 
-impl Args<'_> for ArgLargeOut {
+impl Args for ArgLargeOut {
     type ArgType = ArgLargeOut;
 
     fn add() -> Arg<'static> {

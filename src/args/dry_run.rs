@@ -13,7 +13,7 @@ impl ArgDryRun {
     }
 }
 
-impl Args<'_> for ArgDryRun {
+impl Args for ArgDryRun {
     type ArgType = ArgDryRun;
 
     fn add() -> Arg<'static> {

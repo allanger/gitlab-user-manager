@@ -17,7 +17,7 @@ impl ArgGroupList {
     }
 }
 
-impl Args<'_> for ArgGroupList {
+impl Args for ArgGroupList {
     type ArgType = ArgGroupList;
 
     fn add() -> Arg<'static> {

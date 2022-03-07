@@ -14,7 +14,7 @@ impl ArgProjectId {
     }
 }
 
-impl Args<'_> for ArgProjectId {
+impl Args for ArgProjectId {
     type ArgType = ArgProjectId;
 
     fn add() -> Arg<'static> {

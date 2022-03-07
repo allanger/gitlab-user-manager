@@ -21,6 +21,11 @@ pub(crate) struct GitlabClient {
     gitlab_client: Gitlab,
 }
 
+
+pub(crate) struct GitlabClientMock;
+
+
+
 impl GitlabClientApi for GitlabClient {
     type Client = Gitlab;
 

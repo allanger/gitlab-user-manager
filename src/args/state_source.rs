@@ -15,7 +15,7 @@ impl ArgStateSource {
     }
 }
 
-impl Args<'_> for ArgStateSource {
+impl Args for ArgStateSource {
     type ArgType = ArgStateSource;
 
     fn add() -> Arg<'static> {
