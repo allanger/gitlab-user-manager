@@ -21,16 +21,13 @@ pub(crate) struct GitlabClient {
     gitlab_client: Gitlab,
 }
 
-
 pub(crate) struct GitlabClientMock;
-
-
 
 impl GitlabClientApi for GitlabClient {
     type Client = Gitlab;
 
     fn get_client(&self) -> Self::Client {
-        return self.gitlab_client.clone();
+        self.gitlab_client.clone()
     }
 }
 
@@ -408,17 +405,17 @@ impl GitlabActions for GitlabClient {
             Err(_) => todo!(),
         };
         let head: Vec<Group> = query.query(&self.gitlab_client).unwrap();
-        if head.len() > 0 {
+        if head.is_empty(){
             for g in head.iter() {
                 let sub: Vec<Group> = self.get_subgroups(g.name.clone(), g.id);
-                if sub.len() > 0 {
+                if sub.is_empty() {
                     groups.extend(sub);
                 }
             }
         }
-        OutSpinner::spinner_success(spinner, format!("{}", group_name));
+        OutSpinner::spinner_success(spinner, group_name);
         groups.extend(head);
-        return groups;
+        groups
     }
 
     fn get_projects(&self, group_name: String, id: u64) -> Vec<Project> {
@@ -430,7 +427,7 @@ impl GitlabActions for GitlabClient {
         let projects: Vec<Project> = query.query(&self.gitlab_client).unwrap();
         OutSpinner::spinner_success(spinner, format!("Got {}", projects.len() + 1));
 
-        return projects;
+        projects
     }
 
     fn get_group_members(&self, name: String, id: u64) -> Vec<CustomMember> {
@@ -441,7 +438,7 @@ impl GitlabActions for GitlabClient {
         };
         let users: Vec<CustomMember> = query.query(&self.gitlab_client).unwrap();
         OutSpinner::spinner_success(spinner, "Done".to_string());
-        return users;
+        users
     }
 
     fn get_project_members(&self, name: String, id: u64) -> Vec<CustomMember> {
@@ -455,6 +452,6 @@ impl GitlabActions for GitlabClient {
         };
         let users: Vec<CustomMember> = query.query(&self.gitlab_client).unwrap();
         OutSpinner::spinner_success(spinner, "Done".to_string());
-        return users;
+        users
     }
 }

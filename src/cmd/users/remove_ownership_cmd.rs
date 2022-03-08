@@ -24,7 +24,7 @@ pub(crate) fn add_remove_ownership_cmd() -> Command<'static> {
         .arg(ArgFileName::add());
 }
 
-pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
+pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl Cmd<'a>, Error> {
     let gitlab_group_id = match ArgGroupId::parse(sub_matches) {
         Ok(arg) => arg.value(),
         Err(err) => return Err(Error::new(ErrorKind::InvalidInput, err.to_string())),

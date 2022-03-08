@@ -14,7 +14,7 @@ pub(crate) struct ArgAccess {
 
 impl ArgAccess {
     pub(crate) fn value(&self) -> AccessLevel {
-        self.value.clone()
+        self.value
     }
 }
 
@@ -31,7 +31,7 @@ impl Args for ArgAccess {
             .global(true);
     }
 
-    fn parse<'a>(sub_matches: &'a ArgMatches) -> Result<Self> {
+    fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<Self> {
         sub_matches
             .value_of(ARG)
             .ok_or_else(|| {
@@ -39,11 +39,9 @@ impl Args for ArgAccess {
                 OutMessage::message_error(err_msg);
                 Error::new(std::io::ErrorKind::InvalidInput, err_msg)
             })
-            .and_then(|value| {
-                match AccessLevel::from_str(value) {
-                    Ok(value) => return Ok(ArgAccess { value }),
-                    Err(e) => return Err(e),
-                };
+            .and_then(|value| match AccessLevel::from_str(value) {
+                Ok(value) => Ok(ArgAccess { value }),
+                Err(e) => Err(e),
             })
     }
 }

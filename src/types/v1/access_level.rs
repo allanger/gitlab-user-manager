@@ -34,7 +34,7 @@ impl FromStr for AccessLevel {
 }
 
 impl AccessLevel {
-    pub(crate) fn to_gitlab_access_level(&self) -> gitlab::api::common::AccessLevel {
+    pub(crate) fn to_gitlab_access_level(self) -> gitlab::api::common::AccessLevel {
         match self {
             AccessLevel::Guest => gitlab::api::common::AccessLevel::Guest,
             AccessLevel::Reporter => gitlab::api::common::AccessLevel::Reporter,

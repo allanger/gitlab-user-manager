@@ -27,11 +27,9 @@ impl ConfigFile {
         // TODO: Handle serde error
         let d: std::result::Result<ConfigFile, _> = serde_yaml::from_reader(&f);
         match d {
-            Ok(r) => return Ok(r),
-            Err(err) => {
-                return Err(Error::new(ErrorKind::Other, err.to_string()));
-            }
-        };
+            Ok(r) => Ok(r),
+            Err(err) => Err(Error::new(ErrorKind::Other, err.to_string())),
+        }
     }
     pub(crate) fn write(&self, file_name: String) -> Result<()> {
         let f = OpenOptions::new()
@@ -49,7 +47,7 @@ impl ConfigFile {
         };
 
         match serde_yaml::to_writer(&f, &self) {
-            Ok(()) => return Ok(()),
+            Ok(()) => Ok(()),
             Err(err) => Err(Error::new(ErrorKind::Other, err.to_string())),
         }
     }

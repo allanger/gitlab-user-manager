@@ -52,7 +52,7 @@ impl State {
         // TODO: Handle serde error
         let d: std::result::Result<HashMap<u64, State>, _> = serde_json::from_reader(&f);
         match d {
-            Ok(r) => return Ok(r),
+            Ok(r) => Ok(r),
             Err(err) => Err(Error::new(ErrorKind::Other, err.to_string())),
         }
     }

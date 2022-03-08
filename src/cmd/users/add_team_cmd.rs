@@ -24,7 +24,7 @@ pub(crate) fn add_add_team_cmd() -> Command<'static> {
         .arg(ArgFileName::add());
 }
 
-pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
+pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl Cmd<'a>, Error> {
     let gitlab_user_id = match ArgUserId::parse(sub_matches) {
         Ok(arg) => arg.value(),
         Err(err) => return Err(err),
@@ -61,7 +61,7 @@ impl<'a> Cmd<'a> for AddTeamCmd {
                     user.name, self.team_name
                 ));
 
-                if user.teams.iter().any(|t| t.to_string() == self.team_name) {
+                if user.teams.iter().any(|t| *t == self.team_name) {
                     return Err(Error::new(
                         ErrorKind::AlreadyExists,
                         format!(

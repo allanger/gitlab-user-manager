@@ -33,7 +33,7 @@ pub(crate) fn add_add_project_cmd() -> Command<'static> {
         .arg(ArgFileName::add());
 }
 
-pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
+pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl Cmd<'a>, Error> {
     let gitlab_token = match ArgGitlabToken::parse(sub_matches) {
         Ok(arg) => arg.value(),
         Err(err) => return Err(err),
@@ -44,7 +44,7 @@ pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, E
     };
 
     // Connect to gitlab
-    let gitlab_client: Gitlab = match Gitlab::new(gitlab_url.to_string(), gitlab_token.to_string())
+    let gitlab_client: Gitlab = match Gitlab::new(gitlab_url, gitlab_token)
     {
         Ok(g) => g,
         Err(_err) => return Err(Error::new(ErrorKind::Other, _err)),
