@@ -30,8 +30,8 @@ impl Args for ArgUserId {
 
     fn parse<'a>(sub_matches: &'a ArgMatches) -> Result<Self> {
         match sub_matches.value_of_t(ARG) {
-            Ok(value) => return Ok(ArgUserId { value }),
-            Err(err) => return Err(Error::new(ErrorKind::InvalidInput, err.to_string())),
-        };
+            Ok(value) => Ok(ArgUserId { value }),
+            Err(err) => Err(Error::new(ErrorKind::InvalidInput, err.to_string())),
+        }
     }
 }

@@ -50,9 +50,7 @@ impl ConfigFile {
 
         match serde_yaml::to_writer(&f, &self) {
             Ok(()) => return Ok(()),
-            Err(err) => {
-                return Err(Error::new(ErrorKind::Other, err.to_string()));
-            }
-        };
+            Err(err) => Err(Error::new(ErrorKind::Other, err.to_string())),
+        }
     }
 }

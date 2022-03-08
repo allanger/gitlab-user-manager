@@ -12,9 +12,9 @@ use crate::{
         group_list::ArgGroupList, Args,
     },
     cmd::Cmd,
-    gitlab::{CustomMember, GitlabActions, GitlabClient, Group, Project, User},
+    gitlab::{CustomMember, GitlabActions, GitlabClient, Group, Project},
     output::out_message::OutMessage,
-    types::v1::{config::Config, config_file::ConfigFile, team::Team, user},
+    types::v1::{config_file::ConfigFile, user},
 };
 
 /// init cmd should be used to generate an empty gum-config

@@ -1,26 +1,26 @@
-use termion::color;
 use rand::seq::SliceRandom;
+use termion::color;
 pub(crate) struct OutMessage;
-const ALIAS: &'static [&'static str] = &["buddy", "mate", "dude", "friend", "dawg", "dear"];
+const ALIAS: &[&str] = &["buddy", "mate", "dude", "friend", "dawg", "dear"];
 
 impl OutMessage {
     pub(crate) fn message_empty(msg: &str) {
-        print!("{}{}\n", color::Fg(color::LightBlue), msg,);
+        println!("{}{}", color::Fg(color::LightBlue), msg,);
     }
 
     pub(crate) fn message_info_with_alias(msg: &str) {
-        print!(
-            "{}INFO: {}, {}\n",
+        println!(
+            "{}INFO: {}, {}",
             color::Fg(color::LightBlue),
             msg,
             ALIAS.choose(&mut rand::thread_rng()).unwrap()
         );
     }
     pub(crate) fn message_info_clean(msg: &str) {
-        print!("{}INFO: {}\n", color::Fg(color::LightBlue), msg,);
+        println!("{}INFO: {}", color::Fg(color::LightBlue), msg,);
     }
 
     pub(crate) fn message_error(msg: &str) {
-        print!("{}ERROR: {}\n", color::Fg(color::LightRed), msg);
+        println!("{}ERROR: {}", color::Fg(color::LightRed), msg);
     }
 }
