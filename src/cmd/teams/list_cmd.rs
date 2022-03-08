@@ -18,7 +18,7 @@ struct ListCmd {
     file_name: String,
 }
 
-pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
+pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl Cmd<'a>, Error> {
     let file_name = match ArgFileName::parse(sub_matches) {
         Ok(arg) => arg.value(),
         Err(err) => return Err(err),

@@ -12,9 +12,9 @@ use crate::{
         group_list::ArgGroupList, Args,
     },
     cmd::Cmd,
-    gitlab::{CustomMember, GitlabActions, GitlabClient, Group, Project, User},
+    gitlab::{CustomMember, GitlabActions, GitlabClient, Group, Project},
     output::out_message::OutMessage,
-    types::v1::{config::Config, config_file::ConfigFile, team::Team, user},
+    types::v1::{config_file::ConfigFile, user},
 };
 
 /// init cmd should be used to generate an empty gum-config
@@ -34,7 +34,7 @@ pub(crate) struct InitCmd {
     gitlab_token: String,
 }
 
-pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
+pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl Cmd<'a>, Error> {
     let file_name = match ArgFileName::parse(sub_matches) {
         Ok(arg) => arg.value(),
         Err(err) => return Err(err),

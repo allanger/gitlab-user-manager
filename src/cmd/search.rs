@@ -43,10 +43,7 @@ pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, E
     };
 
     // Connect to gitlab
-    let gitlab_client: Gitlab = match Gitlab::new(
-        gitlab_url.to_string(),
-        gitlab_token.to_string(),
-    ) {
+    let gitlab_client: Gitlab = match Gitlab::new(gitlab_url, gitlab_token) {
         Ok(g) => g,
         Err(_err) => return Err(Error::new(ErrorKind::Other, _err)),
     };
@@ -89,6 +86,6 @@ impl<'a> Cmd<'a> for SearchCmd<'a> {
                 ));
             }
         }
-        return result;
+        result
     }
 }

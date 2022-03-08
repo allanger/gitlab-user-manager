@@ -24,7 +24,7 @@ struct RemoveProjectCmd {
     gitlab_project_id: u64,
 }
 
-pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
+pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl Cmd<'a>, Error> {
     let gitlab_project_id: u64 = match ArgProjectId::parse(sub_matches) {
         Ok(arg) => arg.value(),
         Err(err) => return Err(err),
@@ -90,6 +90,6 @@ impl<'a> Cmd<'a> for RemoveProjectCmd {
         }
         let error_message = format!("The team with this name can't be found: {}", self.team_name);
         OutMessage::message_error(error_message.as_str());
-        return Err(Error::new(ErrorKind::NotFound, error_message));
+        Err(Error::new(ErrorKind::NotFound, error_message))
     }
 }

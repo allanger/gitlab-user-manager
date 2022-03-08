@@ -42,7 +42,7 @@ pub(crate) struct SyncCmd {
     state_source: String,
 }
 
-pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
+pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl Cmd<'a>, Error> {
     let dry_run: bool = ArgDryRun::parse(sub_matches).unwrap().value();
     let write_state: bool = ArgWriteState::parse(sub_matches).unwrap().value();
 
@@ -55,7 +55,7 @@ pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, E
         Err(err) => return Err(err),
     };
 
-    let gitlab_client = match Gitlab::new(gitlab_url.to_string(), gitlab_token.to_string()) {
+    let gitlab_client = match Gitlab::new(gitlab_url, gitlab_token) {
         Ok(g) => g,
         Err(err) => return Err(Error::new(ErrorKind::Other, err)),
     };
@@ -94,7 +94,7 @@ impl<'a> Cmd<'a> for SyncCmd {
 
         // Read old state
         let mut old_state: HashMap<u64, State> = HashMap::new();
-        if self.state_source != "" {
+        if self.state_source.is_empty() {
             OutMessage::message_info_with_alias(
                 format!("I will try to use this file: {}", self.state_source.clone()).as_str(),
             );
@@ -155,8 +155,8 @@ impl<'a> Cmd<'a> for SyncCmd {
         }
 
         match config_file.write(self.file_name.clone()) {
-            Ok(_) => return Ok(()),
-            Err(err) => return Err(err),
+            Ok(_) => Ok(()),
+            Err(err) => Err(err),
         }
     }
 }
@@ -197,13 +197,13 @@ mod sync_cmd {
                 Err(err) => return Err(err),
             };
             match a.entity_type {
-                EntityType::PROJECT => {
+                EntityType::Project => {
                     let project = match gitlab.get_project_data_by_id(a.entity_id) {
                         Ok(r) => r,
                         Err(err) => return Err(err),
                     };
                     match a.action {
-                        Action::CREATE => {
+                        Action::Create => {
                             let spinner = OutSpinner::spinner_start(
                                 format!(
                                     "Adding {} to {} as {}",
@@ -231,7 +231,7 @@ mod sync_cmd {
                                 x.projects.insert(a.entity_id, a.access);
                             }
                         }
-                        Action::DELETE => {
+                        Action::Delete => {
                             let spinner = OutSpinner::spinner_start(
                                 format!("Removing {} from {}", username.name, project.name)
                                     .to_string(),
@@ -264,7 +264,7 @@ mod sync_cmd {
                                     .unwrap();
                             }
                         }
-                        Action::UPDATE => {
+                        Action::Update => {
                             let spinner = OutSpinner::spinner_start(
                                 format!(
                                     "Updating {} in {} to {}",
@@ -292,13 +292,13 @@ mod sync_cmd {
                         }
                     }
                 }
-                EntityType::GROUP => {
+                EntityType::Group => {
                     let group = match gitlab.get_group_data_by_id(a.entity_id) {
                         Ok(r) => r,
                         Err(err) => return Err(err),
                     };
                     match a.action {
-                        Action::CREATE => {
+                        Action::Create => {
                             let spinner = OutSpinner::spinner_start(
                                 format!(
                                     "Adding {} to {} as {}",
@@ -326,7 +326,7 @@ mod sync_cmd {
                                 x.groups.insert(a.entity_id, a.access);
                             }
                         }
-                        Action::DELETE => {
+                        Action::Delete => {
                             let spinner = OutSpinner::spinner_start(
                                 format!("Removing {} from {}", username.name, group.name)
                                     .to_string(),
@@ -359,7 +359,7 @@ mod sync_cmd {
                                     .unwrap();
                             }
                         }
-                        Action::UPDATE => {
+                        Action::Update => {
                             let spinner = OutSpinner::spinner_start(
                                 format!(
                                     "Updating {} in {} to {}",
@@ -368,8 +368,7 @@ mod sync_cmd {
                                 .to_string(),
                             );
                             if !dry {
-                                match gitlab.edit_user_in_group(a.user_id, a.entity_id, a.access)
-                                {
+                                match gitlab.edit_user_in_group(a.user_id, a.entity_id, a.access) {
                                     Err(err) => {
                                         spinner.spinner_failure(err.to_string());
                                         return Err(err);
@@ -419,7 +418,7 @@ mod sync_cmd {
             } else {
                 keys.insert(
                     g.id,
-                    higher_access(g.access_level, keys.get(&g.id).unwrap().clone()),
+                    higher_access(g.access_level, *keys.get(&g.id).unwrap()),
                 );
             }
         }
@@ -427,7 +426,7 @@ mod sync_cmd {
         for (k, v) in keys.iter() {
             groups_map.insert(*k, *v);
         }
-        return groups_map;
+        groups_map
     }
 
     pub(crate) fn configure_projects(u: &User, c: Config) -> HashMap<u64, AccessLevel> {
@@ -446,7 +445,7 @@ mod sync_cmd {
             } else {
                 keys.insert(
                     p.id,
-                    higher_access(p.access_level, keys.get(&p.id).unwrap().clone()),
+                    higher_access(p.access_level, *keys.get(&p.id).unwrap()),
                 );
             }
         }
@@ -457,7 +456,7 @@ mod sync_cmd {
         return projects_map;
     }
 
-    fn higher_access<'a>(a1: AccessLevel, a2: AccessLevel) -> AccessLevel {
+    fn higher_access(a1: AccessLevel, a2: AccessLevel) -> AccessLevel {
         if a1 == AccessLevel::Maintainer || a2 == AccessLevel::Maintainer {
             AccessLevel::Maintainer
         } else if a1 == AccessLevel::Developer || a2 == AccessLevel::Developer {
@@ -471,14 +470,14 @@ mod sync_cmd {
 
     #[derive(Debug, Clone)]
     enum EntityType {
-        PROJECT,
-        GROUP,
+        Project,
+        Group,
     }
     #[derive(Debug, Clone)]
     enum Action {
-        CREATE,
-        DELETE,
-        UPDATE,
+        Create,
+        Delete,
+        Update,
     }
 
     pub(crate) fn compare_states(
@@ -487,7 +486,7 @@ mod sync_cmd {
     ) -> Vec<Actions> {
         let mut actions: Vec<Actions> = Vec::new();
 
-        for (id, state) in new_state.clone().iter() {
+        for (id, state) in new_state.iter() {
             if old_state.contains_key(id) {
                 compare_projects(
                     old_state[id].projects.clone(),
@@ -505,20 +504,20 @@ mod sync_cmd {
             } else {
                 for (pid, access) in state.projects.iter() {
                     actions.extend([Actions {
-                        user_id: id.clone(),
-                        entity_id: pid.clone(),
-                        entity_type: EntityType::PROJECT,
-                        access: access.clone(),
-                        action: Action::CREATE,
+                        user_id: *id,
+                        entity_id: *pid,
+                        entity_type: EntityType::Project,
+                        access: *access,
+                        action: Action::Create,
                     }])
                 }
                 for (gid, access) in state.groups.iter() {
                     actions.extend([Actions {
-                        user_id: id.clone(),
-                        entity_id: gid.clone(),
-                        entity_type: EntityType::GROUP,
-                        access: access.clone(),
-                        action: Action::CREATE,
+                        user_id: *id,
+                        entity_id: *gid,
+                        entity_type: EntityType::Group,
+                        access: *access,
+                        action: Action::Create,
                     }])
                 }
             }
@@ -526,20 +525,20 @@ mod sync_cmd {
         for (id, state) in old_state.iter() {
             for (pid, access) in state.projects.iter() {
                 actions.extend([Actions {
-                    user_id: id.clone(),
-                    entity_id: pid.clone(),
-                    entity_type: EntityType::PROJECT,
-                    access: access.clone(),
-                    action: Action::DELETE,
+                    user_id: *id,
+                    entity_id: *pid,
+                    entity_type: EntityType::Project,
+                    access: *access,
+                    action: Action::Delete,
                 }])
             }
             for (gid, access) in state.groups.iter() {
                 actions.extend([Actions {
-                    user_id: id.clone(),
-                    entity_id: gid.clone(),
-                    entity_type: EntityType::GROUP,
-                    access: access.clone(),
-                    action: Action::DELETE,
+                    user_id: *id,
+                    entity_id: *gid,
+                    entity_type: EntityType::Group,
+                    access: *access,
+                    action: Action::Delete,
                 }])
             }
         }
@@ -558,30 +557,30 @@ mod sync_cmd {
                 if old_state[id] != new_state[id] {
                     actions.extend([Actions {
                         user_id,
-                        entity_id: id.clone(),
-                        entity_type: EntityType::GROUP,
-                        access: access.clone(),
-                        action: Action::UPDATE,
+                        entity_id: *id,
+                        entity_type: EntityType::Group,
+                        access: *access,
+                        action: Action::Update,
                     }]);
                 }
                 old_state.remove(id);
             } else {
                 actions.extend([Actions {
                     user_id,
-                    entity_id: id.clone(),
-                    entity_type: EntityType::GROUP,
-                    access: access.clone(),
-                    action: Action::CREATE,
+                    entity_id: *id,
+                    entity_type: EntityType::Group,
+                    access: *access,
+                    action: Action::Create,
                 }])
             }
         }
         for (id, access) in old_state.iter() {
             actions.extend([Actions {
                 user_id,
-                entity_id: id.clone(),
-                entity_type: EntityType::GROUP,
-                access: access.clone(),
-                action: Action::DELETE,
+                entity_id: *id,
+                entity_type: EntityType::Group,
+                access: *access,
+                action: Action::Delete,
             }])
         }
     }
@@ -597,30 +596,30 @@ mod sync_cmd {
                 if old_state[id] != new_state[id] {
                     actions.extend([Actions {
                         user_id,
-                        entity_id: id.clone(),
-                        entity_type: EntityType::PROJECT,
-                        access: access.clone(),
-                        action: Action::UPDATE,
+                        entity_id: *id,
+                        entity_type: EntityType::Project,
+                        access: *access,
+                        action: Action::Update,
                     }]);
                 }
                 old_state.remove(id);
             } else {
                 actions.extend([Actions {
                     user_id,
-                    entity_id: id.clone(),
-                    entity_type: EntityType::PROJECT,
-                    access: access.clone(),
-                    action: Action::CREATE,
+                    entity_id: *id,
+                    entity_type: EntityType::Project,
+                    access: *access,
+                    action: Action::Create,
                 }])
             }
         }
         for (id, access) in old_state.iter() {
             actions.extend([Actions {
                 user_id,
-                entity_id: id.clone(),
-                entity_type: EntityType::PROJECT,
-                access: access.clone(),
-                action: Action::DELETE,
+                entity_id: *id,
+                entity_type: EntityType::Project,
+                access: *access,
+                action: Action::Delete,
             }])
         }
     }

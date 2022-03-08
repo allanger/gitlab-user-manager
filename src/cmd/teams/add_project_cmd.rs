@@ -34,7 +34,7 @@ struct AddProjectCmd {
     gitlab_client: Gitlab,
 }
 
-pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
+pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl Cmd<'a>, Error> {
     let gitlab_token = match ArgGitlabToken::parse(sub_matches) {
         Ok(arg) => arg.value(),
         Err(err) => return Err(err),
@@ -44,7 +44,7 @@ pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, E
         Err(err) => return Err(err),
     };
     // Connect to gitlab
-    let gitlab_client: Gitlab = match Gitlab::new(gitlab_url.to_string(), gitlab_token.to_string())
+    let gitlab_client: Gitlab = match Gitlab::new(gitlab_url, gitlab_token)
     {
         Ok(g) => g,
         Err(_err) => return Err(Error::new(ErrorKind::Other, _err)),
@@ -126,7 +126,7 @@ impl<'a> Cmd<'a> for AddProjectCmd {
         }
         let error_message = format!("The team with this name can't be found: {}", self.team_name);
         OutMessage::message_error(error_message.as_str());
-        return Err(Error::new(ErrorKind::NotFound, error_message));
+        Err(Error::new(ErrorKind::NotFound, error_message))
     }
 }
 

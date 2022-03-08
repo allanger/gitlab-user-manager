@@ -20,7 +20,7 @@ pub(crate) struct UpgradeCmd {
     no_confirm: bool,
 }
 
-pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
+pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl Cmd<'a>, Error> {
     let no_confirm: bool = ArgNoConfirm::parse(sub_matches).unwrap().value();
     Ok(UpgradeCmd { no_confirm })
 }

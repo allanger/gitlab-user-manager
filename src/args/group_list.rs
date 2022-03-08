@@ -31,7 +31,7 @@ impl Args for ArgGroupList {
             .multiple_values(true)
     }
 
-    fn parse<'a>(sub_matches: &'a ArgMatches) -> Result<Self> {
+    fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<Self> {
         let value = match sub_matches.values_of(ARG) {
             Some(v) => v.map(|f| f.parse::<u64>().unwrap()).collect(),
             None => {

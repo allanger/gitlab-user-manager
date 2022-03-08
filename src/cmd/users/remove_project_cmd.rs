@@ -28,7 +28,7 @@ pub(crate) fn add_remove_project_cmd() -> Command<'static> {
         .arg(ArgFileName::add());
 }
 
-pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
+pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl Cmd<'a>, Error> {
     let gitlab_project_id: u64 = match ArgProjectId::parse(sub_matches) {
         Ok(arg) => arg.value(),
         Err(err) => return Err(err),

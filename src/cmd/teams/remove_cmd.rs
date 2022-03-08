@@ -22,7 +22,7 @@ struct RemoveCmd {
     file_name: String,
 }
 
-pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
+pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl Cmd<'a>, Error> {
     let team_name = match ArgTeamName::parse(sub_matches) {
         Ok(arg) => arg.value(),
         Err(err) => return Err(err),
@@ -55,9 +55,9 @@ impl<'a> Cmd<'a> for RemoveCmd {
                 OutMessage::message_info_clean(
                     format!("The team is removed: {}", self.team_name).as_str(),
                 );
-                return Ok(());
+                Ok(())
             }
-            Err(err) => return Err(err),
-        };
+            Err(err) => Err(err),
+        }
     }
 }

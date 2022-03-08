@@ -21,16 +21,15 @@ pub(crate) fn find_projects<'a>() -> Command<'a> {
 }
 
 pub(crate) fn prepare<'a>(
-    sub_matches: &'a ArgMatches,
+    sub_matches: &'_ ArgMatches,
     gitlab_client: &'a Gitlab,
 ) -> Result<impl Cmd<'a>, Error> {
-    let search_string = sub_matches.value_of("SEARCH").ok_or(Error::new(
-        std::io::ErrorKind::PermissionDenied,
-        "whatcha lookin' for, mate?",
-    ));
-    if search_string.is_err() {
-        return Err(search_string.err().unwrap());
-    }
+    let search_string = sub_matches.value_of("SEARCH").ok_or_else(|| {
+        Error::new(
+            std::io::ErrorKind::PermissionDenied,
+            "whatcha lookin' for, mate?",
+        )
+    });
 
     Ok(ProjectsCmd {
         search_string: search_string.unwrap().to_string(),

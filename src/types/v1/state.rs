@@ -1,4 +1,8 @@
-use std::{collections::HashMap, io::{Error, ErrorKind}, fs::OpenOptions};
+use std::{
+    collections::HashMap,
+    fs::OpenOptions,
+    io::{Error, ErrorKind},
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -15,7 +19,6 @@ impl State {
         state: HashMap<u64, State>,
         file_name: String,
     ) -> Result<(), Error> {
-      
         let f = OpenOptions::new()
             .create(true)
             .write(true)
@@ -49,10 +52,8 @@ impl State {
         // TODO: Handle serde error
         let d: std::result::Result<HashMap<u64, State>, _> = serde_json::from_reader(&f);
         match d {
-            Ok(r) => return Ok(r),
-            Err(err) => {
-                return Err(Error::new(ErrorKind::Other, err.to_string()));
-            }
-        };
+            Ok(r) => Ok(r),
+            Err(err) => Err(Error::new(ErrorKind::Other, err.to_string())),
+        }
     }
 }

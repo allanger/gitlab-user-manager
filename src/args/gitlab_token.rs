@@ -30,7 +30,7 @@ impl Args for ArgGitlabToken {
             .global(true);
     }
 
-    fn parse<'a>(sub_matches: &'a ArgMatches) -> Result<Self> {
+    fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<Self> {
         sub_matches
             .value_of(ARG)
             .ok_or_else(|| {
