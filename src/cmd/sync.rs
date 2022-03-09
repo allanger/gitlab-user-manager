@@ -94,22 +94,22 @@ impl<'a> Cmd<'a> for SyncCmd {
 
         // Read old state
         let mut old_state: HashMap<u64, State> = HashMap::new();
-        if self.state_source.is_empty() {
+        if !self.state_source.is_empty() {
             OutMessage::message_info_with_alias(
                 format!("I will try to use this file: {}", self.state_source.clone()).as_str(),
             );
             old_state = State::read_from_file(self.state_source.clone())?
         } else {
-            if config_file.state.as_str() != "~" {
+            if config_file.state.as_str() == "~" || config_file.state.is_empty() {
+                OutMessage::message_info_with_alias(
+                    "State is not found, I will generate a new one",
+                );
+            } else {
                 OutMessage::message_info_with_alias("State is found");
                 old_state = match serde_json::from_str(config_file.state.as_str()) {
                     Ok(state) => state,
                     Err(err) => return Err(Error::new(ErrorKind::InvalidData, err)),
                 };
-            } else {
-                OutMessage::message_info_with_alias(
-                    "State is not found, I will generate a new one",
-                );
             }
         }
         let mut new_state: HashMap<u64, State> = HashMap::new();
@@ -141,6 +141,7 @@ impl<'a> Cmd<'a> for SyncCmd {
         if !self.dry_run {
             config_file.state = state;
         }
+        
         if self.write_state {
             match State::write_to_file(old_state, self.state_destination.clone()) {
                 Ok(_) => {
