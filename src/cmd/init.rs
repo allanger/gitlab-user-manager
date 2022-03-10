@@ -63,44 +63,48 @@ pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl Cmd<'a>, E
 
 impl<'a> Cmd<'a> for InitCmd {
     fn exec(&self) -> Result<(), Error> {
-        let mut config_file:ConfigFile = Default::default();
+        let mut config_file: ConfigFile = Default::default();
         if self.group_list.len() > 0 {
+            // Prepare gitlab client
             let gitlab_client: Gitlab =
                 match Gitlab::new(self.gitlab_url.to_string(), self.gitlab_token.to_string()) {
                     Ok(g) => g,
                     Err(_err) => return Err(Error::new(ErrorKind::Other, _err)),
                 };
             let gitlab = GitlabClient::new(gitlab_client.to_owned());
-            let mut sub: Vec<Group> = Vec::new();
+            // Scrap groups
+            let mut groups: Vec<Group> = Vec::new();
             OutMessage::message_info_with_alias("Scrapping groups");
             for i in self.group_list.iter() {
                 let group = match gitlab.get_group_data_by_id(*i) {
                     Ok(p) => p,
                     Err(err) => return Err(err),
                 };
-                sub.extend(vec![group.clone()]);
-                sub.extend(gitlab.get_subgroups(group.name.clone(), *i));
+                groups.extend(vec![group.clone()]);
+                groups.extend(gitlab.get_subgroups(group.name.clone(), *i));
             }
-            OutMessage::message_info_with_alias(format!("Got {} groups", sub.len() + 1).as_str());
+            OutMessage::message_info_with_alias(
+                format!("Got {} groups", groups.len() + 1).as_str(),
+            );
+            // Scrap projects
             let mut projects: Vec<Project> = Vec::new();
-            for i in sub.iter() {
+            for i in groups.iter() {
                 projects.extend(gitlab.get_projects(i.name.clone(), i.id));
             }
             OutMessage::message_info_with_alias(
                 format!("Got {} projects", projects.len() + 1).as_str(),
             );
 
-            let mut groups_users: Vec<CustomMember> = Vec::new();
-
-            for g in sub.iter() {
+            for g in groups.iter() {
                 // Add user if doesn't exist or add group to user if exists
-                groups_users.extend(gitlab.get_group_members(g.name.to_string(), g.id));
+                let groups_users = gitlab.get_group_members(g.name.to_string(), g.id);
                 for member in groups_users.iter() {
                     let mut found = false;
                     for u in config_file.config.users.iter_mut() {
                         if u.id == member.id {
                             found = true;
                             u.groups.push(g.to_gum_group(member.clone()).unwrap());
+                            break;
                         }
                     }
                     if !found {
@@ -114,33 +118,34 @@ impl<'a> Cmd<'a> for InitCmd {
                     }
                 }
             }
-            let mut projects_users: Vec<CustomMember> = Vec::new();
-            for p in projects.iter() {
-                projects_users.extend(gitlab.get_project_members(p.name.to_string(), p.id));
-            }
+
             for p in projects.iter() {
                 // Add user if doesn't exist or add group to user if exists
-                projects_users.extend(gitlab.get_project_members(p.name.to_string(), p.id));
-                for member in groups_users.iter() {
+                let projects_users = gitlab.get_project_members(p.name.to_string(), p.id);
+                for member in projects_users.iter() {
                     let mut found = false;
                     for u in config_file.config.users.iter_mut() {
                         if u.id == member.id {
+                            println!("Adding {} to {}", u.name, p.name);
                             found = true;
                             u.projects.push(p.to_gum_project(member.clone()).unwrap());
+                            break;
                         }
                     }
                     if !found {
+                        println!("Creating {} with access to {}", member.name, p.name);
                         config_file.config.users.push(user::User {
                             id: member.id,
                             name: member.name.clone(),
-                            teams: Default::default(),
                             projects: vec![p.to_gum_project(member.clone()).unwrap()],
+                            teams: Default::default(),
                             groups: Default::default(),
                         });
                     }
                 }
             }
         }
+
         match std::fs::OpenOptions::new()
             .write(true)
             .create_new(true)
