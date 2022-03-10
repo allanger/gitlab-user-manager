@@ -126,14 +126,12 @@ impl<'a> Cmd<'a> for InitCmd {
                     let mut found = false;
                     for u in config_file.config.users.iter_mut() {
                         if u.id == member.id {
-                            println!("Adding {} to {}", u.name, p.name);
                             found = true;
                             u.projects.push(p.to_gum_project(member.clone()).unwrap());
                             break;
                         }
                     }
                     if !found {
-                        println!("Creating {} with access to {}", member.name, p.name);
                         config_file.config.users.push(user::User {
                             id: member.id,
                             name: member.name.clone(),

@@ -425,7 +425,6 @@ impl GitlabActions for GitlabClient {
             Err(_) => todo!(),
         };
         let projects: Vec<Project> = query.query(&self.gitlab_client).unwrap();
-        println!("{:?}", projects);
         OutSpinner::spinner_success(spinner, format!("Got {}", projects.len()));
 
         projects
