@@ -405,10 +405,10 @@ impl GitlabActions for GitlabClient {
             Err(_) => todo!(),
         };
         let head: Vec<Group> = query.query(&self.gitlab_client).unwrap();
-        if head.is_empty(){
+        if !head.is_empty(){
             for g in head.iter() {
                 let sub: Vec<Group> = self.get_subgroups(g.name.clone(), g.id);
-                if sub.is_empty() {
+                if !sub.is_empty() {
                     groups.extend(sub);
                 }
             }
@@ -420,12 +420,13 @@ impl GitlabActions for GitlabClient {
 
     fn get_projects(&self, group_name: String, id: u64) -> Vec<Project> {
         let spinner = OutSpinner::spinner_start(format!("Getting projects from {}", group_name));
-        let query = match groups::projects::GroupProjects::builder().group(id).build() {
+        let query = match groups::projects::GroupProjects::builder().group(id).with_shared(false).build() {
             Ok(q) => q,
             Err(_) => todo!(),
         };
         let projects: Vec<Project> = query.query(&self.gitlab_client).unwrap();
-        OutSpinner::spinner_success(spinner, format!("Got {}", projects.len() + 1));
+        println!("{:?}", projects);
+        OutSpinner::spinner_success(spinner, format!("Got {}", projects.len()));
 
         projects
     }
