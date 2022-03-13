@@ -1,94 +1,74 @@
-mod groups_cmd;
-mod projects_cmd;
-mod users_cmd;
+pub(crate) mod commands;
+mod groups;
+mod projects;
+mod users;
 
-use std::io::{Error, ErrorKind};
-
-use clap::{ArgMatches, Command};
+use std::{
+    collections::HashMap,
+    fmt::{self, Display, Formatter},
+    io::{Error, Result},
+    str::FromStr,
+};
 
 use gitlab::Gitlab;
 
-use crate::{
-    args::{gitlab_token::ArgGitlabToken, gitlab_url::ArgGitlabUrl, Args},
-    cmd::Cmd,
-};
+use self::{groups::Groups, projects::Projects, users::Users};
 
-/// Register search cmd
-pub(crate) fn add_search_cmd() -> Command<'static> {
-    return Command::new("search")
-        .aliases(&["s", "find"])
-        .about("Search for GitLab entities")
-        .arg(ArgGitlabToken::add())
-        .arg(ArgGitlabUrl::add())
-        .arg_required_else_help(true)
-        .subcommand(projects_cmd::find_projects())
-        .subcommand(users_cmd::find_users())
-        .subcommand(groups_cmd::find_groups());
+pub(crate) trait SearchEntity {
+    fn search(&self, query: &str) -> Result<()>;
 }
 
-pub(crate) struct SearchCmd<'a> {
-    // search_string: String,
-    search_sub: Option<(&'a str, &'a ArgMatches)>,
-    gitlab_client: Gitlab,
+pub(crate) struct SearchService<'a> {
+    entities: HashMap<EntityName, Box<dyn SearchEntity + 'a>>,
 }
 
-pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
-    let gitlab_token = match ArgGitlabToken::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(err),
-    };
-    let gitlab_url = match ArgGitlabUrl::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(err),
-    };
+impl<'a> SearchService<'a> {
+    pub fn new(gitlab_client: &'a Gitlab) -> Self {
+        let mut entities: HashMap<EntityName, Box<dyn SearchEntity>> = HashMap::new();
+        entities.insert(EntityName::PROJECTS, Box::new(Projects::new(gitlab_client)));
+        entities.insert(EntityName::GROUPS, Box::new(Groups::new(gitlab_client)));
+        entities.insert(EntityName::USERS, Box::new(Users::new(gitlab_client)));
+        SearchService { entities }
+    }
 
-    // Connect to gitlab
-    let gitlab_client: Gitlab = match Gitlab::new(
-        gitlab_url.to_string(),
-        gitlab_token.to_string(),
-    ) {
-        Ok(g) => g,
-        Err(_err) => return Err(Error::new(ErrorKind::Other, _err)),
-    };
+    pub fn search(&self, entity_name: &str, query: &str) -> Result<()> {
+        let entity_name = EntityName::from_str(entity_name)?;
+        let entity = self.entities.get(&entity_name).ok_or_else(|| {
+            Error::new(
+                std::io::ErrorKind::NotFound,
+                format!("Could not resolve entity with name {entity_name}"),
+            )
+        })?;
 
-    // Get search subcommand
-    let search_sub = sub_matches.subcommand();
-
-    Ok(SearchCmd {
-        search_sub,
-        gitlab_client,
-    })
+        entity.search(query)
+    }
 }
 
-impl<'a> Cmd<'a> for SearchCmd<'a> {
-    fn exec(&self) -> Result<(), Error> {
-        let result;
-        match self.search_sub {
-            Some(("users", sub_matches)) => {
-                result = match users_cmd::prepare(sub_matches, &self.gitlab_client) {
-                    Ok(cmd) => cmd.exec(),
-                    Err(err) => Err(err),
-                };
-            }
-            Some(("projects", sub_matches)) => {
-                result = match projects_cmd::prepare(sub_matches, &self.gitlab_client) {
-                    Ok(cmd) => cmd.exec(),
-                    Err(err) => Err(err),
-                };
-            }
-            Some(("groups", sub_matches)) => {
-                result = match groups_cmd::prepare(sub_matches, &self.gitlab_client) {
-                    Ok(cmd) => cmd.exec(),
-                    Err(err) => Err(err),
-                };
-            }
-            _ => {
-                return Err(Error::new(
-                    std::io::ErrorKind::InvalidInput,
-                    "You should specify what you are looking for, please use help",
-                ));
-            }
+#[derive(Hash, PartialEq, Eq, Debug)]
+pub(crate) enum EntityName {
+    GROUPS,
+    PROJECTS,
+    USERS,
+}
+
+impl FromStr for EntityName {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<EntityName> {
+        match s {
+            "groups" => Ok(Self::GROUPS),
+            "projects" => Ok(Self::PROJECTS),
+            "users" => Ok(Self::USERS),
+            name => Err(Error::new(
+                std::io::ErrorKind::InvalidInput,
+                format!("Entity with name {name} does not exist"),
+            )),
         }
-        return result;
+    }
+}
+
+impl Display for EntityName {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
     }
 }
