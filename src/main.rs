@@ -3,16 +3,18 @@ mod cmd;
 mod gitlab;
 mod output;
 mod types;
+mod service;
 
 use clap::Command;
 use cmd::{
+    groups::{self, add_groups_cmd},
     init::{self, add_init_cmd},
     search::{self, add_search_cmd},
     sync::{self, add_sync_cmd},
     teams::{self, add_teams_cmd},
     upgrade::{self, add_upgrade_cmd},
     users::{self, add_users_cmd},
-    Cmd,
+    CmdOld,
 };
 use output::{out_message::OutMessage, out_sum::OutSum};
 use std::io::{Error, ErrorKind};
@@ -33,6 +35,7 @@ fn main() {
         .subcommand(add_search_cmd())
         .subcommand(add_sync_cmd())
         .subcommand(add_upgrade_cmd())
+        .subcommand(add_groups_cmd())
         .get_matches();
 
     let result: Result<(), Error>;
@@ -56,6 +59,13 @@ fn main() {
                 Err(err) => Err(err),
             };
         }
+        Some(("groups", sub_matches)) => {
+            result = match groups::prepare(sub_matches) {
+                Ok(cmd) => cmd.exec(),
+                Err(err) => Err(err),
+            };
+        }
+
         Some(("teams", sub_matches)) => {
             result = match teams::prepare(sub_matches) {
                 Ok(cmd) => cmd.exec(),

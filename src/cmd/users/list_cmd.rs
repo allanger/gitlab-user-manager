@@ -1,6 +1,6 @@
 use crate::{
     args::{file_name::ArgFileName, large_out::ArgLargeOut, Args},
-    cmd::Cmd,
+    cmd::CmdOld,
     output::out_message::OutMessage,
     types::v1::config_file::ConfigFile,
 };
@@ -20,7 +20,7 @@ struct ListCmd {
     large_out: bool,
 }
 
-pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl Cmd<'a>, Error> {
+pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>, Error> {
     let file_name = match ArgFileName::parse(sub_matches) {
         Ok(arg) => arg.value(),
         Err(err) => return Err(err),
@@ -33,7 +33,7 @@ pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl Cmd<'a>, E
     })
 }
 
-impl<'a> Cmd<'a> for ListCmd {
+impl<'a> CmdOld<'a> for ListCmd {
     fn exec(&self) -> Result<(), Error> {
         let config_file = match ConfigFile::read(self.file_name.clone()) {
             Ok(c) => c,
@@ -46,7 +46,7 @@ impl<'a> Cmd<'a> for ListCmd {
                 message.push_str(
                     format!(
                         "\nprojects: {:?}\nteams: {:?}\ngroups: {:?}\n",
-                        user.projects, user.teams, user.groups
+                        user.projects, user.teams, user.namespaces
                     )
                     .as_str(),
                 );

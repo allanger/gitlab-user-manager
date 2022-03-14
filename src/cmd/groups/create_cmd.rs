@@ -6,27 +6,27 @@ use gitlab::Gitlab;
 use crate::args::file_name::ArgFileName;
 use crate::args::gitlab_token::ArgGitlabToken;
 use crate::args::gitlab_url::ArgGitlabUrl;
-use crate::args::user_id::ArgUserId;
+use crate::args::group_id::ArgGroupId;
 use crate::args::Args;
 use crate::cmd::CmdOld;
 use crate::gitlab::GitlabActions;
 use crate::gitlab::GitlabClient;
 use crate::output::out_message::OutMessage;
 use crate::types::v1::config_file::ConfigFile;
-use crate::types::v1::user::User;
+use crate::types::v1::group::Group;
 
 pub(crate) fn add_create_cmd() -> Command<'static> {
     return Command::new("create")
         .alias("c")
-        .about("Add user to the config file")
-        .arg(ArgUserId::add())
+        .about("Add group to the config file")
+        .arg(ArgGroupId::add())
         .arg(ArgGitlabToken::add())
         .arg(ArgGitlabUrl::add())
         .arg(ArgFileName::add());
 }
 
 struct CreateCmd {
-    gitlab_user_id: u64,
+    gitlab_group_id: u64,
     gitlab_client: Gitlab,
     file_name: String,
 }
@@ -47,7 +47,7 @@ pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>
         Err(_err) => return Err(Error::new(ErrorKind::Other, _err)),
     };
 
-    let gitlab_user_id = match ArgUserId::parse(sub_matches) {
+    let gitlab_group_id = match ArgGroupId::parse(sub_matches) {
         Ok(arg) => arg.value(),
         Err(err) => return Err(err),
     };
@@ -58,7 +58,7 @@ pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>
     };
 
     Ok(CreateCmd {
-        gitlab_user_id,
+        gitlab_group_id,
         gitlab_client,
         file_name,
     })
@@ -72,32 +72,33 @@ impl<'a> CmdOld<'a> for CreateCmd {
         };
 
         let gitlab = GitlabClient::new(self.gitlab_client.to_owned());
-        OutMessage::message_info_with_alias("I'm getting data about the user from Gitlab");
-        let user = match gitlab.get_user_data_by_id(self.gitlab_user_id) {
+        OutMessage::message_info_with_alias("I'm getting data about the group from Gitlab");
+        
+        let group = match gitlab.get_group_data_by_id(self.gitlab_group_id) {
             Ok(u) => u,
             Err(err) => return Err(err),
         };
 
-        let new_user = User {
-            id: self.gitlab_user_id,
-            name: user.name.to_string(),
+        let new_user = Group {
+            id: self.gitlab_group_id,
+            name: group.name.to_string(),
             ..Default::default()
         };
 
         if config_file
             .config
-            .users
+            .groups
             .iter()
-            .any(|i| i.id == self.gitlab_user_id)
+            .any(|i| i.id == self.gitlab_group_id)
         {
             return Err(Error::new(
                 ErrorKind::AlreadyExists,
-                format!("User {} is already in the config file", new_user.name),
+                format!("Group {} is already in the config file", new_user.name),
             ));
         } else {
-            config_file.config.users.extend([new_user]);
+            config_file.config.groups.extend([new_user]);
             OutMessage::message_info_clean(
-                format!("User {} is added to the config", user.name).as_str(),
+                format!("Group {} is added to the config", group.name).as_str(),
             );
         }
 

@@ -14,12 +14,16 @@ use crate::args::Args;
 use crate::args::state_destination::ArgStateDestination;
 use crate::args::state_source::ArgStateSource;
 use crate::args::write_state::ArgWriteState;
-use crate::cmd::Cmd;
+use crate::cmd::CmdOld;
+use crate::gitlab::{GitlabActions, GitlabClient};
 use crate::output::out_message::OutMessage;
 use crate::types::v1::config_file::ConfigFile;
-use crate::types::v1::state::State;
+use crate::types::v1::state::{EntityType, State};
 
-use self::sync_cmd::{apply, compare_states, configure_groups, configure_projects};
+use self::sync_cmd::{
+    apply, compare_states, configure_groups, configure_projects, gr_configure_groups,
+    gr_configure_projects,
+};
 
 pub(crate) fn add_sync_cmd() -> Command<'static> {
     Command::new("sync")
@@ -42,7 +46,7 @@ pub(crate) struct SyncCmd {
     state_source: String,
 }
 
-pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl Cmd<'a>, Error> {
+pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>, Error> {
     let dry_run: bool = ArgDryRun::parse(sub_matches).unwrap().value();
     let write_state: bool = ArgWriteState::parse(sub_matches).unwrap().value();
 
@@ -85,13 +89,13 @@ pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl Cmd<'a>, E
     })
 }
 
-impl<'a> Cmd<'a> for SyncCmd {
+impl<'a> CmdOld<'a> for SyncCmd {
     fn exec(&self) -> Result<(), Error> {
+        let gitlab = GitlabClient::new(self.gitlab_client.to_owned());
         let mut config_file = match ConfigFile::read(self.file_name.clone()) {
             Ok(c) => c,
             Err(err) => return Err(err),
         };
-
         // Read old state
         let mut old_state: HashMap<u64, State> = HashMap::new();
         if !self.state_source.is_empty() {
@@ -118,7 +122,18 @@ impl<'a> Cmd<'a> for SyncCmd {
                 u.id,
                 State {
                     projects: configure_projects(u, config_file.config.clone()),
-                    groups: configure_groups(u, config_file.config.clone()),
+                    namespaces: configure_groups(u, config_file.config.clone()),
+                    entity: EntityType::User,
+                },
+            );
+        }
+        for u in config_file.config.groups.iter().clone() {
+            new_state.insert(
+                u.id,
+                State {
+                    projects: gr_configure_projects(u),
+                    namespaces: gr_configure_groups(u),
+                    entity: EntityType::Group,
                 },
             );
         }
@@ -141,7 +156,7 @@ impl<'a> Cmd<'a> for SyncCmd {
         if !self.dry_run {
             config_file.state = state;
         }
-        
+
         if self.write_state {
             match State::write_to_file(old_state, self.state_destination.clone()) {
                 Ok(_) => {
@@ -165,9 +180,10 @@ impl<'a> Cmd<'a> for SyncCmd {
 mod sync_cmd {
     #[derive(Debug, Clone)]
     pub(crate) struct Actions {
-        user_id: u64,
-        entity_id: u64,
-        entity_type: EntityType,
+        subject_entity_id: u64,
+        subject_entity_type: EntityType,
+        object_entity_id: u64,
+        object_entity_type: ObjectEntityType,
         access: AccessLevel,
         action: Action,
     }
@@ -180,9 +196,11 @@ mod sync_cmd {
     use crate::gitlab::{GitlabActions, GitlabClient};
     use crate::output::{out_message::OutMessage, out_spinner::OutSpinner};
 
+    use crate::types::v1::group::Group;
+    use crate::types::v1::state::EntityType;
     use crate::types::v1::{
-        access_level::AccessLevel, config::Config, group::Group, project::Project, state::State,
-        user::User,
+        access_level::AccessLevel, config::Config, namespace::Namespace, project::Project,
+        state::State, user::User,
     };
 
     pub(crate) fn apply(
@@ -193,13 +211,20 @@ mod sync_cmd {
     ) -> Result<(), Error> {
         for a in actions.iter() {
             let gitlab = GitlabClient::new(gitlab_client.to_owned());
-            let username = match gitlab.get_user_data_by_id(a.user_id) {
-                Ok(r) => r,
-                Err(err) => return Err(err),
+            let subject_name = match a.subject_entity_type {
+                EntityType::User => match gitlab.get_user_data_by_id(a.subject_entity_id) {
+                    Ok(r) => r.name,
+                    Err(err) => return Err(err),
+                },
+                EntityType::Group => match gitlab.get_group_data_by_id(a.subject_entity_id) {
+                    Ok(r) => r.name,
+                    Err(err) => return Err(err),
+                },
             };
-            match a.entity_type {
-                EntityType::Project => {
-                    let project = match gitlab.get_project_data_by_id(a.entity_id) {
+
+            match a.object_entity_type {
+                ObjectEntityType::Project => {
+                    let project = match gitlab.get_project_data_by_id(a.object_entity_id) {
                         Ok(r) => r,
                         Err(err) => return Err(err),
                     };
@@ -208,56 +233,103 @@ mod sync_cmd {
                             let spinner = OutSpinner::spinner_start(
                                 format!(
                                     "Adding {} to {} as {}",
-                                    username.name, project.name, a.access
+                                    subject_name, project.name, a.access
                                 )
                                 .to_string(),
                             );
                             if !dry {
-                                match gitlab.add_user_to_project(a.user_id, a.entity_id, a.access) {
-                                    Err(err) => {
-                                        spinner.spinner_failure(err.to_string());
-                                        return Err(err);
+                                match a.subject_entity_type {
+                                    EntityType::User => {
+                                        match gitlab.add_user_to_project(
+                                            a.subject_entity_id,
+                                            a.object_entity_id,
+                                            a.access,
+                                        ) {
+                                            Err(err) => {
+                                                spinner.spinner_failure(err.to_string());
+                                                return Err(err);
+                                            }
+                                            Ok(msg) => {
+                                                spinner.spinner_success(msg.to_string());
+                                            }
+                                        }
                                     }
-                                    Ok(msg) => {
-                                        spinner.spinner_success(msg.to_string());
+                                    EntityType::Group => {
+                                        match gitlab.add_group_to_project(
+                                            a.subject_entity_id,
+                                            a.object_entity_id,
+                                            a.access,
+                                        ) {
+                                            Err(err) => {
+                                                spinner.spinner_failure(err.to_string());
+                                                return Err(err);
+                                            }
+                                            Ok(msg) => {
+                                                spinner.spinner_success(msg.to_string());
+                                            }
+                                        }
                                     }
-                                }
+                                };
                             } else {
                                 spinner.spinner_close();
                             }
-                            if !state.contains_key(&a.user_id) {
-                                state.insert(a.user_id, State::default());
+                            if !state.contains_key(&a.subject_entity_id) {
+                                state.insert(
+                                    a.subject_entity_id,
+                                    State::new_simple(a.subject_entity_type.clone()),
+                                );
                             };
-                            if let Some(x) = state.get_mut(&a.user_id) {
-                                x.projects.insert(a.entity_id, a.access);
+                            if let Some(x) = state.get_mut(&a.subject_entity_id) {
+                                x.projects.insert(a.object_entity_id, a.access);
                             }
                         }
                         Action::Delete => {
                             let spinner = OutSpinner::spinner_start(
-                                format!("Removing {} from {}", username.name, project.name)
+                                format!("Removing {} from {}", subject_name, project.name)
                                     .to_string(),
                             );
                             if !dry {
-                                match gitlab.remove_user_from_project(a.user_id, a.entity_id) {
-                                    Err(err) => {
-                                        spinner.spinner_failure(err.to_string());
-                                        return Err(err);
+                                match a.subject_entity_type {
+                                    EntityType::User => {
+                                        match gitlab.remove_user_from_project(
+                                            a.subject_entity_id,
+                                            a.object_entity_id,
+                                        ) {
+                                            Err(err) => {
+                                                spinner.spinner_failure(err.to_string());
+                                                return Err(err);
+                                            }
+                                            Ok(msg) => {
+                                                spinner.spinner_success(msg.to_string());
+                                            }
+                                        }
                                     }
-                                    Ok(msg) => {
-                                        spinner.spinner_success(msg.to_string());
+                                    EntityType::Group => {
+                                        match gitlab.remove_group_from_project(
+                                            a.subject_entity_id,
+                                            a.object_entity_id,
+                                        ) {
+                                            Err(err) => {
+                                                spinner.spinner_failure(err.to_string());
+                                                return Err(err);
+                                            }
+                                            Ok(msg) => {
+                                                spinner.spinner_success(msg.to_string());
+                                            }
+                                        }
                                     }
-                                }
+                                };
                             } else {
                                 spinner.spinner_close();
                             }
-                            if let Some(x) = state.get_mut(&a.user_id) {
+                            if let Some(x) = state.get_mut(&a.subject_entity_id) {
                                 x.projects
-                                    .remove(&a.entity_id)
+                                    .remove(&a.object_entity_id)
                                     .ok_or_else(|| {
                                         OutMessage::message_error(
                                             format!(
                                                 "Project {} can't be found in state",
-                                                a.entity_id
+                                                a.object_entity_id
                                             )
                                             .as_str(),
                                         )
@@ -269,32 +341,65 @@ mod sync_cmd {
                             let spinner = OutSpinner::spinner_start(
                                 format!(
                                     "Updating {} in {} to {}",
-                                    username.name, project.name, a.access
+                                    subject_name, project.name, a.access
                                 )
                                 .to_string(),
                             );
                             if !dry {
-                                match gitlab.edit_user_in_project(a.user_id, a.entity_id, a.access)
-                                {
-                                    Err(err) => {
-                                        spinner.spinner_failure(err.to_string());
-                                        return Err(err);
+                                match a.subject_entity_type {
+                                    EntityType::User => {
+                                        match gitlab.edit_user_in_project(
+                                            a.subject_entity_id,
+                                            a.object_entity_id,
+                                            a.access,
+                                        ) {
+                                            Err(err) => {
+                                                spinner.spinner_failure(err.to_string());
+                                                return Err(err);
+                                            }
+                                            Ok(msg) => {
+                                                spinner.spinner_success(msg.to_string());
+                                            }
+                                        }
                                     }
-                                    Ok(msg) => {
-                                        spinner.spinner_success(msg.to_string());
+                                    EntityType::Group => {
+                                        match gitlab.remove_group_from_project(
+                                            a.subject_entity_id,
+                                            a.object_entity_id,
+                                        ) {
+                                            Err(err) => {
+                                                spinner.spinner_failure(err.to_string());
+                                                return Err(err);
+                                            }
+                                            Ok(_) => {
+                                                match gitlab.add_group_to_project(
+                                                    a.subject_entity_id,
+                                                    a.object_entity_id,
+                                                    a.access,
+                                                ) {
+                                                    Err(err) => {
+                                                        spinner.spinner_failure(err.to_string());
+                                                        return Err(err);
+                                                    }
+                                                    Ok(msg) => {
+                                                        spinner.spinner_success(msg.to_string());
+                                                    }
+                                                };
+                                            }
+                                        };
                                     }
-                                }
+                                };
                             } else {
                                 spinner.spinner_close();
                             }
-                            if let Some(x) = state.get_mut(&a.user_id) {
-                                x.projects.insert(a.entity_id, a.access);
+                            if let Some(x) = state.get_mut(&a.subject_entity_id) {
+                                x.projects.insert(a.object_entity_id, a.access);
                             }
                         }
                     }
                 }
-                EntityType::Group => {
-                    let group = match gitlab.get_group_data_by_id(a.entity_id) {
+                ObjectEntityType::Group => {
+                    let group = match gitlab.get_group_data_by_id(a.object_entity_id) {
                         Ok(r) => r,
                         Err(err) => return Err(err),
                     };
@@ -303,56 +408,103 @@ mod sync_cmd {
                             let spinner = OutSpinner::spinner_start(
                                 format!(
                                     "Adding {} to {} as {}",
-                                    username.name, group.name, a.access
+                                    subject_name, group.name, a.access
                                 )
                                 .to_string(),
                             );
                             if !dry {
-                                match gitlab.add_user_to_group(a.user_id, a.entity_id, a.access) {
-                                    Err(err) => {
-                                        spinner.spinner_failure(err.to_string());
-                                        return Err(err);
+                                match a.subject_entity_type {
+                                    EntityType::User => {
+                                        match gitlab.add_user_to_group(
+                                            a.subject_entity_id,
+                                            a.object_entity_id,
+                                            a.access,
+                                        ) {
+                                            Err(err) => {
+                                                spinner.spinner_failure(err.to_string());
+                                                return Err(err);
+                                            }
+                                            Ok(msg) => {
+                                                spinner.spinner_success(msg.to_string());
+                                            }
+                                        }
                                     }
-                                    Ok(msg) => {
-                                        spinner.spinner_success(msg.to_string());
+                                    EntityType::Group => {
+                                        match gitlab.add_group_to_namespace(
+                                            a.subject_entity_id,
+                                            a.object_entity_id,
+                                            a.access,
+                                        ) {
+                                            Err(err) => {
+                                                spinner.spinner_failure(err.to_string());
+                                                return Err(err);
+                                            }
+                                            Ok(msg) => {
+                                                spinner.spinner_success(msg.to_string());
+                                            }
+                                        }
                                     }
-                                }
+                                };
                             } else {
                                 spinner.spinner_close();
                             }
-                            if !state.contains_key(&a.user_id) {
-                                state.insert(a.user_id, State::default());
+                            if !state.contains_key(&a.subject_entity_id) {
+                                state.insert(
+                                    a.subject_entity_id,
+                                    State::new_simple(a.subject_entity_type.clone()),
+                                );
                             };
-                            if let Some(x) = state.get_mut(&a.user_id) {
-                                x.groups.insert(a.entity_id, a.access);
+                            if let Some(x) = state.get_mut(&a.subject_entity_id) {
+                                x.namespaces.insert(a.object_entity_id, a.access);
                             }
                         }
                         Action::Delete => {
                             let spinner = OutSpinner::spinner_start(
-                                format!("Removing {} from {}", username.name, group.name)
+                                format!("Removing {} from {}", subject_name, group.name)
                                     .to_string(),
                             );
                             if !dry {
-                                match gitlab.remove_user_from_group(a.user_id, a.entity_id) {
-                                    Err(err) => {
-                                        spinner.spinner_failure(err.to_string());
-                                        return Err(err);
+                                match a.subject_entity_type {
+                                    EntityType::User => {
+                                        match gitlab.remove_user_from_group(
+                                            a.subject_entity_id,
+                                            a.object_entity_id,
+                                        ) {
+                                            Err(err) => {
+                                                spinner.spinner_failure(err.to_string());
+                                                return Err(err);
+                                            }
+                                            Ok(msg) => {
+                                                spinner.spinner_success(msg.to_string());
+                                            }
+                                        }
                                     }
-                                    Ok(msg) => {
-                                        spinner.spinner_success(msg.to_string());
+                                    EntityType::Group => {
+                                        match gitlab.remove_group_from_namespace(
+                                            a.subject_entity_id,
+                                            a.object_entity_id,
+                                        ) {
+                                            Err(err) => {
+                                                spinner.spinner_failure(err.to_string());
+                                                return Err(err);
+                                            }
+                                            Ok(msg) => {
+                                                spinner.spinner_success(msg.to_string());
+                                            }
+                                        }
                                     }
-                                }
+                                };
                             } else {
                                 spinner.spinner_close();
                             };
-                            if let Some(x) = state.get_mut(&a.user_id) {
-                                x.groups
-                                    .remove(&a.entity_id)
+                            if let Some(x) = state.get_mut(&a.subject_entity_id) {
+                                x.namespaces
+                                    .remove(&a.object_entity_id)
                                     .ok_or_else(|| {
                                         OutMessage::message_error(
                                             format!(
                                                 "Project {} can't be found in state",
-                                                a.entity_id
+                                                a.object_entity_id
                                             )
                                             .as_str(),
                                         )
@@ -364,25 +516,59 @@ mod sync_cmd {
                             let spinner = OutSpinner::spinner_start(
                                 format!(
                                     "Updating {} in {} to {}",
-                                    username.name, group.name, a.access
+                                    subject_name, group.name, a.access
                                 )
                                 .to_string(),
                             );
                             if !dry {
-                                match gitlab.edit_user_in_group(a.user_id, a.entity_id, a.access) {
-                                    Err(err) => {
-                                        spinner.spinner_failure(err.to_string());
-                                        return Err(err);
+                                match a.subject_entity_type {
+                                    EntityType::User => {
+                                        match gitlab.edit_user_in_group(
+                                            a.subject_entity_id,
+                                            a.object_entity_id,
+                                            a.access,
+                                        ) {
+                                            Err(err) => {
+                                                spinner.spinner_failure(err.to_string());
+                                                return Err(err);
+                                            }
+                                            Ok(msg) => {
+                                                spinner.spinner_success(msg.to_string());
+                                            }
+                                        }
                                     }
-                                    Ok(msg) => {
-                                        spinner.spinner_success(msg.to_string());
+                                    EntityType::Group => {
+                                        match gitlab.remove_group_from_namespace(
+                                            a.subject_entity_id,
+                                            a.object_entity_id,
+                                        ) {
+                                            Err(err) => {
+                                                spinner.spinner_failure(err.to_string());
+                                                return Err(err);
+                                            }
+                                            Ok(_) => {
+                                                match gitlab.add_group_to_namespace(
+                                                    a.subject_entity_id,
+                                                    a.object_entity_id,
+                                                    a.access,
+                                                ) {
+                                                    Err(err) => {
+                                                        spinner.spinner_failure(err.to_string());
+                                                        return Err(err);
+                                                    }
+                                                    Ok(msg) => {
+                                                        spinner.spinner_success(msg.to_string());
+                                                    }
+                                                };
+                                            }
+                                        };
                                     }
-                                }
+                                };
                             } else {
                                 spinner.spinner_close();
                             }
-                            if let Some(x) = state.get_mut(&a.user_id) {
-                                x.groups.insert(a.entity_id, a.access);
+                            if let Some(x) = state.get_mut(&a.subject_entity_id) {
+                                x.namespaces.insert(a.object_entity_id, a.access);
                             }
                         }
                     }
@@ -393,19 +579,9 @@ mod sync_cmd {
         Ok(())
     }
 
-    // pub(crate) fn configure_groups(u: &User) -> HashMap<u64, AccessLevel> {
-    // let mut groups_map: HashMap<u64, AccessLevel> = HashMap::new();
-    // let groups: Vec<Group> = u.groups.clone();
-    // for g in groups.iter() {
-    // let mut _group: HashMap<u64, AccessLevel> = HashMap::new();
-    // groups_map.insert(g.id, AccessLevel::Owner);
-    // }
-    // return groups_map;
-    // }
-
     pub(crate) fn configure_groups(u: &User, c: Config) -> HashMap<u64, AccessLevel> {
         let mut groups_map: HashMap<u64, AccessLevel> = HashMap::new();
-        let mut groups: Vec<Group> = u.groups.clone();
+        let mut groups: Vec<Namespace> = u.namespaces.clone();
         for t in c.teams.iter() {
             if u.teams.contains(&t.name.to_string()) || t.name == "default" {
                 groups.extend(t.groups.clone());
@@ -457,6 +633,47 @@ mod sync_cmd {
         return projects_map;
     }
 
+    pub(crate) fn gr_configure_groups(u: &Group) -> HashMap<u64, AccessLevel> {
+        let mut groups_map: HashMap<u64, AccessLevel> = HashMap::new();
+        let mut groups: Vec<Namespace> = u.namespaces.clone();
+        let mut keys: HashMap<u64, AccessLevel> = HashMap::new();
+        for g in groups.iter() {
+            if !keys.contains_key(&g.id) {
+                keys.insert(g.id, g.clone().access_level);
+            } else {
+                keys.insert(
+                    g.id,
+                    higher_access(g.access_level, *keys.get(&g.id).unwrap()),
+                );
+            }
+        }
+        groups.clear();
+        for (k, v) in keys.iter() {
+            groups_map.insert(*k, *v);
+        }
+        groups_map
+    }
+    pub(crate) fn gr_configure_projects(u: &Group) -> HashMap<u64, AccessLevel> {
+        let mut projects_map: HashMap<u64, AccessLevel> = HashMap::new();
+        let mut projects: Vec<Project> = u.projects.clone();
+        let mut keys: HashMap<u64, AccessLevel> = HashMap::new();
+        for p in projects.iter() {
+            if !keys.contains_key(&p.id) {
+                keys.insert(p.id, p.clone().access_level);
+            } else {
+                keys.insert(
+                    p.id,
+                    higher_access(p.access_level, *keys.get(&p.id).unwrap()),
+                );
+            }
+        }
+        projects.clear();
+        for (k, v) in keys.iter() {
+            projects_map.insert(*k, *v);
+        }
+        return projects_map;
+    }
+
     fn higher_access(a1: AccessLevel, a2: AccessLevel) -> AccessLevel {
         if a1 == AccessLevel::Maintainer || a2 == AccessLevel::Maintainer {
             AccessLevel::Maintainer
@@ -470,7 +687,7 @@ mod sync_cmd {
     }
 
     #[derive(Debug, Clone)]
-    enum EntityType {
+    enum ObjectEntityType {
         Project,
         Group,
     }
@@ -490,14 +707,16 @@ mod sync_cmd {
         for (id, state) in new_state.iter() {
             if old_state.contains_key(id) {
                 compare_projects(
+                    state.entity.clone(),
                     old_state[id].projects.clone(),
                     state.projects.clone(),
                     &mut actions,
                     *id,
                 );
                 compare_ownerships(
-                    old_state[id].groups.clone(),
-                    state.groups.clone(),
+                    state.entity.clone(),
+                    old_state[id].namespaces.clone(),
+                    state.namespaces.clone(),
                     &mut actions,
                     *id,
                 );
@@ -505,20 +724,22 @@ mod sync_cmd {
             } else {
                 for (pid, access) in state.projects.iter() {
                     actions.extend([Actions {
-                        user_id: *id,
-                        entity_id: *pid,
-                        entity_type: EntityType::Project,
+                        subject_entity_id: *id,
+                        object_entity_id: *pid,
+                        object_entity_type: ObjectEntityType::Project,
                         access: *access,
                         action: Action::Create,
+                        subject_entity_type: state.entity.clone(),
                     }])
                 }
-                for (gid, access) in state.groups.iter() {
+                for (gid, access) in state.namespaces.iter() {
                     actions.extend([Actions {
-                        user_id: *id,
-                        entity_id: *gid,
-                        entity_type: EntityType::Group,
+                        subject_entity_id: *id,
+                        object_entity_id: *gid,
+                        object_entity_type: ObjectEntityType::Group,
                         access: *access,
                         action: Action::Create,
+                        subject_entity_type: state.entity.clone(),
                     }])
                 }
             }
@@ -526,20 +747,22 @@ mod sync_cmd {
         for (id, state) in old_state.iter() {
             for (pid, access) in state.projects.iter() {
                 actions.extend([Actions {
-                    user_id: *id,
-                    entity_id: *pid,
-                    entity_type: EntityType::Project,
+                    subject_entity_id: *id,
+                    object_entity_id: *pid,
+                    object_entity_type: ObjectEntityType::Project,
                     access: *access,
                     action: Action::Delete,
+                    subject_entity_type: state.entity.clone(),
                 }])
             }
-            for (gid, access) in state.groups.iter() {
+            for (gid, access) in state.namespaces.iter() {
                 actions.extend([Actions {
-                    user_id: *id,
-                    entity_id: *gid,
-                    entity_type: EntityType::Group,
+                    subject_entity_id: *id,
+                    object_entity_id: *gid,
+                    object_entity_type: ObjectEntityType::Group,
                     access: *access,
                     action: Action::Delete,
+                    subject_entity_type: state.entity.clone(),
                 }])
             }
         }
@@ -548,6 +771,7 @@ mod sync_cmd {
     }
 
     fn compare_ownerships(
+        entity_type: EntityType,
         mut old_state: HashMap<u64, AccessLevel>,
         new_state: HashMap<u64, AccessLevel>,
         actions: &mut Vec<Actions>,
@@ -557,36 +781,40 @@ mod sync_cmd {
             if old_state.contains_key(id) {
                 if old_state[id] != new_state[id] {
                     actions.extend([Actions {
-                        user_id,
-                        entity_id: *id,
-                        entity_type: EntityType::Group,
+                        subject_entity_id: user_id,
+                        object_entity_id: *id,
+                        object_entity_type: ObjectEntityType::Group,
                         access: *access,
                         action: Action::Update,
+                        subject_entity_type: entity_type.clone(),
                     }]);
                 }
                 old_state.remove(id);
             } else {
                 actions.extend([Actions {
-                    user_id,
-                    entity_id: *id,
-                    entity_type: EntityType::Group,
+                    subject_entity_id: user_id,
+                    object_entity_id: *id,
+                    object_entity_type: ObjectEntityType::Group,
                     access: *access,
                     action: Action::Create,
+                    subject_entity_type: entity_type.clone(),
                 }])
             }
         }
         for (id, access) in old_state.iter() {
             actions.extend([Actions {
-                user_id,
-                entity_id: *id,
-                entity_type: EntityType::Group,
+                subject_entity_id: user_id,
+                object_entity_id: *id,
+                object_entity_type: ObjectEntityType::Group,
                 access: *access,
                 action: Action::Delete,
+                subject_entity_type: entity_type.clone(),
             }])
         }
     }
 
     fn compare_projects(
+        entity_type: EntityType,
         mut old_state: HashMap<u64, AccessLevel>,
         new_state: HashMap<u64, AccessLevel>,
         actions: &mut Vec<Actions>,
@@ -596,31 +824,34 @@ mod sync_cmd {
             if old_state.contains_key(id) {
                 if old_state[id] != new_state[id] {
                     actions.extend([Actions {
-                        user_id,
-                        entity_id: *id,
-                        entity_type: EntityType::Project,
+                        subject_entity_id: user_id,
+                        object_entity_id: *id,
+                        object_entity_type: ObjectEntityType::Project,
                         access: *access,
                         action: Action::Update,
+                        subject_entity_type: entity_type.clone(),
                     }]);
                 }
                 old_state.remove(id);
             } else {
                 actions.extend([Actions {
-                    user_id,
-                    entity_id: *id,
-                    entity_type: EntityType::Project,
+                    subject_entity_id: user_id,
+                    object_entity_id: *id,
+                    object_entity_type: ObjectEntityType::Project,
                     access: *access,
                     action: Action::Create,
+                    subject_entity_type: entity_type.clone(),
                 }])
             }
         }
         for (id, access) in old_state.iter() {
             actions.extend([Actions {
-                user_id,
-                entity_id: *id,
-                entity_type: EntityType::Project,
+                subject_entity_id: user_id,
+                object_entity_id: *id,
+                object_entity_type: ObjectEntityType::Project,
                 access: *access,
                 action: Action::Delete,
+                subject_entity_type: entity_type.clone(),
             }])
         }
     }

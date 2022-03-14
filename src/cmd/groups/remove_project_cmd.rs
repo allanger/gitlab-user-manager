@@ -5,15 +5,15 @@ use clap::{ArgMatches, Command};
 use crate::args::file_name::ArgFileName;
 use crate::args::gitlab_token::ArgGitlabToken;
 use crate::args::gitlab_url::ArgGitlabUrl;
+use crate::args::group_id::ArgGroupId;
 use crate::args::project_id::ArgProjectId;
-use crate::args::user_id::ArgUserId;
 use crate::args::Args;
 use crate::cmd::CmdOld;
 use crate::output::out_message::OutMessage;
 use crate::types::v1::config_file::ConfigFile;
 
 pub(crate) struct RemoveProjectCmd {
-    gitlab_user_id: u64,
+    gitlab_group_id: u64,
     gitlab_project_id: u64,
     file_name: String,
 }
@@ -21,7 +21,7 @@ pub(crate) fn add_remove_project_cmd() -> Command<'static> {
     return Command::new("remove-project")
         .alias("rp")
         .about("Remove user from the project")
-        .arg(ArgUserId::add())
+        .arg(ArgGroupId::add())
         .arg(ArgGitlabToken::add())
         .arg(ArgGitlabUrl::add())
         .arg(ArgProjectId::add())
@@ -34,7 +34,7 @@ pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>
         Err(err) => return Err(err),
     };
 
-    let gitlab_user_id = match ArgUserId::parse(sub_matches) {
+    let gitlab_group_id = match ArgGroupId::parse(sub_matches) {
         Ok(arg) => arg.value(),
         Err(err) => return Err(err),
     };
@@ -46,7 +46,7 @@ pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>
 
     Ok(RemoveProjectCmd {
         gitlab_project_id,
-        gitlab_user_id,
+        gitlab_group_id,
         file_name,
     })
 }
@@ -58,15 +58,15 @@ impl<'a> CmdOld<'a> for RemoveProjectCmd {
             Err(err) => return Err(err),
         };
 
-        for u in config_file.config.users.iter_mut() {
-            if u.id == self.gitlab_user_id {
-                for (i, p) in u.projects.iter().enumerate() {
+        for g in config_file.config.groups.iter_mut() {
+            if g.id == self.gitlab_group_id {
+                for (i, p) in g.projects.iter().enumerate() {
                     if p.id == self.gitlab_project_id {
                         OutMessage::message_info_clean(
-                            format!("removing user {} from project {}", u.name, p.name).as_str(),
+                            format!("removing user {} from project {}", g.name, p.name).as_str(),
                         );
 
-                        u.projects.remove(i);
+                        g.projects.remove(i);
                         break;
                     }
                 }

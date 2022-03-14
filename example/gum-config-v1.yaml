@@ -5,4 +5,5 @@ config:
     name: default
     projects: [] 
   users: []
+  groups: []
 state: 

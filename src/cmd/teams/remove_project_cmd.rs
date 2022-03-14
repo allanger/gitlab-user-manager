@@ -2,7 +2,7 @@ use crate::args::file_name::ArgFileName;
 use crate::args::project_id::ArgProjectId;
 use crate::args::team_name::ArgTeamName;
 use crate::args::Args;
-use crate::cmd::Cmd;
+use crate::cmd::CmdOld;
 use crate::output::out_message::OutMessage;
 use crate::types::v1::config_file::ConfigFile;
 use crate::types::v1::project::Project;
@@ -24,7 +24,7 @@ struct RemoveProjectCmd {
     gitlab_project_id: u64,
 }
 
-pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl Cmd<'a>, Error> {
+pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>, Error> {
     let gitlab_project_id: u64 = match ArgProjectId::parse(sub_matches) {
         Ok(arg) => arg.value(),
         Err(err) => return Err(err),
@@ -47,7 +47,7 @@ pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl Cmd<'a>, E
     })
 }
 
-impl<'a> Cmd<'a> for RemoveProjectCmd {
+impl<'a> CmdOld<'a> for RemoveProjectCmd {
     fn exec(&self) -> Result<(), Error> {
         let mut config_file = match ConfigFile::read(self.file_name.clone()) {
             Ok(c) => c,

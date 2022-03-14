@@ -34,12 +34,7 @@ impl Args for ArgGroupList {
     fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<Self> {
         let value = match sub_matches.values_of(ARG) {
             Some(v) => v.map(|f| f.parse::<u64>().unwrap()).collect(),
-            None => {
-                return Err(Error::new(
-                    ErrorKind::InvalidInput,
-                    "You have to provide values for using group-list args",
-                ))
-            }
+            None => Vec::new(),
         };
 
         Ok(ArgGroupList { value })

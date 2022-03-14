@@ -1,6 +1,7 @@
 [
   {
-    "user_id": {
+    "entity": "user",
+    "id": "user_id",
       "projects": [
         {
           "project_id": "access_level"
@@ -17,6 +18,5 @@
           "group_id": "access_level"
         }
       ]
-    }
   }
 ]
