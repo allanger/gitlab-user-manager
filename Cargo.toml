@@ -8,7 +8,7 @@ edition = "2021"
 clap = { version = "3.0", features = ["derive", "env"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.8"
-gitlab = "0.1408.0"
+# gitlab = "0.1408.0"
 log = "0.4.14"
 tempfile = "3.3.0"
 uuid = { version = "0.8", features = ["serde", "v4"]}
@@ -19,3 +19,4 @@ rand = "0.8.5"
 tabled = "0.5.0"
 serde_json = "1.0.79"
 self_update = "0.28.0"
+gitlab = { git = "https://gitlab.kitware.com/allanger/rust-gitlab.git", tag = "temp-version-fix"}

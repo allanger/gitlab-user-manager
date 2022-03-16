@@ -1,5 +1,5 @@
 use std::{
-    io::{Error, ErrorKind},
+    io::{Error, ErrorKind, Result},
     vec,
 };
 
@@ -11,11 +11,19 @@ use crate::{
         file_name::ArgFileName, gitlab_token::ArgGitlabToken, gitlab_url::ArgGitlabUrl,
         group_list::ArgGroupList, Args,
     },
-    cmd::Cmd,
-    gitlab::{CustomMember, GitlabActions, GitlabClient, Group, Project},
+    cmd::CmdOld,
+    gitlab::{
+        shared_groups, shared_projects, GitlabActions, GitlabClient, GitlabClientApi, Group,
+        Project,
+    },
     output::out_message::OutMessage,
-    types::v1::{config_file::ConfigFile, user},
+    service::init::InitService,
+    types::v1::{
+        self, access_level::AccessLevel, config_file::ConfigFile, namespace::Namespace, user,
+    },
 };
+
+use super::Cmd;
 
 /// init cmd should be used to generate an empty gum-config
 pub(crate) fn add_init_cmd() -> Command<'static> {
@@ -34,25 +42,39 @@ pub(crate) struct InitCmd {
     gitlab_token: String,
 }
 
-pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl Cmd<'a>, Error> {
-    let file_name = match ArgFileName::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(err),
-    };
-    let group_list = match ArgGroupList::parse(sub_matches) {
-        Ok(arg) => arg.value().to_vec(),
-        Err(err) => return Err(err),
-    };
-    let gitlab_token = match ArgGitlabToken::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(err),
-    };
+// TODO: It's not actually implemented yet
+impl Cmd for InitCmd {
+    type CmdType = InitCmd;
+    fn add() -> Command<'static> {
+        Command::new("init")
+            .about("Create a default yaml file in the current directory")
+            .arg(ArgFileName::add())
+            .arg(ArgGroupList::add())
+            .arg(ArgGitlabToken::add())
+            .arg(ArgGitlabUrl::add())
+    }
 
-    let gitlab_url = match ArgGitlabUrl::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(err),
-    };
+    fn prepare(sub_matches: &'_ ArgMatches) -> Result<InitCmd> {
+        Ok(InitCmd {
+            file_name: ArgFileName::parse(sub_matches)?.value(),
+            group_list: ArgGroupList::parse(sub_matches)?.value().to_vec(),
+            gitlab_url: ArgGitlabToken::parse(sub_matches)?.value(),
+            gitlab_token: ArgGitlabUrl::parse(sub_matches)?.value(),
+        })
+    }
 
+    fn exec(&self) -> Result<()> {
+        InitService::new()
+            .parse_groups(self.group_list.clone())
+            .save(self.file_name.clone())
+    }
+}
+
+pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>> {
+    let file_name = ArgFileName::parse(sub_matches)?.value();
+    let group_list = ArgGroupList::parse(sub_matches)?.value().to_vec();
+    let gitlab_token = ArgGitlabToken::parse(sub_matches)?.value();
+    let gitlab_url = ArgGitlabUrl::parse(sub_matches)?.value();
     Ok(InitCmd {
         file_name,
         group_list,
@@ -61,9 +83,10 @@ pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl Cmd<'a>, E
     })
 }
 
-impl<'a> Cmd<'a> for InitCmd {
-    fn exec(&self) -> Result<(), Error> {
+impl<'a> CmdOld<'a> for InitCmd {
+    fn exec(&self) -> Result<()> {
         let mut config_file: ConfigFile = Default::default();
+
         if self.group_list.len() > 0 {
             // Prepare gitlab client
             let gitlab_client: Gitlab =
@@ -83,19 +106,50 @@ impl<'a> Cmd<'a> for InitCmd {
                 groups.extend(vec![group.clone()]);
                 groups.extend(gitlab.get_subgroups(group.name.clone(), *i));
             }
-            OutMessage::message_info_with_alias(
-                format!("Got {} groups", groups.len() + 1).as_str(),
-            );
+            OutMessage::message_info_with_alias(format!("Got {} groups", groups.len()).as_str());
             // Scrap projects
             let mut projects: Vec<Project> = Vec::new();
             for i in groups.iter() {
                 projects.extend(gitlab.get_projects(i.name.clone(), i.id));
             }
             OutMessage::message_info_with_alias(
-                format!("Got {} projects", projects.len() + 1).as_str(),
+                format!("Got {} projects", projects.len()).as_str(),
             );
 
             for g in groups.iter() {
+                match shared_groups::SharedWithGroups::get(g.id, gitlab.get_client()) {
+                    Ok(group) => {
+                        for ns in group.iter() {
+                            let item = Namespace {
+                                name: g.name.clone(),
+                                access_level: AccessLevel::from_gitlab_access_level(
+                                    ns.group_access_level,
+                                ),
+                                id: g.id,
+                                url: g.web_url.clone(),
+                            };
+                            let mut found = false;
+                            for group in config_file.config.groups.iter_mut() {
+                                if ns.group_id == group.id {
+                                    found = true;
+                                    group.namespaces.push(item.clone());
+                                }
+                            }
+                            if !found {
+                                let group_entry = v1::group::Group {
+                                    name: ns.group_name.clone(),
+                                    id: ns.group_id,
+                                    projects: Default::default(),
+                                    namespaces: vec![item],
+                                };
+                                config_file.config.groups.push(group_entry);
+                            }
+                        }
+                    }
+                    Err(_) => {
+                        OutMessage::message_info_clean("This group is not shared");
+                    }
+                };
                 // Add user if doesn't exist or add group to user if exists
                 let groups_users = gitlab.get_group_members(g.name.to_string(), g.id);
                 for member in groups_users.iter() {
@@ -103,7 +157,7 @@ impl<'a> Cmd<'a> for InitCmd {
                     for u in config_file.config.users.iter_mut() {
                         if u.id == member.id {
                             found = true;
-                            u.groups.push(g.to_gum_group(member.clone()).unwrap());
+                            u.namespaces.push(g.to_gum_group(member.clone()).unwrap());
                             break;
                         }
                     }
@@ -113,7 +167,7 @@ impl<'a> Cmd<'a> for InitCmd {
                             name: member.name.clone(),
                             teams: Default::default(),
                             projects: Default::default(),
-                            groups: vec![g.to_gum_group(member.clone()).unwrap()],
+                            namespaces: vec![g.to_gum_group(member.clone()).unwrap()],
                         });
                     }
                 }
@@ -121,6 +175,39 @@ impl<'a> Cmd<'a> for InitCmd {
 
             for p in projects.iter() {
                 // Add user if doesn't exist or add group to user if exists
+                match shared_projects::SharedWithGroups::get(p.id, gitlab.get_client()) {
+                    Ok(group) => {
+                        for ns in group.iter() {
+                            let item = v1::project::Project {
+                                id: p.id,
+                                name: p.name.clone(),
+                                access_level: AccessLevel::from_gitlab_access_level(
+                                    ns.group_access_level,
+                                ),
+                            };
+                            let mut found = false;
+                            for group in config_file.config.groups.iter_mut() {
+                                if ns.group_id == group.id {
+                                    found = true;
+                                    group.projects.push(item.clone());
+                                }
+                            }
+                            if !found {
+                                let group_entry = v1::group::Group {
+                                    name: ns.group_name.clone(),
+                                    id: ns.group_id,
+                                    namespaces: Default::default(),
+                                    projects: vec![item],
+                                };
+                                config_file.config.groups.push(group_entry);
+                            }
+                        }
+                    }
+                    Err(_) => {
+                        OutMessage::message_info_clean("This project is not shared");
+                    }
+                };
+
                 let projects_users = gitlab.get_project_members(p.name.to_string(), p.id);
                 for member in projects_users.iter() {
                     let mut found = false;
@@ -137,13 +224,12 @@ impl<'a> Cmd<'a> for InitCmd {
                             name: member.name.clone(),
                             projects: vec![p.to_gum_project(member.clone()).unwrap()],
                             teams: Default::default(),
-                            groups: Default::default(),
+                            namespaces: Default::default(),
                         });
                     }
                 }
             }
         }
-
         match std::fs::OpenOptions::new()
             .write(true)
             .create_new(true)

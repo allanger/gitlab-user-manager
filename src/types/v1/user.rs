@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::{group::Group, project::Project};
+use super::{namespace::Namespace, project::Project};
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
 pub struct User {
@@ -8,5 +8,5 @@ pub struct User {
     pub(crate) name: String,
     pub(crate) teams: Vec<String>,
     pub(crate) projects: Vec<Project>,
-    pub(crate) groups: Vec<Group>,
+    pub(crate) namespaces: Vec<Namespace>,
 }

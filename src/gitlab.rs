@@ -1,3 +1,6 @@
+pub mod shared_groups;
+pub(crate) mod shared_projects;
+
 use core::time;
 use std::{
     io::{Error, ErrorKind},
@@ -14,7 +17,7 @@ use tabled::Tabled;
 
 use crate::{
     output::{out_message::OutMessage, out_spinner::OutSpinner},
-    types::v1::{access_level::AccessLevel, group, project},
+    types::v1::{access_level::AccessLevel, namespace, project},
 };
 
 pub(crate) struct GitlabClient {
@@ -65,6 +68,20 @@ pub(crate) trait GitlabActions {
         gid: u64,
         access_level: AccessLevel,
     ) -> Result<String, Error>;
+    fn add_group_to_namespace(
+        &self,
+        gid: u64,
+        nid: u64,
+        access_level: AccessLevel,
+    ) -> Result<String, Error>;
+    fn add_group_to_project(
+        &self,
+        gid: u64,
+        pid: u64,
+        access_level: AccessLevel,
+    ) -> Result<String, Error>;
+    fn remove_group_from_namespace(&self, gid: u64, nid: u64) -> Result<String, Error>;
+    fn remove_group_from_project(&self, gid: u64, pid: u64) -> Result<String, Error>;
     fn remove_user_from_project(&self, uid: u64, pid: u64) -> Result<String, Error>;
     fn remove_user_from_group(&self, uid: u64, gid: u64) -> Result<String, Error>;
     fn edit_user_in_project(
@@ -84,6 +101,7 @@ pub(crate) trait GitlabActions {
     fn get_projects(&self, group_name: String, id: u64) -> Vec<Project>;
     fn get_project_members(&self, name: String, id: u64) -> Vec<CustomMember>;
     fn get_group_members(&self, name: String, id: u64) -> Vec<CustomMember>;
+    fn get_shared_projects(&self, group_id: u64) -> Vec<Project>;
 }
 
 #[derive(Debug, Deserialize, Tabled)]
@@ -129,8 +147,8 @@ pub(crate) struct Group {
 }
 
 impl Group {
-    pub(crate) fn to_gum_group(&self, member: CustomMember) -> Result<group::Group, Error> {
-        let group = group::Group {
+    pub(crate) fn to_gum_group(&self, member: CustomMember) -> Result<namespace::Namespace, Error> {
+        let group = namespace::Namespace {
             id: self.id,
             name: self.name.clone(),
             url: self.web_url.clone(),
@@ -206,6 +224,7 @@ impl GitlabActions for GitlabClient {
                 return Err(Error::new(std::io::ErrorKind::Other, err.to_string()));
             }
         };
+
         let output: Group = match group.query(&self.gitlab_client) {
             Err(err) => {
                 match err {
@@ -405,7 +424,7 @@ impl GitlabActions for GitlabClient {
             Err(_) => todo!(),
         };
         let head: Vec<Group> = query.query(&self.gitlab_client).unwrap();
-        if !head.is_empty(){
+        if !head.is_empty() {
             for g in head.iter() {
                 let sub: Vec<Group> = self.get_subgroups(g.name.clone(), g.id);
                 if !sub.is_empty() {
@@ -420,7 +439,11 @@ impl GitlabActions for GitlabClient {
 
     fn get_projects(&self, group_name: String, id: u64) -> Vec<Project> {
         let spinner = OutSpinner::spinner_start(format!("Getting projects from {}", group_name));
-        let query = match groups::projects::GroupProjects::builder().group(id).with_shared(false).build() {
+        let query = match groups::projects::GroupProjects::builder()
+            .group(id)
+            .with_shared(false)
+            .build()
+        {
             Ok(q) => q,
             Err(_) => todo!(),
         };
@@ -453,5 +476,136 @@ impl GitlabActions for GitlabClient {
         let users: Vec<CustomMember> = query.query(&self.gitlab_client).unwrap();
         OutSpinner::spinner_success(spinner, "Done".to_string());
         users
+    }
+
+    fn get_shared_projects(&self, group_id: u64) -> Vec<Project> {
+        let query = match groups::shared::GroupSharedProjects::builder()
+            .id(group_id)
+            .build()
+        {
+            Ok(q) => q,
+            Err(_) => todo!(),
+        };
+        let users: Vec<Project> = query.query(&self.gitlab_client).unwrap();
+        print!("{:?}", users);
+        users
+    }
+
+    fn add_group_to_namespace(
+        &self,
+        gid: u64,
+        nid: u64,
+        access_level: AccessLevel,
+    ) -> Result<String, Error> {
+        let q = match groups::shared::AddGroupShare::builder()
+            .group_access(access_level.to_gitlab_access_level())
+            .id(nid)
+            .group(gid)
+            .build()
+        {
+            Ok(q) => q,
+            Err(err) => {
+                return Err(Error::new(std::io::ErrorKind::Other, err.to_string()));
+            }
+        };
+        let _: () = match api::ignore(q).query(&self.gitlab_client) {
+            Ok(_) => return Ok("Added".to_string()),
+            Err(err) => {
+                if let ApiError::Gitlab { msg } = err {
+                    if msg == "Shared group The group has already been shared with this group" {
+                        return Ok("Already exists".to_string());
+                    }
+                    return Err(Error::new(ErrorKind::AddrNotAvailable, msg));
+                } else {
+                    return Err(Error::new(ErrorKind::AddrNotAvailable, err));
+                };
+            }
+        };
+    }
+
+    fn add_group_to_project(
+        &self,
+        gid: u64,
+        pid: u64,
+        access_level: AccessLevel,
+    ) -> Result<String, Error> {
+        let q = match projects::share::AddProjectShare::builder()
+            .group_access(access_level.to_gitlab_access_level())
+            .project(pid)
+            .group(gid)
+            .build()
+        {
+            Ok(q) => q,
+            Err(err) => {
+                return Err(Error::new(std::io::ErrorKind::Other, err.to_string()));
+            }
+        };
+        let _: () = match api::ignore(q).query(&self.gitlab_client) {
+            Ok(_) => return Ok("Added".to_string()),
+            Err(err) => {
+                if let ApiError::Gitlab { msg } = err {
+                    if msg == "Group already shared with this group" {
+                        return Ok("Already exists".to_string());
+                    }
+                    return Err(Error::new(ErrorKind::AddrNotAvailable, msg));
+                } else {
+                    return Err(Error::new(ErrorKind::AddrNotAvailable, err));
+                };
+            }
+        };
+    }
+
+    fn remove_group_from_namespace(&self, gid: u64, nid: u64) -> Result<String, Error> {
+        let q = match groups::shared::RemoveGroupShare::builder()
+            .id(nid)
+            .group(gid)
+            .build()
+        {
+            Ok(q) => q,
+            Err(err) => {
+                return Err(Error::new(std::io::ErrorKind::Other, err.to_string()));
+            }
+        };
+        let _: () = match api::ignore(q).query(&self.gitlab_client) {
+            Ok(_) => return Ok("Removed".to_string()),
+            Err(err) => {
+                match err {
+                    ApiError::Gitlab { msg } => {
+                        if msg == "404 Group Link Not Found" {
+                            return Ok("Not found".to_string());
+                        }
+                        return Err(Error::new(ErrorKind::AddrNotAvailable, msg));
+                    }
+                    _ => return Err(Error::new(ErrorKind::AddrNotAvailable, err)),
+                };
+            }
+        };
+    }
+
+    fn remove_group_from_project(&self, gid: u64, pid: u64) -> Result<String, Error> {
+        let q = match projects::share::RemoveProjectShare::builder()
+            .project(pid)
+            .group(gid)
+            .build()
+        {
+            Ok(q) => q,
+            Err(err) => {
+                return Err(Error::new(std::io::ErrorKind::Other, err.to_string()));
+            }
+        };
+        let _: () = match api::ignore(q).query(&self.gitlab_client) {
+            Ok(_) => return Ok("Removed".to_string()),
+            Err(err) => {
+                match err {
+                    ApiError::Gitlab { msg } => {
+                        if msg == "404 Group Link Not Found" {
+                            return Ok("Not found".to_string());
+                        }
+                        return Err(Error::new(ErrorKind::AddrNotAvailable, msg));
+                    }
+                    _ => return Err(Error::new(ErrorKind::AddrNotAvailable, err)),
+                };
+            }
+        };
     }
 }

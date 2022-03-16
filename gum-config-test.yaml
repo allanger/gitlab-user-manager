@@ -1,0 +1,62 @@
+---
+meta:
+  version: v1
+config:
+  teams:
+    - name: default
+      projects: []
+      groups: []
+  users:
+    - id: 3644679
+      name: N R
+      teams: []
+      projects: []
+      namespaces:
+        - name: gitlab-user-manager
+          access_level: Owner
+          id: 16198577
+          url: "https://gitlab.com/groups/gitlab-user-manager"
+    - id: 6012633
+      name: Nikolay Rodionov
+      teams: []
+      projects:
+        - name: affectionate_sammet
+          id: 33873252
+          access_level: Maintainer
+        - name: pedantic_mahavira
+          id: 33873240
+          access_level: Developer
+        - name: relaxed_hertz
+          id: 33873238
+          access_level: Guest
+        - name: peaceful_shannon
+          id: 33873231
+          access_level: Owner
+        - name: flamboyant_ride
+          id: 33873225
+          access_level: Developer
+      namespaces: []
+  groups:
+    - name: group_1
+      id: 16198579
+      projects:
+        - name: flamboyant_ride
+          id: 33873225
+          access_level: Guest
+      namespaces:
+        - name: group_2
+          access_level: Guest
+          id: 16198581
+          url: "https://gitlab.com/groups/gitlab-user-manager/group_2"
+        - name: group_3
+          access_level: Developer
+          id: 16198584
+          url: "https://gitlab.com/groups/gitlab-user-manager/group_211"
+    - name: group_3
+      id: 16198584
+      projects:
+        - name: pedantic_mahavira
+          id: 33873240
+          access_level: Guest
+      namespaces: []
+state: ""

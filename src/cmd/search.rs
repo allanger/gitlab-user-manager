@@ -10,7 +10,7 @@ use gitlab::Gitlab;
 
 use crate::{
     args::{gitlab_token::ArgGitlabToken, gitlab_url::ArgGitlabUrl, Args},
-    cmd::Cmd,
+    cmd::CmdOld,
 };
 
 /// Register search cmd
@@ -32,7 +32,7 @@ pub(crate) struct SearchCmd<'a> {
     gitlab_client: Gitlab,
 }
 
-pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, Error> {
+pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl CmdOld<'a>, Error> {
     let gitlab_token = match ArgGitlabToken::parse(sub_matches) {
         Ok(arg) => arg.value(),
         Err(err) => return Err(err),
@@ -57,7 +57,7 @@ pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl Cmd<'a>, E
     })
 }
 
-impl<'a> Cmd<'a> for SearchCmd<'a> {
+impl<'a> CmdOld<'a> for SearchCmd<'a> {
     fn exec(&self) -> Result<(), Error> {
         let result;
         match self.search_sub {

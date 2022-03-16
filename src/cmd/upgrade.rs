@@ -5,7 +5,7 @@ use self_update::{backends::github::Update, cargo_crate_version};
 
 use crate::{
     args::{no_confirm::ArgNoConfirm, Args},
-    cmd::Cmd,
+    cmd::CmdOld,
     output::out_message::OutMessage,
 };
 
@@ -20,12 +20,12 @@ pub(crate) struct UpgradeCmd {
     no_confirm: bool,
 }
 
-pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl Cmd<'a>, Error> {
+pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>, Error> {
     let no_confirm: bool = ArgNoConfirm::parse(sub_matches).unwrap().value();
     Ok(UpgradeCmd { no_confirm })
 }
 
-impl<'a> Cmd<'a> for UpgradeCmd {
+impl<'a> CmdOld<'a> for UpgradeCmd {
     fn exec(&self) -> Result<(), Error> {
         let status = match Update::configure()
             .repo_owner("allanger")

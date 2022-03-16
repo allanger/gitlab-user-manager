@@ -4,7 +4,7 @@ use clap::{ArgMatches, Command};
 
 use crate::{
     args::{file_name::ArgFileName, team_name::ArgTeamName, Args},
-    cmd::Cmd,
+    cmd::CmdOld,
     output::out_message::OutMessage,
     types::v1::config_file::ConfigFile,
 };
@@ -22,7 +22,7 @@ struct RemoveCmd {
     file_name: String,
 }
 
-pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl Cmd<'a>, Error> {
+pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>, Error> {
     let team_name = match ArgTeamName::parse(sub_matches) {
         Ok(arg) => arg.value(),
         Err(err) => return Err(err),
@@ -38,7 +38,7 @@ pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl Cmd<'a>, E
     })
 }
 
-impl<'a> Cmd<'a> for RemoveCmd {
+impl<'a> CmdOld<'a> for RemoveCmd {
     fn exec(&self) -> Result<(), Error> {
         let mut config_file = match ConfigFile::read(self.file_name.clone()) {
             Ok(c) => c,

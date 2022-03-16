@@ -6,7 +6,7 @@ use gitlab::Gitlab;
 use crate::{
     args::{
         access_level::ArgAccess, file_name::ArgFileName, gitlab_token::ArgGitlabToken,
-        gitlab_url::ArgGitlabUrl, project_id::ArgProjectId, user_id::ArgUserId, Args,
+        gitlab_url::ArgGitlabUrl, project_id::ArgProjectId, Args, group_id::ArgGroupId,
     },
     gitlab::GitlabActions,
     output::{out_message::OutMessage, out_spinner::OutSpinner},
@@ -16,7 +16,7 @@ use crate::{cmd::CmdOld, gitlab::GitlabClient};
 
 pub(crate) struct AddProjectCmd {
     file_name: String,
-    gitlab_user_id: u64,
+    gitlab_group_id: u64,
     access_level: AccessLevel,
     gitlab_project_id: u64,
     gitlab_client: Gitlab,
@@ -24,8 +24,8 @@ pub(crate) struct AddProjectCmd {
 pub(crate) fn add_add_project_cmd() -> Command<'static> {
     return Command::new("add-project")
         .alias("ap")
-        .about("Add user to project")
-        .arg(ArgUserId::add())
+        .about("Add group to project")
+        .arg(ArgGroupId::add())
         .arg(ArgGitlabToken::add())
         .arg(ArgGitlabUrl::add())
         .arg(ArgAccess::add())
@@ -60,7 +60,7 @@ pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>
         Err(e) => return Err(e),
     };
 
-    let gitlab_user_id = match ArgUserId::parse(sub_matches) {
+    let gitlab_user_id = match ArgGroupId::parse(sub_matches) {
         Ok(arg) => arg.value(),
         Err(err) => return Err(err),
     };
@@ -74,7 +74,7 @@ pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>
         access_level,
         gitlab_project_id,
         gitlab_client,
-        gitlab_user_id,
+        gitlab_group_id: gitlab_user_id,
         file_name,
     })
 }
@@ -93,11 +93,11 @@ impl<'a> CmdOld<'a> for AddProjectCmd {
             Err(err) => return Err(err),
         };
 
-        for user in config_file.config.users.iter_mut() {
-            if user.id == self.gitlab_user_id {
+        for group in config_file.config.groups.iter_mut() {
+            if group.id == self.gitlab_group_id {
                 let spinner = OutSpinner::spinner_start(format!(
                     "Adding {} to {} as {}",
-                    user.name, project.name, self.access_level,
+                    group.name, project.name, self.access_level,
                 ));
 
                 let p = Project {
@@ -105,17 +105,17 @@ impl<'a> CmdOld<'a> for AddProjectCmd {
                     id: project.id,
                     name: project.name,
                 };
-                if user.projects.iter().any(|i| i.id == p.id) {
+                if group.projects.iter().any(|i| i.id == p.id) {
                     return Err(Error::new(
                         ErrorKind::AlreadyExists,
                         format!(
                             "the user {} already has an access to this project: '{}'",
-                            user.name, p.name
+                            group.name, p.name
                         ),
                     ));
                 }
 
-                user.projects.extend([p]);
+                group.projects.extend([p]);
                 spinner.spinner_success("Added".to_string());
                 break;
             }

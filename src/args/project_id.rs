@@ -19,7 +19,7 @@ impl Args for ArgProjectId {
 
     fn add() -> Arg<'static> {
         Arg::new(ARG)
-            .short('i')
+            .short('p')
             .takes_value(true)
             .value_name("PROJECT_ID")
             .help("Provide the GitLab project ID")

@@ -1,13 +1,15 @@
 use serde::{Deserialize, Serialize};
 
-use super::{team::Team, user::User};
+use super::{group::Group, team::Team, user::User};
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct Config {
-    #[serde(default)] 
+    #[serde(default)]
     pub(crate) teams: Vec<Team>,
-    #[serde(default)] 
+    #[serde(default)]
     pub(crate) users: Vec<User>,
+    #[serde(default)]
+    pub(crate) groups: Vec<Group>,
 }
 
 impl Default for Config {
@@ -18,6 +20,7 @@ impl Default for Config {
                 ..Default::default()
             }],
             users: Default::default(),
+            groups: Default::default(),
         }
     }
 }

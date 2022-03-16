@@ -7,14 +7,32 @@ use std::{
 use serde::{Deserialize, Serialize};
 
 use super::access_level::AccessLevel;
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub(crate) enum EntityType {
+    User,
+    Group,
+}
 
+impl Default for EntityType {
+    fn default() -> Self {
+        Self::User
+    }
+}
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub(crate) struct State {
+    pub(crate) entity: EntityType,
     pub(crate) projects: HashMap<u64, AccessLevel>,
-    pub(crate) groups: HashMap<u64, AccessLevel>,
+    pub(crate) namespaces: HashMap<u64, AccessLevel>,
 }
 
 impl State {
+    pub(crate) fn new_simple(entity_type: EntityType) -> Self {
+        Self {
+            entity: entity_type,
+            projects: Default::default(),
+            namespaces: Default::default(),
+        }
+    }
     pub(crate) fn write_to_file(
         state: HashMap<u64, State>,
         file_name: String,
@@ -25,15 +43,13 @@ impl State {
             .read(true)
             .truncate(true)
             .open(file_name);
-
         let f = match f {
             Ok(file) => file,
             Err(err) => {
                 return Err(err);
             }
         };
-
-        let _ = match serde_json::to_writer(&f, &state) {
+        match serde_json::to_writer(&f, &state) {
             Ok(()) => return Ok(()),
             Err(err) => {
                 return Err(Error::new(ErrorKind::Other, err.to_string()));

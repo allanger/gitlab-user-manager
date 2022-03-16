@@ -6,6 +6,7 @@ pub(crate) mod gitlab_url;
 pub(crate) mod group_id;
 pub(crate) mod group_list;
 pub(crate) mod large_out;
+pub(crate) mod namespace_id;
 pub(crate) mod no_confirm;
 pub(crate) mod project_id;
 pub(crate) mod state_destination;

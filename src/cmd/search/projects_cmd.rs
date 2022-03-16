@@ -8,7 +8,7 @@ use gitlab::{
 use tabled::Table;
 
 use crate::{
-    cmd::Cmd,
+    cmd::CmdOld,
     gitlab::Project,
     output::{out_message::OutMessage, out_spinner::OutSpinner},
 };
@@ -23,7 +23,7 @@ pub(crate) fn find_projects<'a>() -> Command<'a> {
 pub(crate) fn prepare<'a>(
     sub_matches: &'_ ArgMatches,
     gitlab_client: &'a Gitlab,
-) -> Result<impl Cmd<'a>, Error> {
+) -> Result<impl CmdOld<'a>, Error> {
     let search_string = sub_matches.value_of("SEARCH").ok_or_else(|| {
         Error::new(
             std::io::ErrorKind::PermissionDenied,
@@ -41,7 +41,7 @@ struct ProjectsCmd<'a> {
     gitlab_client: &'a Gitlab,
 }
 
-impl<'a> Cmd<'a> for ProjectsCmd<'a> {
+impl<'a> CmdOld<'a> for ProjectsCmd<'a> {
     fn exec(&self) -> Result<(), Error> {
         let spinner = OutSpinner::spinner_start("Looking for projects".to_string());
         let projects = match projects::Projects::builder()

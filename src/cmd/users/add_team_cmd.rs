@@ -6,7 +6,7 @@ use crate::args::file_name::ArgFileName;
 use crate::args::team_name::ArgTeamName;
 use crate::args::user_id::ArgUserId;
 use crate::args::Args;
-use crate::cmd::Cmd;
+use crate::cmd::CmdOld;
 use crate::output::out_spinner::OutSpinner;
 use crate::types::v1::config_file::ConfigFile;
 
@@ -24,7 +24,7 @@ pub(crate) fn add_add_team_cmd() -> Command<'static> {
         .arg(ArgFileName::add());
 }
 
-pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl Cmd<'a>, Error> {
+pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>, Error> {
     let gitlab_user_id = match ArgUserId::parse(sub_matches) {
         Ok(arg) => arg.value(),
         Err(err) => return Err(err),
@@ -47,7 +47,7 @@ pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl Cmd<'a>, E
     })
 }
 
-impl<'a> Cmd<'a> for AddTeamCmd {
+impl<'a> CmdOld<'a> for AddTeamCmd {
     fn exec(&self) -> Result<(), Error> {
         let mut config_file = match ConfigFile::read(self.file_name.clone()) {
             Ok(c) => c,
