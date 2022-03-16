@@ -42,6 +42,7 @@ pub(crate) struct InitCmd {
     gitlab_token: String,
 }
 
+// TODO: It's not actually implemented yet
 impl Cmd for InitCmd {
     type CmdType = InitCmd;
     fn add() -> Command<'static> {
@@ -54,16 +55,18 @@ impl Cmd for InitCmd {
     }
 
     fn prepare(sub_matches: &'_ ArgMatches) -> Result<InitCmd> {
-        let file_name = ArgFileName::parse(sub_matches)?.value();
-        let group_list = ArgGroupList::parse(sub_matches)?.value().to_vec();
-        let gitlab_token = ArgGitlabToken::parse(sub_matches)?.value();
-        let gitlab_url = ArgGitlabUrl::parse(sub_matches)?.value();
         Ok(InitCmd {
-            file_name,
-            group_list,
-            gitlab_url,
-            gitlab_token,
+            file_name: ArgFileName::parse(sub_matches)?.value(),
+            group_list: ArgGroupList::parse(sub_matches)?.value().to_vec(),
+            gitlab_url: ArgGitlabToken::parse(sub_matches)?.value(),
+            gitlab_token: ArgGitlabUrl::parse(sub_matches)?.value(),
         })
+    }
+
+    fn exec(&self) -> Result<()> {
+        InitService::new()
+            .parse_groups(self.group_list.clone())
+            .save(self.file_name.clone())
     }
 }
 
@@ -103,16 +106,14 @@ impl<'a> CmdOld<'a> for InitCmd {
                 groups.extend(vec![group.clone()]);
                 groups.extend(gitlab.get_subgroups(group.name.clone(), *i));
             }
-            OutMessage::message_info_with_alias(
-                format!("Got {} groups", groups.len() + 1).as_str(),
-            );
+            OutMessage::message_info_with_alias(format!("Got {} groups", groups.len()).as_str());
             // Scrap projects
             let mut projects: Vec<Project> = Vec::new();
             for i in groups.iter() {
                 projects.extend(gitlab.get_projects(i.name.clone(), i.id));
             }
             OutMessage::message_info_with_alias(
-                format!("Got {} projects", projects.len() + 1).as_str(),
+                format!("Got {} projects", projects.len()).as_str(),
             );
 
             for g in groups.iter() {
@@ -129,7 +130,6 @@ impl<'a> CmdOld<'a> for InitCmd {
                             };
                             let mut found = false;
                             for group in config_file.config.groups.iter_mut() {
-                                print!("Found");
                                 if ns.group_id == group.id {
                                     found = true;
                                     group.namespaces.push(item.clone());
@@ -187,7 +187,6 @@ impl<'a> CmdOld<'a> for InitCmd {
                             };
                             let mut found = false;
                             for group in config_file.config.groups.iter_mut() {
-                                print!("Found");
                                 if ns.group_id == group.id {
                                     found = true;
                                     group.projects.push(item.clone());

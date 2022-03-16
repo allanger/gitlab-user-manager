@@ -18,4 +18,5 @@ pub(crate) trait Cmd {
     type CmdType;
     fn add() -> Command<'static>;
     fn prepare(sub_matches: &'_ ArgMatches) -> Result<Self::CmdType>;
+    fn exec(&self) -> Result<()>;
 }

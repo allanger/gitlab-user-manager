@@ -1,0 +1,62 @@
+---
+meta:
+  version: v1
+config:
+  teams:
+    - name: default
+      projects: []
+      groups: []
+  users:
+    - id: 3644679
+      name: N R
+      teams: []
+      projects: []
+      namespaces:
+        - name: gitlab-user-manager
+          access_level: Owner
+          id: 16198577
+          url: "https://gitlab.com/groups/gitlab-user-manager"
+    - id: 6012633
+      name: Nikolay Rodionov
+      teams: []
+      projects:
+        - name: affectionate_sammet
+          id: 33873252
+          access_level: Maintainer
+        - name: pedantic_mahavira
+          id: 33873240
+          access_level: Developer
+        - name: relaxed_hertz
+          id: 33873238
+          access_level: Guest
+        - name: peaceful_shannon
+          id: 33873231
+          access_level: Owner
+        - name: flamboyant_ride
+          id: 33873225
+          access_level: Developer
+      namespaces: []
+  groups:
+    - name: group_1
+      id: 16198579
+      projects:
+        - name: flamboyant_ride
+          id: 33873225
+          access_level: Guest
+      namespaces:
+        - name: group_2
+          access_level: Guest
+          id: 16198581
+          url: "https://gitlab.com/groups/gitlab-user-manager/group_2"
+        - name: group_3
+          access_level: Developer
+          id: 16198584
+          url: "https://gitlab.com/groups/gitlab-user-manager/group_211"
+    - name: group_3
+      id: 16198584
+      projects:
+        - name: pedantic_mahavira
+          id: 33873240
+          access_level: Guest
+      namespaces: []
+state: "{\"16198579\":{\"entity\":\"Group\",\"projects\":{\"33873225\":\"Guest\"},\"namespaces\":{\"16198581\":\"Guest\",\"16198584\":\"Developer\"}},\"6012633\":{\"entity\":\"User\",\"projects\":{\"33873231\":\"Owner\",\"33873225\":\"Developer\",\"33873240\":\"Developer\",\"33873252\":\"Maintainer\",\"33873238\":\"Guest\"},\"namespaces\":{}},\"16198584\":{\"entity\":\"Group\",\"projects\":{\"33873240\":\"Guest\"},\"namespaces\":{}},\"3644679\":{\"entity\":\"User\",\"projects\":{},\"namespaces\":{\"16198577\":\"Owner\"}}}"
