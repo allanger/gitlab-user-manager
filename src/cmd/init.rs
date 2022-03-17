@@ -96,6 +96,7 @@ impl<'a> CmdOld<'a> for InitCmd {
                 };
             let gitlab = GitlabClient::new(gitlab_client.to_owned());
             // Scrap groups
+            
             let mut groups: Vec<Group> = Vec::new();
             OutMessage::message_info_with_alias("Scrapping groups");
             for i in self.group_list.iter() {

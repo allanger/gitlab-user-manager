@@ -14,8 +14,8 @@ impl InitService {
     }
 
     pub(crate) fn parse_groups(&mut self, groups: Vec<u64>) -> &Self {
-        if groups.is_empty() {
-            self.set_config_file(ConfigFile::default())
+        if !groups.is_empty() {
+            return self;
         }
         self
     }
