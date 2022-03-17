@@ -36,7 +36,6 @@ impl Args for ArgGroupList {
             Some(v) => v.map(|f| f.parse::<u64>().unwrap()).collect(),
             None => Vec::new(),
         };
-
         Ok(ArgGroupList { value })
     }
 }

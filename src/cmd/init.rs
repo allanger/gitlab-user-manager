@@ -13,8 +13,8 @@ use crate::{
     },
     cmd::CmdOld,
     gitlab::{
-        shared_groups, shared_projects, GitlabActions, GitlabClient, GitlabClientApi, Group,
-        Project,
+        group::GroupGitlab, shared_groups, shared_projects, GitlabActions, GitlabApi, GitlabClient,
+        GitlabClientApi, Group, Project,
     },
     output::out_message::OutMessage,
     service::init::InitService,
@@ -25,16 +25,6 @@ use crate::{
 
 use super::Cmd;
 
-/// init cmd should be used to generate an empty gum-config
-pub(crate) fn add_init_cmd() -> Command<'static> {
-    return Command::new("init")
-        .about("Create a default yaml file in the current directory")
-        .arg(ArgFileName::add())
-        .arg(ArgGroupList::add())
-        .arg(ArgGitlabToken::add())
-        .arg(ArgGitlabUrl::add());
-}
-
 pub(crate) struct InitCmd {
     file_name: String,
     group_list: Vec<u64>,
@@ -42,12 +32,15 @@ pub(crate) struct InitCmd {
     gitlab_token: String,
 }
 
-// TODO: It's not actually implemented yet
 impl Cmd for InitCmd {
     type CmdType = InitCmd;
+
     fn add() -> Command<'static> {
         Command::new("init")
-            .about("Create a default yaml file in the current directory")
+            .about("Generate a config file")
+            .alias("i")
+            .after_help("$ gum init -g 111 222 -f gum-config-example.yaml ## where 111 and 222 are groups ids")
+            .before_help("Use this command if you want to be sure that you're starting to use gum the right way")
             .arg(ArgFileName::add())
             .arg(ArgGroupList::add())
             .arg(ArgGitlabToken::add())
@@ -58,29 +51,16 @@ impl Cmd for InitCmd {
         Ok(InitCmd {
             file_name: ArgFileName::parse(sub_matches)?.value(),
             group_list: ArgGroupList::parse(sub_matches)?.value().to_vec(),
-            gitlab_url: ArgGitlabToken::parse(sub_matches)?.value(),
-            gitlab_token: ArgGitlabUrl::parse(sub_matches)?.value(),
+            gitlab_url: ArgGitlabUrl::parse(sub_matches)?.value(),
+            gitlab_token: ArgGitlabToken::parse(sub_matches)?.value(),
         })
     }
 
     fn exec(&self) -> Result<()> {
-        InitService::new()
-            .parse_groups(self.group_list.clone())
-            .save(self.file_name.clone())
+        InitService::new(GitlabApi::new(&self.gitlab_url, &self.gitlab_token)?)
+            .parse_groups(&self.group_list)?
+            .save(&self.file_name)
     }
-}
-
-pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>> {
-    let file_name = ArgFileName::parse(sub_matches)?.value();
-    let group_list = ArgGroupList::parse(sub_matches)?.value().to_vec();
-    let gitlab_token = ArgGitlabToken::parse(sub_matches)?.value();
-    let gitlab_url = ArgGitlabUrl::parse(sub_matches)?.value();
-    Ok(InitCmd {
-        file_name,
-        group_list,
-        gitlab_url,
-        gitlab_token,
-    })
 }
 
 impl<'a> CmdOld<'a> for InitCmd {
@@ -96,7 +76,7 @@ impl<'a> CmdOld<'a> for InitCmd {
                 };
             let gitlab = GitlabClient::new(gitlab_client.to_owned());
             // Scrap groups
-            
+
             let mut groups: Vec<Group> = Vec::new();
             OutMessage::message_info_with_alias("Scrapping groups");
             for i in self.group_list.iter() {
