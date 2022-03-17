@@ -1,5 +1,7 @@
+pub(crate) mod group;
 pub mod shared_groups;
 pub(crate) mod shared_projects;
+pub(crate) mod types;
 
 use core::time;
 use std::{
@@ -16,9 +18,47 @@ use serde::Deserialize;
 use tabled::Tabled;
 
 use crate::{
+    gitlab::group::GroupGitlab,
     output::{out_message::OutMessage, out_spinner::OutSpinner},
     types::v1::{access_level::AccessLevel, namespace, project},
 };
+
+use self::group::{GitlabGroupsApi, GroupGitlabMock};
+
+pub(crate) trait GitlabApiInterface {
+    type Groups: GitlabGroupsApi;
+    fn groups(&self) -> Self::Groups;
+}
+
+pub(crate) struct GitlabApi {
+    pub(crate) gitlab_client: Gitlab,
+}
+
+impl GitlabApi {
+    pub(crate) fn new(gitlab_url: &String, gitlab_token: &String) -> Result<Self, Error> {
+        match Gitlab::new(gitlab_url.clone(), gitlab_token.clone()) {
+            Ok(gitlab_client) => Ok(GitlabApi { gitlab_client }),
+            Err(err) => return Err(Error::new(ErrorKind::Other, err)),
+        }
+    }
+}
+
+impl GitlabApiInterface for GitlabApi {
+    type Groups = GroupGitlab;
+    fn groups(&self) -> Self::Groups {
+        return GroupGitlab {
+            gitlab_client: self.gitlab_client.clone(),
+        };
+    }
+}
+pub(crate) struct GitlabApiMock;
+
+impl GitlabApiInterface for GitlabApiMock {
+    type Groups = GroupGitlabMock;
+    fn groups(&self) -> Self::Groups {
+        GroupGitlabMock {}
+    }
+}
 
 pub(crate) struct GitlabClient {
     gitlab_client: Gitlab,
