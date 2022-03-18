@@ -31,7 +31,7 @@ impl Cmd for InitCmd {
             .after_help("$ gum init -g 111 222 -f gum-config-example.yaml ## where 111 and 222 are groups ids")
             .before_help("Use this command if you want to be sure that you're starting to use gum the right way")
             .arg(ArgFileName::add())
-            .arg(ArgGroupList::add())/
+            .arg(ArgGroupList::add())
             .arg(ArgGitlabToken::add())
             .arg(ArgGitlabUrl::add())
     }
