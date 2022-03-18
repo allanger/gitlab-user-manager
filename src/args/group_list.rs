@@ -1,6 +1,6 @@
 use super::Args;
 use clap::{Arg, ArgMatches};
-use std::io::{Error, ErrorKind, Result};
+use std::io::Result;
 
 static ARG: &str = "groups";
 

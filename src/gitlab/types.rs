@@ -1,2 +1,2 @@
 pub(crate) mod group;
-mod project;
+pub(crate) mod project;

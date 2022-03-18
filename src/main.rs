@@ -43,7 +43,7 @@ fn main() {
     match matches.subcommand() {
         Some(("init", sub_matches)) => {
             result = match InitCmd::prepare(sub_matches) {
-                Ok(cmd) => Cmd::exec(&cmd),
+                Ok(cmd) => cmd.exec(),
                 Err(err) => Err(err),
             };
         }

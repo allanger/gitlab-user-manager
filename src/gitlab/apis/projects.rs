@@ -1,5 +1,8 @@
 use crate::{
-    gitlab::{CustomMember, Project},
+    gitlab::{
+        types::project::{ProjectsWithShared, SharedWithGroups},
+        CustomMember, Project,
+    },
     output::{out_message::OutMessage, out_spinner::OutSpinner},
     types::v1::access_level::AccessLevel,
 };
@@ -21,6 +24,7 @@ pub(crate) trait GitlabProjectsApi {
     fn get_members(&self, name: String, id: u64) -> Vec<CustomMember>;
     fn share_with_group(&self, gid: u64, pid: u64, access_level: AccessLevel) -> Result<String>;
     fn stop_sharing_with_group(&self, gid: u64, pid: u64) -> Result<String>;
+    fn get_groups_shared_with(&self, pid: u64) -> Result<Vec<SharedWithGroups>>;
 }
 
 pub(crate) struct ProjectsGitlab {
@@ -131,14 +135,18 @@ impl GitlabProjectsApi for ProjectsGitlab {
     }
 
     fn get_members(&self, name: String, id: u64) -> Vec<CustomMember> {
-        let spinner = OutSpinner::spinner_start(format!("Getting users from {}", name));
-        let query = match groups::members::GroupMembers::builder().group(id).build() {
+        let spinner = OutSpinner::spinner_start(format!("Getting projects from {}", name));
+        let query = match projects::members::ProjectMembers::builder()
+            .project(id)
+            .build()
+        {
             Ok(q) => q,
             Err(_) => todo!(),
         };
         let users: Vec<CustomMember> = query.query(&self.gitlab_client).unwrap();
         OutSpinner::spinner_success(spinner, "Done".to_string());
         users
+
     }
 
     fn share_with_group(&self, gid: u64, pid: u64, access_level: AccessLevel) -> Result<String> {
@@ -194,6 +202,22 @@ impl GitlabProjectsApi for ProjectsGitlab {
             }
         };
     }
+
+    fn get_groups_shared_with(&self, id: u64) -> Result<Vec<SharedWithGroups>> {
+        let group = match projects::Project::builder().project(id).build() {
+            Ok(group) => group,
+            Err(err) => {
+                return Err(Error::new(std::io::ErrorKind::Other, err.to_string()));
+            }
+        };
+        let shared: ProjectsWithShared = group.query(&self.gitlab_client).unwrap_or_else(|err| {
+            OutMessage::message_info_clean(format!("{}", err).as_str());
+
+            return ProjectsWithShared::default();
+        });
+        let r = shared.shared_with_groups();
+        Ok(r)
+    }
 }
 
 pub(crate) struct ProjectsGitlabMock;
@@ -224,6 +248,10 @@ impl GitlabProjectsApi for ProjectsGitlabMock {
     }
 
     fn stop_sharing_with_group(&self, gid: u64, pid: u64) -> Result<String> {
+        todo!()
+    }
+
+    fn get_groups_shared_with(&self, group_id: u64) -> Result<Vec<SharedWithGroups>> {
         todo!()
     }
 }

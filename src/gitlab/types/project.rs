@@ -24,3 +24,21 @@ impl Project {
         Ok(project)
     }
 }
+
+#[derive(Debug, Deserialize, Clone, Default)]
+pub(crate) struct ProjectsWithShared {
+    shared_with_groups: Vec<SharedWithGroups>,
+}
+
+impl ProjectsWithShared {
+    /// Get a reference to the groups with shared's shared with groups.
+    pub(crate) fn shared_with_groups(&self) -> Vec<SharedWithGroups> {
+        self.shared_with_groups.clone()
+    }
+}
+#[derive(Debug, Deserialize, Clone)]
+pub(crate) struct SharedWithGroups {
+    pub(crate) group_id: u64,
+    pub(crate) group_name: String,
+    pub(crate) group_access_level: gitlab::AccessLevel,
+}

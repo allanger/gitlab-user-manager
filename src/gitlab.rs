@@ -1,6 +1,4 @@
 pub(crate) mod apis;
-pub mod shared_groups;
-pub(crate) mod shared_projects;
 pub(crate) mod types;
 
 use core::time;
@@ -20,14 +18,20 @@ use tabled::Tabled;
 use crate::{
     gitlab::apis::groups::GroupGitlab,
     output::{out_message::OutMessage, out_spinner::OutSpinner},
-    types::v1::{access_level::AccessLevel, namespace, project},
+    types::v1::{access_level::AccessLevel, project},
 };
 
-use self::apis::groups::{GitlabGroupsApi, GroupGitlabMock};
+use self::apis::{
+    groups::{GitlabGroupsApi, GroupGitlabMock},
+    projects::{GitlabProjectsApi, ProjectsGitlab, ProjectsGitlabMock},
+};
 
 pub(crate) trait GitlabApiInterface {
     type Groups: GitlabGroupsApi;
+    type Projects: GitlabProjectsApi;
+
     fn groups(&self) -> Self::Groups;
+    fn projects(&self) -> Self::Projects;
 }
 
 pub(crate) struct GitlabApi {
@@ -50,6 +54,14 @@ impl GitlabApiInterface for GitlabApi {
             gitlab_client: self.gitlab_client.clone(),
         };
     }
+
+    type Projects = ProjectsGitlab;
+
+    fn projects(&self) -> Self::Projects {
+        return ProjectsGitlab {
+            gitlab_client: self.gitlab_client.clone(),
+        };
+    }
 }
 pub(crate) struct GitlabApiMock;
 
@@ -57,6 +69,12 @@ impl GitlabApiInterface for GitlabApiMock {
     type Groups = GroupGitlabMock;
     fn groups(&self) -> Self::Groups {
         GroupGitlabMock {}
+    }
+
+    type Projects = ProjectsGitlabMock;
+
+    fn projects(&self) -> Self::Projects {
+        todo!()
     }
 }
 
@@ -70,8 +88,6 @@ impl GitlabApiInterface for GitlabApiMock {
 pub(crate) struct GitlabClient {
     gitlab_client: Gitlab,
 }
-
-pub(crate) struct GitlabClientMock;
 
 impl GitlabClientApi for GitlabClient {
     type Client = Gitlab;
@@ -186,18 +202,6 @@ pub(crate) struct Group {
     pub(crate) id: u64,
     pub(crate) name: String,
     pub(crate) web_url: String,
-}
-
-impl Group {
-    pub(crate) fn to_gum_group(&self, member: CustomMember) -> Result<namespace::Namespace, Error> {
-        let group = namespace::Namespace {
-            id: self.id,
-            name: self.name.clone(),
-            url: self.web_url.clone(),
-            access_level: AccessLevel::from_gitlab_access_level(member.access_level),
-        };
-        Ok(group)
-    }
 }
 
 impl GitlabActions for GitlabClient {
