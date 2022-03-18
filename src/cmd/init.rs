@@ -13,8 +13,8 @@ use crate::{
     },
     cmd::CmdOld,
     gitlab::{
-        group::GroupGitlab, shared_groups, shared_projects, GitlabActions, GitlabApi, GitlabClient,
-        GitlabClientApi, Group, Project,
+        shared_groups, shared_projects, GitlabActions, GitlabApi, GitlabClient, GitlabClientApi,
+        Group, Project,
     },
     output::out_message::OutMessage,
     service::init::InitService,
@@ -62,7 +62,7 @@ impl Cmd for InitCmd {
             .save(&self.file_name)
     }
 }
-
+/*
 impl<'a> CmdOld<'a> for InitCmd {
     fn exec(&self) -> Result<()> {
         let mut config_file: ConfigFile = Default::default();
@@ -245,3 +245,4 @@ impl<'a> CmdOld<'a> for InitCmd {
         }
     }
 }
+*/
