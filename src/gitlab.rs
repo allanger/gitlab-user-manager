@@ -1,4 +1,4 @@
-pub(crate) mod group;
+pub(crate) mod apis;
 pub mod shared_groups;
 pub(crate) mod shared_projects;
 pub(crate) mod types;
@@ -13,17 +13,17 @@ use gitlab::{
     api::{self, groups, projects, users, ApiError, Query},
     Gitlab,
 };
-// use gitlab::AccessLevel;
+
 use serde::Deserialize;
 use tabled::Tabled;
 
 use crate::{
-    gitlab::group::GroupGitlab,
+    gitlab::apis::groups::GroupGitlab,
     output::{out_message::OutMessage, out_spinner::OutSpinner},
     types::v1::{access_level::AccessLevel, namespace, project},
 };
 
-use self::group::{GitlabGroupsApi, GroupGitlabMock};
+use self::apis::groups::{GitlabGroupsApi, GroupGitlabMock};
 
 pub(crate) trait GitlabApiInterface {
     type Groups: GitlabGroupsApi;
@@ -60,6 +60,13 @@ impl GitlabApiInterface for GitlabApiMock {
     }
 }
 
+/*
+======================================================================================================================
+======================================================== LEGACY ======================================================
+========================================== Please, do not add anything here ==========================================
+======================================================================================================================
+*/
+
 pub(crate) struct GitlabClient {
     gitlab_client: Gitlab,
 }
@@ -79,11 +86,6 @@ pub(crate) trait GitlabClientApi {
     fn get_client(&self) -> Self::Client;
 }
 
-/*
-======================================================================================================================
-======================================================== LEGACY ======================================================
-======================================================================================================================
-*/
 impl GitlabClient {
     pub(crate) fn new(client: Gitlab) -> Self {
         Self {
