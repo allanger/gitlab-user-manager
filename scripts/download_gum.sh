@@ -7,7 +7,7 @@ case "$(uname)" in
   "arm64")
     TARGET="aarch64-$SYSTEM"
     ;;
-  "x68_64")
+  "x86_64")
     TARGET="x86_64-$SYSTEM"
     ;;
   *)
@@ -19,7 +19,7 @@ case "$(uname)" in
 "Linux")
   SYSTEM="unknown-linux-gnu"
   case $(uname -m) in
-  "x68_64")
+  "x86_64")
     TARGET="x86_64-$SYSTEM"
     ;;
   *)
