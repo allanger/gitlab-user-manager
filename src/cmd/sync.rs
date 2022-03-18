@@ -15,7 +15,6 @@ use crate::args::state_destination::ArgStateDestination;
 use crate::args::state_source::ArgStateSource;
 use crate::args::write_state::ArgWriteState;
 use crate::cmd::CmdOld;
-use crate::gitlab::{GitlabActions, GitlabClient};
 use crate::output::out_message::OutMessage;
 use crate::types::v1::config_file::ConfigFile;
 use crate::types::v1::state::{EntityType, State};
@@ -91,7 +90,6 @@ pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>
 
 impl<'a> CmdOld<'a> for SyncCmd {
     fn exec(&self) -> Result<(), Error> {
-        let gitlab = GitlabClient::new(self.gitlab_client.to_owned());
         let mut config_file = match ConfigFile::read(self.file_name.clone()) {
             Ok(c) => c,
             Err(err) => return Err(err),
@@ -584,7 +582,7 @@ mod sync_cmd {
         let mut groups: Vec<Namespace> = u.namespaces.clone();
         for t in c.teams.iter() {
             if u.teams.contains(&t.name.to_string()) || t.name == "default" {
-                groups.extend(t.groups.clone());
+                groups.extend(t.namespaces.clone());
             }
         }
 

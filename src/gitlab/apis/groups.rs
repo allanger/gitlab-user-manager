@@ -1,5 +1,8 @@
 use crate::{
-    gitlab::{types::group::Group, CustomMember, Project},
+    gitlab::{
+        types::group::{Group, SharedWithGroups, GroupsWithShared},
+        CustomMember, Project,
+    },
     output::{out_message::OutMessage, out_spinner::OutSpinner},
     types::v1::access_level::AccessLevel,
 };
@@ -21,13 +24,14 @@ pub(crate) trait GitlabGroupsApi {
     fn get_projects(&self, group_name: String, id: u64) -> Vec<Project>;
     fn remove_from_namespace(&self, gid: u64, nid: u64) -> Result<String>;
     fn add_to_namespace(&self, gid: u64, nid: u64, access_level: AccessLevel) -> Result<String>;
+    fn git_groups_shared_with(&self, group_id: u64) -> Result<Vec<SharedWithGroups>>;
 }
-
 pub(crate) struct GroupGitlab {
     pub(crate) gitlab_client: Gitlab,
 }
 
 impl GitlabGroupsApi for GroupGitlab {
+    /// Get the group data from Gitlab
     fn get_data_by_id(&self, id: u64) -> Result<Group> {
         let group = match groups::Group::builder().group(id).build() {
             Ok(group) => group,
@@ -58,6 +62,7 @@ impl GitlabGroupsApi for GroupGitlab {
         Ok(output)
     }
 
+    /// Get groups which are subgroups to current one
     fn get_subgroups(&self, group_name: String, id: u64, recursive: bool) -> Vec<Group> {
         let spinner = OutSpinner::spinner_start("Getting subgroups".to_string());
 
@@ -71,7 +76,7 @@ impl GitlabGroupsApi for GroupGitlab {
             Err(_) => todo!(),
         };
         let head: Vec<Group> = query.query(&self.gitlab_client).unwrap();
-        if !head.is_empty() {
+        if recursive && !head.is_empty() {
             for g in head.iter() {
                 let sub: Vec<Group> = self.get_subgroups(g.name.clone(), g.id, true);
                 if !sub.is_empty() {
@@ -84,6 +89,7 @@ impl GitlabGroupsApi for GroupGitlab {
         groups
     }
 
+    /// Get users that have access to this group
     fn get_members(&self, name: String, id: u64) -> Vec<CustomMember> {
         let spinner = OutSpinner::spinner_start(format!("Getting users from {}", name));
         let query = match groups::members::GroupMembers::builder().group(id).build() {
@@ -177,6 +183,22 @@ impl GitlabGroupsApi for GroupGitlab {
             }
         };
     }
+
+    fn git_groups_shared_with(&self, group_id: u64) -> Result<Vec<SharedWithGroups>> {
+        let group = match groups::Group::builder().group(group_id).build() {
+            Ok(group) => group,
+            Err(err) => {
+                return Err(Error::new(std::io::ErrorKind::Other, err.to_string()));
+            }
+        };
+        let shared: GroupsWithShared = group.query(&self.gitlab_client).unwrap_or_else(|err| {
+            OutMessage::message_info_clean(format!("{}", err).as_str());
+
+            return GroupsWithShared::default();
+        });
+    let r = shared.shared_with_groups();
+        Ok(r)
+    }
 }
 
 pub(crate) struct GroupGitlabMock;
@@ -191,7 +213,7 @@ impl GitlabGroupsApi for GroupGitlabMock {
         Ok(group)
     }
 
-    fn get_subgroups(&self, group_name: String, id: u64, recursive: bool) -> Vec<Group> {
+    fn get_subgroups(&self, _: String, id: u64, _: bool) -> Vec<Group> {
         let group_1 = Group {
             id: id + 1,
             name: "group_1".to_string(),
@@ -217,11 +239,15 @@ impl GitlabGroupsApi for GroupGitlabMock {
         todo!()
     }
 
-    fn remove_from_namespace(&self, gid: u64, nid: u64) -> Result<String> {
+fn remove_from_namespace(&self, gid: u64, nid: u64) -> Result<String> {
         todo!()
     }
 
     fn add_to_namespace(&self, gid: u64, nid: u64, access_level: AccessLevel) -> Result<String> {
+        todo!()
+    }
+
+    fn git_groups_shared_with(&self, group_id: u64) -> Result<Vec<SharedWithGroups>> {
         todo!()
     }
 }
