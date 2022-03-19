@@ -13,7 +13,6 @@ use crate::{
 
 use super::Cmd;
 
-
 pub(crate) struct InitCmd {
     file_name: String,
     group_list: Vec<u64>,
