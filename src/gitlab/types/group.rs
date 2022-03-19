@@ -1,6 +1,6 @@
+use mockall::automock;
 use serde::Deserialize;
 use tabled::Tabled;
-
 use crate::{
     gitlab::CustomMember,
     types::v1::{access_level::AccessLevel, namespace::Namespace},

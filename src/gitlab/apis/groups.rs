@@ -1,6 +1,6 @@
 use crate::{
     gitlab::{
-        types::group::{Group, SharedWithGroups, GroupsWithShared},
+        types::group::{Group, GroupsWithShared, SharedWithGroups},
         CustomMember, Project,
     },
     output::{out_message::OutMessage, out_spinner::OutSpinner},
@@ -11,11 +11,13 @@ use gitlab::{
     api::{self, groups, ApiError, Query},
     Gitlab,
 };
+use mockall::predicate::*;
+use mockall::*;
 use std::{
     io::{Error, ErrorKind, Result},
     thread,
 };
-
+#[automock]
 pub(crate) trait GitlabGroupsApi {
     fn get_data_by_id(&self, id: u64) -> Result<Group>;
     fn get_subgroups(&self, group_name: String, id: u64, recursive: bool) -> Vec<Group>;
@@ -196,7 +198,7 @@ impl GitlabGroupsApi for GroupGitlab {
 
             return GroupsWithShared::default();
         });
-    let r = shared.shared_with_groups();
+        let r = shared.shared_with_groups();
         Ok(r)
     }
 }
@@ -239,7 +241,7 @@ impl GitlabGroupsApi for GroupGitlabMock {
         todo!()
     }
 
-fn remove_from_namespace(&self, gid: u64, nid: u64) -> Result<String> {
+    fn remove_from_namespace(&self, gid: u64, nid: u64) -> Result<String> {
         todo!()
     }
 

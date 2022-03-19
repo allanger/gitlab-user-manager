@@ -62,6 +62,8 @@ impl<T: GitlabApiInterface> InitService<T> {
                                 id: g.id,
                                 url: g.web_url.clone(),
                             };
+                            // TODO: Use a HashMap here to avoid a loop
+
                             let mut found = false;
                             for group in self.config_file.config.groups.iter_mut() {
                                 if ns.group_id == group.id {
@@ -86,6 +88,7 @@ impl<T: GitlabApiInterface> InitService<T> {
                 };
                 let groups_users = groups_api.get_members(g.name.to_string(), g.id);
                 for member in groups_users.iter() {
+                    // TODO: Use a HashMap here to avoid a loop
                     let mut found = false;
                     for u in self.config_file.config.users.iter_mut() {
                         if u.id == member.id {
@@ -108,6 +111,7 @@ impl<T: GitlabApiInterface> InitService<T> {
             let projects_api = self.gitlab_api.projects();
             for p in projects.iter() {
                 // Add user if doesn't exist or add group to user if exists
+                // TODO: Use a HashMap here to avoid a loop
                 match projects_api.get_groups_shared_with(p.id) {
                     Ok(group) => {
                         for ns in group.iter() {
@@ -142,6 +146,7 @@ impl<T: GitlabApiInterface> InitService<T> {
                 };
                 let projects_users = projects_api.get_members(p.name.to_string(), p.id);
                 for member in projects_users.iter() {
+                    // TODO: Use a HashMap here to avoid a loop
                     let mut found = false;
                     for u in self.config_file.config.users.iter_mut() {
                         if u.id == member.id {
@@ -199,26 +204,35 @@ impl<T: GitlabApiInterface> InitService<T> {
             Err(err) => return Err(err),
         }
     }
-
-    /// Set the init service's config file.
-    pub(crate) fn set_config_file(&mut self, config_file: ConfigFile) {
-        self.config_file = config_file;
-    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::gitlab::GitlabApiMock;
+    use mockall::predicate;
+
+    use crate::gitlab::{apis::groups::MockGitlabGroupsApi, types::group::Group, GitlabApiMock};
 
     use super::InitService;
 
     #[test]
     fn check_group_parser() {
-        let gitlab_client = GitlabApiMock;
-        let groups: Vec<u64> = vec![1];
-        InitService::new(gitlab_client)
-            .parse_groups(&groups)
-            .unwrap()
-            .save(&"file_name".to_string());
+        // let gitlab_client = GitlabApiMock;
+        // let groups: Vec<u64> = vec![1];
+        // InitService::new(gitlab_client)
+            // .parse_groups(&groups)
+            // .unwrap()
+            // .save(&"file_name".to_string());
+        let mut mock = MockGitlabGroupsApi::new();
+        mock.expect_get_data_by_id()
+            .with(predicate::eq(4))
+            .times(1)
+            .returning(|x| {
+                Ok(Group {
+                    id: x,
+                    name: "lala".to_string(),
+                    web_url: "lala".to_string(),
+                })
+            });
+        println!("{:?}", mock.);
     }
 }
