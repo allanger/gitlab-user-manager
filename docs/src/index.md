@@ -6,6 +6,7 @@
 ### Download 
 - Get executable from github releases
 
+
 Prebuilt binaries exist for **Linux x86_64** and **MacOS arm64** and **x86_64**
 ```
 $ curl https://raw.githubusercontent.com/allanger/gitlab-user-manager/main/scripts/download_gum.sh | bash
