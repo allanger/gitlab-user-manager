@@ -41,3 +41,6 @@ plugins:
 
 nav:
   - "Home": "index.md"
+  - "Entities":
+      "v1": 
+        "Teams": "./src/v1/teams.md"
