@@ -20,7 +20,7 @@ use output::{out_message::OutMessage, out_sum::OutSum};
 use std::io::{Error, ErrorKind};
 use std::process::exit;
 
-static VERSION: &str = "v0.0.7";
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 fn main() {
     OutMessage::message_empty("\n☮️  Fight war, not wars ☮️\n---");
