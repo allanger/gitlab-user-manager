@@ -1,6 +1,5 @@
-# GUM
-[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
-![Maintainer](https://img.shields.io/badge/maintainer-allanger-blue)
+# Gitlab User Manager
+## or just GUM
 
 ## Usage 
 ### Download 
