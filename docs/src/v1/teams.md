@@ -1,4 +1,4 @@
-# Teams
+# Entity: `Teams`
 
 Teams is a gum entity. It's just a set of projects and groups with an access level. 
 
@@ -50,7 +50,7 @@ users:
         url: https://gitlab.com/groups/namespace_1
 ```
 
-After syncing this config file, `User Name` will be a `Developer` in `project_1` and in `namespace_1`. 
+After syncing this config file, `User Name` will become `Developer` in `project_1` and in `namespace_1`. 
 
 ## Default team
 Every user in the config file will be added to the `default` team by default, so be careful with it. You can simply remove it if you don't wanna use it.

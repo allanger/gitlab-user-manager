@@ -41,6 +41,6 @@ plugins:
 
 nav:
   - "Home": "index.md"
-  - "Entities":
-      - "v1": 
-        - "Teams": "v1/teams.md"
+  - "V1": 
+    - "Entity: teams": "v1/teams.md"
+    - "Cmd: init": "v1/init.md"
