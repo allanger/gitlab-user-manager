@@ -29,4 +29,9 @@ impl OutMessage {
         let msg = format!("{} {}", prefix, msg,);
         println!(" {}", style(msg).red());
     }
+
+    pub(crate) fn message_important(msg: &str) {
+        println!("{}IMPORTANT: {}", color::Fg(color::Red), msg);
+    }
+
 }

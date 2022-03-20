@@ -11,6 +11,11 @@ use crate::{
 };
 use std::io::{Error, ErrorKind, Result};
 
+/*
+InitService should be used to generate an initial config file
+
+*/
+
 pub(crate) struct InitService<T: GitlabApiInterface> {
     config_file: ConfigFile,
     gitlab_api: T,
@@ -208,9 +213,11 @@ impl<T: GitlabApiInterface> InitService<T> {
 
 #[cfg(test)]
 mod tests {
-    use mockall::predicate;
+    use mockall::{mock, predicate};
 
-    use crate::gitlab::{apis::groups::MockGitlabGroupsApi, types::group::Group, GitlabApiMock};
+    use crate::gitlab::{
+        apis::groups::{MockGitlabGroupsApi, GroupGitlabMock}, types::group::Group, GitlabApiInterface, GitlabApiMock,
+    };
 
     use super::InitService;
 
@@ -219,20 +226,21 @@ mod tests {
         // let gitlab_client = GitlabApiMock;
         // let groups: Vec<u64> = vec![1];
         // InitService::new(gitlab_client)
-            // .parse_groups(&groups)
-            // .unwrap()
-            // .save(&"file_name".to_string());
-        let mut mock = MockGitlabGroupsApi::new();
-        mock.expect_get_data_by_id()
-            .with(predicate::eq(4))
-            .times(1)
-            .returning(|x| {
-                Ok(Group {
-                    id: x,
-                    name: "lala".to_string(),
-                    web_url: "lala".to_string(),
-                })
-            });
-        println!("{:?}", mock.);
+        // .parse_groups(&groups)
+        // .unwrap()
+        // .save(&"file_name".to_string());
+        // let mock = MockGitlabGroupsApi
+        // mock.expect_get_data_by_id()
+        // .with(predicate::eq(4))
+        // .times(1)
+        // .returning(|x| {
+        // Ok(Group {
+        // id: x,
+        // name: "lala".to_string(),
+        // web_url: "lala".to_string(),
+        // })
+        // });
+        println!("");
+        // InitService::new(mock);
     }
 }
