@@ -24,6 +24,8 @@ static VERSION: &str = "v0.0.7";
 
 fn main() {
     OutMessage::message_empty("\n☮️  Fight war, not wars ☮️\n---");
+    // TODO: Remove in the next version
+    OutMessage::message_important("Please, change config.teams.groups to config.teams.namespaces. Thanks! 💋\n---");
     let matches = Command::new("gum")
         .about("Manage your GitLab team access in a better way, dude")
         .version(VERSION)

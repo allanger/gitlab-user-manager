@@ -6,7 +6,6 @@ use std::{
 use serde::{Deserialize, Serialize};
 
 use super::{config::Config, meta::Meta};
-
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
 pub struct ConfigFile {
     pub(crate) meta: Meta,

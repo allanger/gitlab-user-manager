@@ -27,7 +27,7 @@ impl Cmd for InitCmd {
         Command::new("init")
             .about("Generate a config file")
             .alias("i")
-            .after_help("$ gum init -g 111 222 -f gum-config-example.yaml ## where 111 and 222 are groups ids")
+            .after_help("$ gum init -g 111 222 -f gum-config-example.yaml -- where 111 and 222 are groups ids")
             .before_help("Use this command if you want to be sure that you're starting to use gum the right way")
             .arg(ArgFileName::add())
             .arg(ArgGroupList::add())
