@@ -1,0 +1,46 @@
+# Project information
+site_name: "GitLab User Manager"
+site_description: "Manage your GitLab team access in a better way, dude "
+site_author: "allanger"
+site_url: "https://allanger.github.io/gitlab-user-manager/"
+
+repo_name: "gitlab-user-management"
+repo_url: "https://github.com/allanger/gitlab-user-manager"
+edit_uri: "https://github.com/allanger/gitlab-user-manager/edit/main/docs/pages"
+
+docs_dir: "src"
+theme:
+  name: "material"
+  language: "en"
+  shortcuts:
+    help: 191 # ?
+    next: 78 # n
+    previous: 80 # p
+    search: 83 # s
+  palette:
+    primary: "blue"
+    accent: "blue"
+  features:
+    - tabs
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - footnotes
+  - mdx_math:
+      enable_dollar_delimiter: true
+  - toc:
+      permalink: true
+      separator: "_"
+
+plugins:
+  - search:
+      separator: '[\s\-\.]+'
+      lang:
+        - en
+
+nav:
+  - "Home": "index.md"
+  - "V1": 
+    - "Entity: teams": "v1/teams.md"
+    - "Cmd: init": "v1/init.md"

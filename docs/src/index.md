@@ -1,12 +1,10 @@
-# GUM
-[You can find the documentation here. If you feel like doing this, please contribute](https://allanger.github.io/gitlab-user-manager/)
+# Gitlab User Manager
+## or just GUM
 
-[![Maintainer](https://github.com/allanger/gitlab-user-manager/actions/workflows/container-version.yaml/badge.svg)](https://img.shields.io/badge/maintainer-allanger-blue)
-[![Version build](https://github.com/allanger/gitlab-user-manager/actions/workflows/build-version.yaml/badge.svg)](https://github.com/allanger/gitlab-user-manager/actions/workflows/build-version.yaml)
-[![Version container](https://github.com/allanger/gitlab-user-manager/actions/workflows/container-version.yaml/badge.svg)](https://github.com/allanger/gitlab-user-manager/actions/workflows/container-version.yaml)
 ## Usage 
 ### Download 
 - Get executable from github releases
+
 
 Prebuilt binaries exist for **Linux x86_64** and **MacOS arm64** and **x86_64**
 ```
