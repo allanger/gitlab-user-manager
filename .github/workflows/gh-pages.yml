@@ -35,7 +35,7 @@ jobs:
       - name: Install dependencies
         run: python3 -m pip install -r ./docs/requirements.txt
 
-      - run: mkdocs build --config-file .docs/mkdocs.yml
+      - run: mkdocs build --config-file ./docs/mkdocs.yml
 
       - name: Deploy to GitHub Pages
         if: github.ref == 'refs/heads/main'
