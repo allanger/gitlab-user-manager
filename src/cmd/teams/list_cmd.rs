@@ -33,10 +33,13 @@ impl<'a> CmdOld<'a> for ListCmd {
             Ok(c) => c,
             Err(err) => return Err(err),
         };
+        let total = &config_file.config.teams.len();
 
         for team in config_file.config.teams.iter() {
             OutMessage::message_empty(format!("{}: {:?}\n", team.name, team.projects).as_str());
         }
+        OutMessage::message_info_with_alias(format!("\nYou've got {} teams here", total).as_str());
+
         Ok(())
     }
 }

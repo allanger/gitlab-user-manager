@@ -39,7 +39,7 @@ impl<'a> CmdOld<'a> for ListCmd {
             Ok(c) => c,
             Err(err) => return Err(err),
         };
-
+        let total = &config_file.config.groups.len();
         for group in config_file.config.groups {
             let mut message = format!("{} - {}", group.id, group.name);
             if self.large_out {
@@ -53,6 +53,7 @@ impl<'a> CmdOld<'a> for ListCmd {
             }
             OutMessage::message_empty(message.as_str());
         }
+        OutMessage::message_info_with_alias(format!("You've got {} groups here", total).as_str());
         Ok(())
     }
 }
