@@ -39,6 +39,7 @@ impl<'a> CmdOld<'a> for ListCmd {
             Ok(c) => c,
             Err(err) => return Err(err),
         };
+        let total = &config_file.config.users.len();
 
         for user in config_file.config.users {
             let mut message = format!("{} - {}", user.id, user.name);
@@ -53,6 +54,7 @@ impl<'a> CmdOld<'a> for ListCmd {
             }
             OutMessage::message_empty(message.as_str());
         }
+        OutMessage::message_info_with_alias(format!("You've got {} users here", total).as_str());
         Ok(())
     }
 }
