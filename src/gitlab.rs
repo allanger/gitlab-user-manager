@@ -425,14 +425,16 @@ impl GitlabActions for GitlabClient {
         };
         let head: Vec<Group> = query.query(&self.gitlab_client).unwrap();
         if !head.is_empty() {
+            OutSpinner::spinner_success(spinner, group_name);
             for g in head.iter() {
                 let sub: Vec<Group> = self.get_subgroups(g.name.clone(), g.id);
                 if !sub.is_empty() {
                     groups.extend(sub);
                 }
             }
+        } else {
+            OutSpinner::spinner_success(spinner, group_name);
         }
-        OutSpinner::spinner_success(spinner, group_name);
         groups.extend(head);
         groups
     }
