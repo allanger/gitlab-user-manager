@@ -9,9 +9,9 @@ impl OutMessage {
     }
 
     pub(crate) fn message_info_with_alias(msg: &str) {
-        let prefix = format!(" [{}]", style("INFO").underlined());
+        let prefix = format!("{}", style("[INFO]").blue());
         let msg = format!(
-            "{} {}, {}",
+            " {} {}, {}",
             prefix,
             msg,
             ALIAS.choose(&mut rand::thread_rng()).unwrap()
@@ -19,13 +19,13 @@ impl OutMessage {
         println!("{}", style(msg).blue());
     }
     pub(crate) fn message_info_clean(msg: &str) {
-        let prefix = format!(" [{}]", style("INFO").underlined());
-        let msg = format!(" {} {}", prefix, msg,);
-        println!("{}", style(msg).blue());
+        let prefix = format!("{}", style("[INFO]"));
+        let msg = format!("{} {}", prefix, msg,);
+        println!(" {}", style(msg).blue());
     }
 
     pub(crate) fn message_error(msg: &str) {
-        let prefix = format!(" [{}]", style("INFO").underlined());
+        let prefix = format!("{}", style("[ERROR]").red());
         let msg = format!("{} {}", prefix, msg,);
         println!(" {}", style(msg).red());
     }

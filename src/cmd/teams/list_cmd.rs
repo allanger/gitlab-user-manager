@@ -1,10 +1,11 @@
 use crate::{
     args::{file_name::ArgFileName, Args},
     cmd::CmdOld,
-    output::out_message::OutMessage,
+    output::{out_message::OutMessage, out_extra::OutExtra},
     types::v1::config_file::ConfigFile,
 };
 use clap::{ArgMatches, Command};
+use console::style;
 
 use std::io::Error;
 
@@ -38,7 +39,8 @@ impl<'a> CmdOld<'a> for ListCmd {
         for team in config_file.config.teams.iter() {
             OutMessage::message_empty(format!("{}: {:?}\n", team.name, team.projects).as_str());
         }
-        OutMessage::message_info_with_alias(format!("\nYou've got {} teams here", total).as_str());
+        OutExtra::empty_line();
+        OutMessage::message_info_with_alias(format!("You've got {} teams here", style(total).bold().underlined()).as_str());
 
         Ok(())
     }
