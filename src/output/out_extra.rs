@@ -19,7 +19,7 @@ impl OutExtra {
                     .bold()
             );
             for n in news.iter() {
-                println!(" * {}", style(n).black());
+                println!(" * {}", style(n).cyan());
             }
         }
         OutExtra::empty_line();
