@@ -1,10 +1,11 @@
 use crate::{
     args::{file_name::ArgFileName, large_out::ArgLargeOut, Args},
     cmd::CmdOld,
-    output::out_message::OutMessage,
+    output::{out_message::OutMessage, out_extra::OutExtra},
     types::v1::config_file::ConfigFile,
 };
 use clap::{ArgMatches, Command};
+use console::style;
 
 use std::io::Error;
 
@@ -54,7 +55,8 @@ impl<'a> CmdOld<'a> for ListCmd {
             }
             OutMessage::message_empty(message.as_str());
         }
-        OutMessage::message_info_with_alias(format!("You've got {} users here", total).as_str());
+        OutExtra::empty_line();
+        OutMessage::message_info_with_alias(format!("You've got {} users here", style(total).bold().underlined()).as_str());
         Ok(())
     }
 }
