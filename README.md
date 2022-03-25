@@ -1,12 +1,12 @@
 # GUM
-[You can find the documentation here. If you feel like doing this, please contribute](https://allanger.github.io/gitlab-user-manager/)
 
 [![Maintainer](https://github.com/allanger/gitlab-user-manager/actions/workflows/container-version.yaml/badge.svg)](https://img.shields.io/badge/maintainer-allanger-blue)
 [![Version build](https://github.com/allanger/gitlab-user-manager/actions/workflows/build-version.yaml/badge.svg)](https://github.com/allanger/gitlab-user-manager/actions/workflows/build-version.yaml)
 [![Version container](https://github.com/allanger/gitlab-user-manager/actions/workflows/container-version.yaml/badge.svg)](https://github.com/allanger/gitlab-user-manager/actions/workflows/container-version.yaml)
-## Usage 
+## Install 
 ### Download 
-- Get executable from github releases
+
+Get executable from github releases
 
 Prebuilt binaries exist for **Linux x86_64** and **MacOS arm64** and **x86_64**
 ```
@@ -31,50 +31,35 @@ $ cargo build --release
 ``` 
 2. Run `gum help`
 
-3. Init new config
+## Use
+
+__First of all, please execute__
 ```
+$ gum help
+``` 
+and do the same for each command like this 
+```
+$ gum help init
+```
+This will be cool, trust me.
+ 
+**In case the help did not help:**
+
+😢
+
+To start working with **gum**, you may want to use `init` cmd, like this:
+```BASH
+# This is good anyway
+$ gum init --help
 $ gum init
 ```
-It will create an empty config file
-
-4. Work with teams
+You may want to save the config to another file, if so, use flag `--file/-f`
 
 ```
-$ gum teams help
-$ gum teams add-project -u PROJECT_ID # will add a project to the default team
-$ gum teams add-project -u PROJECT_ID -n backend-team # will add project to the backend-team
+$ gum init --file custom-name.yaml
 ```
 
-5. There is a command to search for project IDs (Search currently lists only internal projects for specified token)
-```
-$ gum projects search PROJECT_NAME
-```
+Also, you may wanna scrap the config from you gitlab installation. To be sure, you know. 
 
-6. Work with users
 ```
-$ gum users help
-$ gum users create USER_ID
-```
-
-7. Add projects to users
-```
-$ gum users add-project $USER_ID -i $PROJECT_ID -a $ACCESS_LEVEL
-```
-
-7. Add projects to teams
-```
-$ gum teams add-project -i $PROJECT_ID -a $ACCESS_LEVEL $TEAM_NAME
-```
-
-8. Add user to team 
-```
-$ gum users add-team USER_ID team-1 team-2
-```
-9. Apply config
-```
-## to see what's gonna happen
-$ gum sync --dry-run
-## to apply 
-$ gum sync 
-```
-`sync` command will compare current state (if exists) and apply changes. Then the new state will be saved as gum-state.yaml. 
+$ gum init -g ${GROUP_ID} ${ANOTHER_GROUP_ID} --token ${PERSONAL_GITLAB_TOKEN}

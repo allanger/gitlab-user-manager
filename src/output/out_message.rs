@@ -1,26 +1,32 @@
+use console::style;
 use rand::seq::SliceRandom;
-use termion::color;
 pub(crate) struct OutMessage;
 const ALIAS: &[&str] = &["buddy", "mate", "dude", "friend", "dawg", "dear"];
 
 impl OutMessage {
     pub(crate) fn message_empty(msg: &str) {
-        println!("{}{}", color::Fg(color::LightBlue), msg,);
+        println!(" {}", style(msg).blue());
     }
 
     pub(crate) fn message_info_with_alias(msg: &str) {
-        println!(
-            "{}INFO: {}, {}",
-            color::Fg(color::LightBlue),
+        let prefix = format!(" [{}]", style("INFO").underlined());
+        let msg = format!(
+            "{} {}, {}",
+            prefix,
             msg,
             ALIAS.choose(&mut rand::thread_rng()).unwrap()
         );
+        println!("{}", style(msg).blue());
     }
     pub(crate) fn message_info_clean(msg: &str) {
-        println!("{}INFO: {}", color::Fg(color::LightBlue), msg,);
+        let prefix = format!(" [{}]", style("INFO").underlined());
+        let msg = format!(" {} {}", prefix, msg,);
+        println!("{}", style(msg).blue());
     }
 
     pub(crate) fn message_error(msg: &str) {
-        println!("{}ERROR: {}", color::Fg(color::LightRed), msg);
+        let prefix = format!(" [{}]", style("INFO").underlined());
+        let msg = format!("{} {}", prefix, msg,);
+        println!(" {}", style(msg).red());
     }
 }

@@ -2,8 +2,8 @@ mod args;
 mod cmd;
 mod gitlab;
 mod output;
-mod types;
 mod service;
+mod types;
 
 use clap::Command;
 use cmd::{
@@ -16,14 +16,16 @@ use cmd::{
     users::{self, add_users_cmd},
     CmdOld,
 };
-use output::{out_message::OutMessage, out_sum::OutSum};
+use output::{out_extra::OutExtra, out_message::OutMessage};
 use std::io::{Error, ErrorKind};
 use std::process::exit;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
+const MESSAGE_OF_THE_DAY: &str = "☮️  Fight war, not wars ☮️";
+const NEWS: &[&str] = &["Now I'm able to print some news, so you'll stay informed"];
 
 fn main() {
-    OutMessage::message_empty("\n☮️  Fight war, not wars ☮️\n---");
+    OutExtra::welcome_message(MESSAGE_OF_THE_DAY, NEWS);
     let matches = Command::new("gum")
         .about("Manage your GitLab team access in a better way, dude")
         .version(VERSION)
@@ -90,11 +92,11 @@ fn main() {
 
     match result {
         Err(err) => {
-            OutSum::sum_failure(&err.to_string());
+            OutExtra::sum_failure(&err.to_string());
             exit(1);
         }
         Ok(_) => {
-            OutSum::sum_success("Cool, huh?");
+            OutExtra::sum_success("It was fun, wasn't it?");
         }
     }
 }

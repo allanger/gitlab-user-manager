@@ -21,6 +21,7 @@ httparse
 httpdate
 idna
 indexmap
+indicatif
 ipnet
 itertools
 itoa

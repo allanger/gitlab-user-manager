@@ -253,7 +253,7 @@ impl<'a> CmdOld<'a> for InitCmd {
             Ok(_) => {
                 OutMessage::message_empty(
                     format!(
-                        "Config file is generated, check it out\n $ cat {}",
+                        "Config file is generated, check it out\n   $ cat {}",
                         self.file_name.clone()
                     )
                     .as_str(),
