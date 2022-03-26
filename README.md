@@ -1,12 +1,12 @@
 # GUM
 > or just Gitlab User Manager
+> 
 
 [![Version build](https://github.com/allanger/gitlab-user-manager/actions/workflows/build-version.yaml/badge.svg)](https://github.com/allanger/gitlab-user-manager/actions/workflows/build-version.yaml)
 [![Version container](https://github.com/allanger/gitlab-user-manager/actions/workflows/container-version.yaml/badge.svg)](https://github.com/allanger/gitlab-user-manager/actions/workflows/container-version.yaml)
 [![Stable container](https://github.com/allanger/gitlab-user-manager/actions/workflows/container-stable.yaml/badge.svg)](https://github.com/allanger/gitlab-user-manager/actions/workflows/container-stable.yaml)
 
 ## What's this?
-![gum](./assets/gum.jpg)
 
 As I said, it's just a gitlab user manager. The better question, why do you want to use it? **Because gitlab user management is such a mess**!
 
@@ -34,13 +34,10 @@ Your Gitlab projects structure is probably looking like this:
     - **Project**: Crypto Exchanger Micro Service
     - **SubGroup**: Crypto Exchanger Devops:
       - **Project**: Crypto Exchanger Infrastructure
-      - **Project**: Crypto Exchanger Scripts
-    - **Project**: Crypto Exchanger Documentation
   - **SubGroup**: Just a Sock Shop
     - **Project**: Sock Shop Web
     - **Project**: Sock Shop Api
     - **SubGroup**: Crypto Exchanger Devops:
-      - **Project**: Crypto Exchanger Infrastructure
       - **Project**: Crypto Exchanger Scripts
     - **Project**: Crypto Exchanger Documentation
 
