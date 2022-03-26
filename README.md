@@ -144,7 +144,7 @@ $ gum sync -s state.json # Will take the state from the file ./state.json and ap
 ```
 
 
-### Config file modifications
+### Modify your config
 
 There are two ways of modifying the config file. 
 1. Just edit a yaml file. But remember that gum only needs ID of entity to process it, names and urls exist only to let you understand what's happening. And also currently gum is not checking if an entity name corresponds to entity ID, I will do it soon. So just changing names/urls won't do anything.
