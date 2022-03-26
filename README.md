@@ -14,7 +14,9 @@ As I said, it's just a gitlab user manager. The better question, why do you want
 
 In short, using **gum** you can control who and how can access your projects and groups with the everything-as-code approach. Just create a config file and sync it. 
 
-Back to GitLab.
+---
+
+**Back to GitLab.**
 
 Let's imagine you have two big projects in your company **IT-Leaders**: 
 - The Best Crypto Exchanger
@@ -50,7 +52,7 @@ And now you have to give users access to you groups and projects. I see several 
 3. You can add them to subgroups
 4. You can create one more subgroups with another subgroups level, add those subgroups to projects and add users just there. 
 
-Now pros and cons
+Now it a time for pros and cons...
 - Way 1
   - Pros: Easy as heck
   - Cons: Everything else. At least should backend and frontend developers have similar access to backend and frontend projects? Or junior devs and tech leads? You can't really control access with this approach.
