@@ -15,9 +15,10 @@ use crate::args::state_destination::ArgStateDestination;
 use crate::args::state_source::ArgStateSource;
 use crate::args::write_state::ArgWriteState;
 use crate::cmd::CmdOld;
+use crate::gitlab::{GitlabActions, GitlabClient};
 use crate::output::out_message::OutMessage;
 use crate::types::v1::config_file::ConfigFile;
-use crate::types::v1::state::{EntityType, AccessUnit};
+use crate::types::v1::state::{EntityType, State};
 
 use self::sync_cmd::{
     apply, compare_states, configure_groups, configure_projects, gr_configure_groups,
@@ -49,15 +50,34 @@ pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>
     let dry_run: bool = ArgDryRun::parse(sub_matches).unwrap().value();
     let write_state: bool = ArgWriteState::parse(sub_matches).unwrap().value();
 
-    let gitlab_token = ArgGitlabToken::parse(sub_matches)?;
-    let gitlab_url = ArgGitlabUrl::parse(sub_matches)?;
+    let gitlab_token = match ArgGitlabToken::parse(sub_matches) {
+        Ok(v) => v.value(),
+        Err(err) => return Err(err),
+    };
+    let gitlab_url = match ArgGitlabUrl::parse(sub_matches) {
+        Ok(v) => v.value(),
+        Err(err) => return Err(err),
+    };
 
-    let gitlab_client =
-        Gitlab::new(gitlab_url, gitlab_token).map_err(|err| Error::new(ErrorKind::Other, err))?;
+    let gitlab_client = match Gitlab::new(gitlab_url, gitlab_token) {
+        Ok(g) => g,
+        Err(err) => return Err(Error::new(ErrorKind::Other, err)),
+    };
 
-    let file_name = ArgFileName::parse(sub_matches)?;
-    let state_destination = ArgStateDestination::parse(sub_matches)?;
-    let state_source = ArgStateSource::parse(sub_matches)?;
+    let file_name = match ArgFileName::parse(sub_matches) {
+        Ok(arg) => arg.value(),
+        Err(err) => return Err(err),
+    };
+
+    let state_destination = match ArgStateDestination::parse(sub_matches) {
+        Ok(arg) => arg.value(),
+        Err(err) => return Err(err),
+    };
+
+    let state_source = match ArgStateSource::parse(sub_matches) {
+        Ok(arg) => arg.value(),
+        Err(err) => return Err(err),
+    };
 
     Ok(SyncCmd {
         dry_run,
@@ -71,17 +91,18 @@ pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>
 
 impl<'a> CmdOld<'a> for SyncCmd {
     fn exec(&self) -> Result<(), Error> {
+        let gitlab = GitlabClient::new(self.gitlab_client.to_owned());
         let mut config_file = match ConfigFile::read(self.file_name.clone()) {
             Ok(c) => c,
             Err(err) => return Err(err),
         };
         // Read old state
-        let mut old_state: HashMap<u64, AccessUnit> = HashMap::new();
+        let mut old_state: HashMap<u64, State> = HashMap::new();
         if !self.state_source.is_empty() {
             OutMessage::message_info_with_alias(
                 format!("I will try to use this file: {}", self.state_source.clone()).as_str(),
             );
-            old_state = AccessUnit::read_from_file(self.state_source.clone())?
+            old_state = State::read_from_file(self.state_source.clone())?
         } else {
             if config_file.state.as_str() == "~" || config_file.state.is_empty() {
                 OutMessage::message_info_with_alias(
@@ -95,11 +116,11 @@ impl<'a> CmdOld<'a> for SyncCmd {
                 };
             }
         }
-        let mut new_state: HashMap<u64, AccessUnit> = HashMap::new();
+        let mut new_state: HashMap<u64, State> = HashMap::new();
         for u in config_file.config.users.iter().clone() {
             new_state.insert(
                 u.id,
-                AccessUnit {
+                State {
                     projects: configure_projects(u, config_file.config.clone()),
                     namespaces: configure_groups(u, config_file.config.clone()),
                     entity: EntityType::User,
@@ -109,7 +130,7 @@ impl<'a> CmdOld<'a> for SyncCmd {
         for u in config_file.config.groups.iter().clone() {
             new_state.insert(
                 u.id,
-                AccessUnit {
+                State {
                     projects: gr_configure_projects(u),
                     namespaces: gr_configure_groups(u),
                     entity: EntityType::Group,
@@ -137,7 +158,7 @@ impl<'a> CmdOld<'a> for SyncCmd {
         }
 
         if self.write_state {
-            match AccessUnit::write_to_file(old_state, self.state_destination.clone()) {
+            match State::write_to_file(old_state, self.state_destination.clone()) {
                 Ok(_) => {
                     let msg = format!(
                         "State is saved, check it out\n $ cat {}",
@@ -179,13 +200,13 @@ mod sync_cmd {
     use crate::types::v1::state::EntityType;
     use crate::types::v1::{
         access_level::AccessLevel, config::Config, namespace::Namespace, project::Project,
-        state::AccessUnit, user::User,
+        state::State, user::User,
     };
 
     pub(crate) fn apply(
         actions: Vec<Actions>,
         gitlab_client: &Gitlab,
-        state: &mut HashMap<u64, AccessUnit>,
+        state: &mut HashMap<u64, State>,
         dry: bool,
     ) -> Result<(), Error> {
         for a in actions.iter() {
@@ -255,7 +276,7 @@ mod sync_cmd {
                             if !state.contains_key(&a.subject_entity_id) {
                                 state.insert(
                                     a.subject_entity_id,
-                                    AccessUnit::new_simple(a.subject_entity_type.clone()),
+                                    State::new_simple(a.subject_entity_type.clone()),
                                 );
                             };
                             if let Some(x) = state.get_mut(&a.subject_entity_id) {
@@ -430,7 +451,7 @@ mod sync_cmd {
                             if !state.contains_key(&a.subject_entity_id) {
                                 state.insert(
                                     a.subject_entity_id,
-                                    AccessUnit::new_simple(a.subject_entity_type.clone()),
+                                    State::new_simple(a.subject_entity_type.clone()),
                                 );
                             };
                             if let Some(x) = state.get_mut(&a.subject_entity_id) {
@@ -563,7 +584,7 @@ mod sync_cmd {
         let mut groups: Vec<Namespace> = u.namespaces.clone();
         for t in c.teams.iter() {
             if u.teams.contains(&t.name.to_string()) || t.name == "default" {
-                groups.extend(t.namespaces.clone());
+                groups.extend(t.groups.clone());
             }
         }
 
@@ -678,8 +699,8 @@ mod sync_cmd {
     }
 
     pub(crate) fn compare_states(
-        mut old_state: HashMap<u64, AccessUnit>,
-        new_state: HashMap<u64, AccessUnit>,
+        mut old_state: HashMap<u64, State>,
+        new_state: HashMap<u64, State>,
     ) -> Vec<Actions> {
         let mut actions: Vec<Actions> = Vec::new();
 

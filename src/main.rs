@@ -5,6 +5,7 @@ mod output;
 mod service;
 mod types;
 mod cli;
+mod store;
 
 use cmd::{
     init::InitCmd,
@@ -17,7 +18,9 @@ use cmd::{
     search,
     Cmd, CmdOld,
 };
-use output::out_extra::OutExtra;
+use output::{out_extra::OutExtra, out_message::OutMessage};
+use types::v1::state::State;
+>>>>>>> 21cc23b (wip)
 use std::io::{Error, ErrorKind};
 use std::process::exit;
 
@@ -29,6 +32,11 @@ const NEWS: &[&str] = &[
 
 
 fn main() {
+    State::get("s3://bucket_name/filepath".to_string());
+    State::get("./gum-state.json".to_string());
+    State::get("/tmp/gum-state.json".to_string());
+    State::get(r#"{"6006629":{"entity":"User","projects":{},"namespaces":{"7818000":"Developer"}}}"#.to_string());
+    exit(1);
     OutExtra::welcome_message(MESSAGE_OF_THE_DAY, NEWS);
     let matches = cli::build().get_matches();
 
