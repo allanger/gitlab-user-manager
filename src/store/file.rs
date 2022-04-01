@@ -37,7 +37,26 @@ impl Store for FileStore {
         }
     }
 
-    fn write(&self) {}
+    fn write(&self, data: HashMap<u64, AccessUnit>) -> Result<()> {
+        let f = OpenOptions::new()
+            .create(true)
+            .write(true)
+            .read(true)
+            .truncate(true)
+            .open(&self.file_path);
+        let f = match f {
+            Ok(file) => file,
+            Err(err) => {
+                return Err(err);
+            }
+        };
+        match serde_json::to_writer(&f, &data) {
+            Ok(()) => return Ok(()),
+            Err(err) => {
+                return Err(Error::new(ErrorKind::Other, err.to_string()));
+            }
+        }
+    }
 }
 
 #[cfg(test)]
@@ -63,7 +82,7 @@ mod tests {
 
         writeln!(file, "{}", data).unwrap();
         let file_store = FileStore::new(file_path.to_string_lossy().to_string());
-        let mut data:HashMap<u64, AccessUnit> = HashMap::new();
+        let mut data: HashMap<u64, AccessUnit> = HashMap::new();
         let mut projects: HashMap<u64, AccessLevel> = HashMap::new();
         let mut namespaces: HashMap<u64, AccessLevel> = HashMap::new();
         projects.insert(1, AccessLevel::Developer);
@@ -75,14 +94,5 @@ mod tests {
         };
         data.insert(1, access_unit);
         assert_eq!(data, file_store.get().unwrap());
-    }
-
-    fn checlk_file_read() {
-        let dir = tempdir().unwrap();
-        let file_path = dir.path().join("my-temporary-note.txt");
-        let mut file = File::create(file_path.clone()).unwrap();
-        let data = r#"{"1":{"entity":"User","projects":{"1":"Developer"},"namespaces":{"1":"Maintainer"}}}"#;
-        let state = AccessUnit::from_string(data.to_string());
-        let 
     }
 }
