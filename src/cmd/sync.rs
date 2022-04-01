@@ -49,34 +49,15 @@ pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>
     let dry_run: bool = ArgDryRun::parse(sub_matches).unwrap().value();
     let write_state: bool = ArgWriteState::parse(sub_matches).unwrap().value();
 
-    let gitlab_token = match ArgGitlabToken::parse(sub_matches) {
-        Ok(v) => v.value(),
-        Err(err) => return Err(err),
-    };
-    let gitlab_url = match ArgGitlabUrl::parse(sub_matches) {
-        Ok(v) => v.value(),
-        Err(err) => return Err(err),
-    };
+    let gitlab_token = ArgGitlabToken::parse(sub_matches)?;
+    let gitlab_url = ArgGitlabUrl::parse(sub_matches)?;
 
-    let gitlab_client = match Gitlab::new(gitlab_url, gitlab_token) {
-        Ok(g) => g,
-        Err(err) => return Err(Error::new(ErrorKind::Other, err)),
-    };
+    let gitlab_client =
+        Gitlab::new(gitlab_url, gitlab_token).map_err(|err| Error::new(ErrorKind::Other, err))?;
 
-    let file_name = match ArgFileName::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(err),
-    };
-
-    let state_destination = match ArgStateDestination::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(err),
-    };
-
-    let state_source = match ArgStateSource::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(err),
-    };
+    let file_name = ArgFileName::parse(sub_matches)?;
+    let state_destination = ArgStateDestination::parse(sub_matches)?;
+    let state_source = ArgStateSource::parse(sub_matches)?;
 
     Ok(SyncCmd {
         dry_run,

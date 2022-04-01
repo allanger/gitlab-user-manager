@@ -21,11 +21,8 @@ struct ListCmd {
 }
 
 pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>, Error> {
-    let file_name = match ArgFileName::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(err),
-    };
-    let large_out: bool = ArgLargeOut::parse(sub_matches).unwrap().value();
+    let file_name = ArgFileName::parse(sub_matches)?;
+    let large_out: bool = ArgLargeOut::parse(sub_matches)?;
 
     Ok(ListCmd {
         file_name,
@@ -35,10 +32,7 @@ pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>
 
 impl<'a> CmdOld<'a> for ListCmd {
     fn exec(&self) -> Result<(), Error> {
-        let config_file = match ConfigFile::read(self.file_name.clone()) {
-            Ok(c) => c,
-            Err(err) => return Err(err),
-        };
+        let config_file = ConfigFile::read(self.file_name.clone())?;
 
         for group in config_file.config.groups {
             let mut message = format!("{} - {}", group.id, group.name);

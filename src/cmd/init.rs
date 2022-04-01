@@ -37,10 +37,10 @@ impl Cmd for InitCmd {
 
     fn prepare(sub_matches: &'_ ArgMatches) -> Result<InitCmd> {
         Ok(InitCmd {
-            file_name: ArgFileName::parse(sub_matches)?.value(),
-            group_list: ArgGroupList::parse(sub_matches)?.value().to_vec(),
-            gitlab_url: ArgGitlabUrl::parse(sub_matches)?.value(),
-            gitlab_token: ArgGitlabToken::parse(sub_matches)?.value(),
+            file_name: ArgFileName::parse(sub_matches)?,
+            group_list: ArgGroupList::parse(sub_matches)?,
+            gitlab_url: ArgGitlabUrl::parse(sub_matches)?,
+            gitlab_token: ArgGitlabToken::parse(sub_matches)?,
         })
     }
 

@@ -5,18 +5,10 @@ use std::io::{Error, Result};
 
 static ARG: &str = "token";
 
-pub(crate) struct ArgGitlabToken {
-    value: String,
-}
-
-impl ArgGitlabToken {
-    pub(crate) fn value(&self) -> String {
-        self.value.clone()
-    }
-}
+pub(crate) struct ArgGitlabToken;
 
 impl Args for ArgGitlabToken {
-    type ArgType = ArgGitlabToken;
+    type ArgType = String;
 
     fn add() -> Arg<'static> {
         return Arg::new(ARG)
@@ -30,7 +22,7 @@ impl Args for ArgGitlabToken {
             .global(true);
     }
 
-    fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<Self> {
+    fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<String> {
         sub_matches
             .value_of(ARG)
             .ok_or_else(|| {
@@ -39,9 +31,7 @@ impl Args for ArgGitlabToken {
                 Error::new(std::io::ErrorKind::InvalidInput, err_msg)
             })
             .and_then(|value| {
-                return Ok(ArgGitlabToken {
-                    value: value.to_string(),
-                });
+                return Ok(value.to_string());
             })
     }
 }

@@ -23,14 +23,8 @@ struct RemoveCmd {
 }
 
 pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>, Error> {
-    let team_name = match ArgTeamName::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(err),
-    };
-    let file_name = match ArgFileName::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(err),
-    };
+    let team_name = ArgTeamName::parse(sub_matches)?;
+    let file_name = ArgFileName::parse(sub_matches)?;
 
     Ok(RemoveCmd {
         team_name,
@@ -40,10 +34,7 @@ pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>
 
 impl<'a> CmdOld<'a> for RemoveCmd {
     fn exec(&self) -> Result<(), Error> {
-        let mut config_file = match ConfigFile::read(self.file_name.clone()) {
-            Ok(c) => c,
-            Err(err) => return Err(err),
-        };
+        let mut config_file = ConfigFile::read(self.file_name.clone())?;
 
         config_file
             .config

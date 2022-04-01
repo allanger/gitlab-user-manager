@@ -5,18 +5,10 @@ use std::io::{Error, Result};
 
 static ARG: &str = "state-source";
 
-pub(crate) struct ArgStateSource {
-    value: String,
-}
-
-impl ArgStateSource {
-    pub(crate) fn value(&self) -> String {
-        self.value.clone()
-    }
-}
+pub(crate) struct ArgStateSource;
 
 impl Args for ArgStateSource {
-    type ArgType = ArgStateSource;
+    type ArgType = String;
 
     fn add() -> Arg<'static> {
         return Arg::new(ARG)
@@ -29,7 +21,7 @@ impl Args for ArgStateSource {
             .global(true);
     }
 
-    fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<Self> {
+    fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<String> {
         sub_matches
             .value_of(ARG)
             .ok_or_else(|| {
@@ -38,9 +30,7 @@ impl Args for ArgStateSource {
                 Error::new(std::io::ErrorKind::InvalidInput, err_msg)
             })
             .and_then(|value| {
-                return Ok(ArgStateSource {
-                    value: value.to_string(),
-                });
+                return Ok(value.to_string());
             })
     }
 }

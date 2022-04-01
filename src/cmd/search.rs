@@ -33,20 +33,12 @@ pub(crate) struct SearchCmd<'a> {
 }
 
 pub(crate) fn prepare<'a>(sub_matches: &'a ArgMatches) -> Result<impl CmdOld<'a>, Error> {
-    let gitlab_token = match ArgGitlabToken::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(err),
-    };
-    let gitlab_url = match ArgGitlabUrl::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(err),
-    };
+    let gitlab_token = ArgGitlabToken::parse(sub_matches)?;
+    let gitlab_url = ArgGitlabUrl::parse(sub_matches)?;
 
     // Connect to gitlab
-    let gitlab_client: Gitlab = match Gitlab::new(gitlab_url, gitlab_token) {
-        Ok(g) => g,
-        Err(_err) => return Err(Error::new(ErrorKind::Other, _err)),
-    };
+    let gitlab_client =
+        Gitlab::new(gitlab_url, gitlab_token).map_err(|err| Error::new(ErrorKind::Other, err))?;
 
     // Get search subcommand
     let search_sub = sub_matches.subcommand();

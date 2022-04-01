@@ -32,30 +32,14 @@ struct CreateCmd {
 }
 
 pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>, Error> {
-    let gitlab_token = match ArgGitlabToken::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(err),
-    };
-    let gitlab_url = match ArgGitlabUrl::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(err),
-    };
+    let gitlab_token = ArgGitlabToken::parse(sub_matches)?;
+    let gitlab_url = ArgGitlabUrl::parse(sub_matches)?;
 
-    let gitlab_client: Gitlab = match Gitlab::new(gitlab_url, gitlab_token)
-    {
-        Ok(g) => g,
-        Err(_err) => return Err(Error::new(ErrorKind::Other, _err)),
-    };
+    let gitlab_client: Gitlab =
+        Gitlab::new(gitlab_url, gitlab_token).map_err(|err| Error::new(ErrorKind::Other, err))?;
 
-    let gitlab_user_id = match ArgUserId::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(err),
-    };
-
-    let file_name = match ArgFileName::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(err),
-    };
+    let gitlab_user_id = ArgUserId::parse(sub_matches)?;
+    let file_name = ArgFileName::parse(sub_matches)?;
 
     Ok(CreateCmd {
         gitlab_user_id,
@@ -66,17 +50,11 @@ pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>
 
 impl<'a> CmdOld<'a> for CreateCmd {
     fn exec(&self) -> Result<(), Error> {
-        let mut config_file = match ConfigFile::read(self.file_name.clone()) {
-            Ok(c) => c,
-            Err(err) => return Err(err),
-        };
+        let mut config_file = ConfigFile::read(self.file_name.clone())?;
 
         let gitlab = GitlabClient::new(self.gitlab_client.to_owned());
         OutMessage::message_info_with_alias("I'm getting data about the user from Gitlab");
-        let user = match gitlab.get_user_data_by_id(self.gitlab_user_id) {
-            Ok(u) => u,
-            Err(err) => return Err(err),
-        };
+        let user = gitlab.get_user_data_by_id(self.gitlab_user_id)?;
 
         let new_user = User {
             id: self.gitlab_user_id,
@@ -101,9 +79,6 @@ impl<'a> CmdOld<'a> for CreateCmd {
             );
         }
 
-        let _ = match config_file.write(self.file_name.clone()) {
-            Ok(()) => return Ok(()),
-            Err(err) => return Err(err),
-        };
+        config_file.write(self.file_name.clone())
     }
 }

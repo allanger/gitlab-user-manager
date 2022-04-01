@@ -35,40 +35,18 @@ struct AddProjectCmd {
 }
 
 pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>, Error> {
-    let gitlab_token = match ArgGitlabToken::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(err),
-    };
-    let gitlab_url = match ArgGitlabUrl::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(err),
-    };
+    let gitlab_token = ArgGitlabToken::parse(sub_matches)?;
+    let gitlab_url = ArgGitlabUrl::parse(sub_matches)?;
     // Connect to gitlab
-    let gitlab_client: Gitlab = match Gitlab::new(gitlab_url, gitlab_token)
-    {
-        Ok(g) => g,
-        Err(_err) => return Err(Error::new(ErrorKind::Other, _err)),
-    };
+    let gitlab_client: Gitlab =
+        Gitlab::new(gitlab_url, gitlab_token).map_err(|err| Error::new(ErrorKind::Other, err))?;
 
-    let gitlab_project_id: u64 = match ArgProjectId::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(err),
-    };
+    let gitlab_project_id: u64 = ArgProjectId::parse(sub_matches)?;
 
-    let access_level = match ArgAccess::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(e) => return Err(e),
-    };
+    let access_level = ArgAccess::parse(sub_matches)?;
 
-    let team_name = match ArgTeamName::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(err),
-    };
-
-    let file_name = match ArgFileName::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(err),
-    };
+    let team_name = ArgTeamName::parse(sub_matches)?;
+    let file_name = ArgFileName::parse(sub_matches)?;
 
     Ok(AddProjectCmd {
         file_name,
@@ -129,4 +107,3 @@ impl<'a> CmdOld<'a> for AddProjectCmd {
         Err(Error::new(ErrorKind::NotFound, error_message))
     }
 }
-
