@@ -39,8 +39,7 @@ pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>
 
     // Connect to gitlab
     let gitlab_client: Gitlab =
-        Gitlab::new(gitlab_url, gitlab_token).map_err(|err| Error::new(ErrorKind::Other, err))?;
-
+        Gitlab::new(gitlab_url, gitlab_token).map_err(|err| Error::new(ErrorKind::InvalidInput, err))?;
     let gitlab_project_id: u64 = ArgProjectId::parse(sub_matches)?;
 
     let access_level = ArgAccess::parse(sub_matches)?;

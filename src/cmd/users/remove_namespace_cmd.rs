@@ -25,8 +25,7 @@ pub(crate) fn add_remove_namespace_cmd() -> Command<'static> {
 }
 
 pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>, Error> {
-    let gitlab_group_id = ArgNamespaceId::parse(sub_matches)
-        .map_err(|err| Error::new(ErrorKind::InvalidInput, err))?;
+    let gitlab_group_id = ArgNamespaceId::parse(sub_matches)?;
 
     let gitlab_user_id = ArgUserId::parse(sub_matches)?;
     let file_name = ArgFileName::parse(sub_matches)?;

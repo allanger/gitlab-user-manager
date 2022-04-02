@@ -37,8 +37,7 @@ pub(crate) fn add_add_namespace_cmd() -> Command<'static> {
 }
 
 pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>, Error> {
-    let gitlab_namespace_id = ArgNamespaceId::parse(sub_matches)
-        .map_err(|err| Error::new(ErrorKind::InvalidInput, err))?;
+    let gitlab_namespace_id = ArgNamespaceId::parse(sub_matches)?;
 
     let gitlab_token = ArgGitlabToken::parse(sub_matches)?;
     let gitlab_url = ArgGitlabUrl::parse(sub_matches)?;
@@ -47,8 +46,7 @@ pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>
     let gitlab_client: Gitlab =
         Gitlab::new(gitlab_url, gitlab_token).map_err(|err| Error::new(ErrorKind::Other, err))?;
 
-    let gitlab_group_id = ArgNamespaceId::parse(sub_matches)
-        .map_err(|err| Error::new(ErrorKind::InvalidInput, err))?;
+    let gitlab_group_id = ArgNamespaceId::parse(sub_matches)?;
 
     let file_name = ArgFileName::parse(sub_matches)?;
 
