@@ -1,0 +1,31 @@
+[1mdiff --git a/src/gitlab/apis/groups.rs b/src/gitlab/apis/groups.rs[m
+[1mindex 80c60cf..76e4f48 100644[m
+[1m--- a/src/gitlab/apis/groups.rs[m
+[1m+++ b/src/gitlab/apis/groups.rs[m
+[36m@@ -25,8 +25,7 @@[m [mpub(crate) trait GitlabGroupsApi {[m
+     fn get_shared_projects(&self, group_id: u64) -> Vec<Project>;[m
+     fn get_projects(&self, group_name: String, id: u64) -> Vec<Project>;[m
+     fn remove_from_namespace(&self, gid: u64, nid: u64) -> Result<String>;[m
+[31m-    fn add_to_namespace(&self, gid: u64, nid: u64, access_level: AccessLevel) -> Result<String>;[m
+[31m-    fn git_groups_shared_with(&self, group_id: u64) -> Result<Vec<SharedWithGroups>>;[m
+[32m+[m
+ }[m
+ pub(crate) struct GroupGitlab {[m
+     pub(crate) gitlab_client: Gitlab,[m
+[36m@@ -80,13 +79,15 @@[m [mimpl GitlabGroupsApi for GroupGitlab {[m
+         let head: Vec<Group> = query.query(&self.gitlab_client).unwrap();[m
+         if recursive && !head.is_empty() {[m
+             for g in head.iter() {[m
+[32m+[m[32m                OutSpinner::spinner_success(spinner, group_name);[m
+                 let sub: Vec<Group> = self.get_subgroups(g.name.clone(), g.id, true);[m
+                 if !sub.is_empty() {[m
+                     groups.extend(sub);[m
+                 }[m
+             }[m
+[32m+[m[32m        } else {[m
+[32m+[m[32m            OutSpinner::spinner_success(spinner, group_name);[m
+         }[m
+[31m-        OutSpinner::spinner_success(spinner, group_name);[m
+         groups.extend(head);[m
+         groups[m
+     }[m
