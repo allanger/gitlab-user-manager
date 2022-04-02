@@ -30,8 +30,4 @@ impl OutMessage {
         println!(" {}", style(msg).red());
     }
 
-    pub(crate) fn message_important(msg: &str) {
-        println!("{}IMPORTANT: {}", color::Fg(color::Red), msg);
-    }
-
 }
