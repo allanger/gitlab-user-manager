@@ -34,41 +34,17 @@ pub(crate) fn add_add_project_cmd() -> Command<'static> {
 }
 
 pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>, Error> {
-    let gitlab_token = match ArgGitlabToken::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(err),
-    };
-    let gitlab_url = match ArgGitlabUrl::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(err),
-    };
+    let gitlab_token = ArgGitlabToken::parse(sub_matches)?;
+    let gitlab_url = ArgGitlabUrl::parse(sub_matches)?;
 
     // Connect to gitlab
-    let gitlab_client: Gitlab = match Gitlab::new(gitlab_url, gitlab_token)
-    {
-        Ok(g) => g,
-        Err(_err) => return Err(Error::new(ErrorKind::Other, _err)),
-    };
+    let gitlab_client: Gitlab =
+        Gitlab::new(gitlab_url, gitlab_token).map_err(|err| Error::new(ErrorKind::Other, err))?;
 
-    let gitlab_project_id: u64 = match ArgProjectId::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(err),
-    };
-
-    let access_level = match ArgAccess::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(e) => return Err(e),
-    };
-
-    let gitlab_user_id = match ArgUserId::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(err),
-    };
-
-    let file_name = match ArgFileName::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(err),
-    };
+    let gitlab_project_id = ArgProjectId::parse(sub_matches)?;
+    let access_level = ArgAccess::parse(sub_matches)?;
+    let gitlab_user_id = ArgUserId::parse(sub_matches)?;
+    let file_name = ArgFileName::parse(sub_matches)?;
 
     Ok(AddProjectCmd {
         access_level,
@@ -81,17 +57,11 @@ pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>
 
 impl<'a> CmdOld<'a> for AddProjectCmd {
     fn exec(&self) -> Result<(), Error> {
-        let mut config_file = match ConfigFile::read(self.file_name.clone()) {
-            Ok(c) => c,
-            Err(err) => return Err(err),
-        };
+        let mut config_file = ConfigFile::read(self.file_name.clone())?;
         let gitlab = GitlabClient::new(self.gitlab_client.to_owned());
         OutMessage::message_info_with_alias("I'm getting data about the project from Gitlab");
 
-        let project = match gitlab.get_project_data_by_id(self.gitlab_project_id) {
-            Ok(p) => p,
-            Err(err) => return Err(err),
-        };
+        let project = gitlab.get_project_data_by_id(self.gitlab_project_id)?;
 
         for user in config_file.config.users.iter_mut() {
             if user.id == self.gitlab_user_id {
@@ -121,9 +91,6 @@ impl<'a> CmdOld<'a> for AddProjectCmd {
             }
         }
 
-        let _ = match config_file.write(self.file_name.clone()) {
-            Ok(()) => return Ok(()),
-            Err(err) => return Err(err),
-        };
+        config_file.write(self.file_name.clone())
     }
 }

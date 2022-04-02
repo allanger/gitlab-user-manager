@@ -8,18 +8,10 @@ use std::{
 
 static ARG: &str = "access";
 
-pub(crate) struct ArgAccess {
-    value: AccessLevel,
-}
-
-impl ArgAccess {
-    pub(crate) fn value(&self) -> AccessLevel {
-        self.value
-    }
-}
+pub(crate) struct ArgAccess;
 
 impl Args for ArgAccess {
-    type ArgType = ArgAccess;
+    type ArgType = AccessLevel;
 
     fn add() -> Arg<'static> {
         return Arg::new(ARG)
@@ -31,7 +23,7 @@ impl Args for ArgAccess {
             .global(true);
     }
 
-    fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<Self> {
+    fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<AccessLevel> {
         sub_matches
             .value_of(ARG)
             .ok_or_else(|| {
@@ -40,7 +32,7 @@ impl Args for ArgAccess {
                 Error::new(std::io::ErrorKind::InvalidInput, err_msg)
             })
             .and_then(|value| match AccessLevel::from_str(value) {
-                Ok(value) => Ok(ArgAccess { value }),
+                Ok(value) => Ok(value),
                 Err(e) => Err(e),
             })
     }

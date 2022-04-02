@@ -5,18 +5,10 @@ use std::io::{Error, Result};
 
 static ARG: &str = "team-name";
 
-pub(crate) struct ArgTeamName {
-    value: String,
-}
-
-impl ArgTeamName {
-    pub(crate) fn value(&self) -> String {
-        self.value.clone()
-    }
-}
+pub(crate) struct ArgTeamName;
 
 impl Args for ArgTeamName {
-    type ArgType = ArgTeamName;
+    type ArgType = String;
 
     fn add() -> Arg<'static> {
         Arg::new(ARG)
@@ -27,7 +19,7 @@ impl Args for ArgTeamName {
             .default_value("default")
     }
 
-    fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<Self> {
+    fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<String> {
         sub_matches
             .value_of(ARG)
             .ok_or_else(|| {
@@ -36,9 +28,7 @@ impl Args for ArgTeamName {
                 Error::new(std::io::ErrorKind::InvalidInput, err_msg)
             })
             .and_then(|value| {
-                return Ok(ArgTeamName {
-                    value: value.to_string(),
-                });
+                return Ok(value.to_string());
             })
     }
 }

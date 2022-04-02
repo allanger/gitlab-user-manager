@@ -4,21 +4,10 @@ use std::io::Result;
 
 static ARG: &str = "groups";
 
-pub(crate) struct ArgGroupList {
-    value: Vec<u64>,
-}
-
-impl ArgGroupList {
-    /// Get a reference to the arg group list's value.
-
-    /// Get a reference to the arg group list's value.
-    pub(crate) fn value(&self) -> &[u64] {
-        self.value.as_ref()
-    }
-}
+pub(crate) struct ArgGroupList;
 
 impl Args for ArgGroupList {
-    type ArgType = ArgGroupList;
+    type ArgType = Vec<u64>;
 
     fn add() -> Arg<'static> {
         Arg::new(ARG)
@@ -31,11 +20,11 @@ impl Args for ArgGroupList {
             .multiple_values(true)
     }
 
-    fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<Self> {
+    fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<Vec<u64>> {
         let value = match sub_matches.values_of(ARG) {
             Some(v) => v.map(|f| f.parse::<u64>().unwrap()).collect(),
             None => Vec::new(),
         };
-        Ok(ArgGroupList { value })
+        Ok(value)
     }
 }

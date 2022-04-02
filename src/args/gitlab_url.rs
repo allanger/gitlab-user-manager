@@ -5,18 +5,10 @@ use std::io::{Error, Result};
 
 static ARG: &str = "url";
 
-pub(crate) struct ArgGitlabUrl {
-    value: String,
-}
-
-impl ArgGitlabUrl {
-    pub(crate) fn value(&self) -> String {
-        self.value.clone()
-    }
-}
+pub(crate) struct ArgGitlabUrl;
 
 impl Args for ArgGitlabUrl {
-    type ArgType = ArgGitlabUrl;
+    type ArgType = String;
 
     fn add() -> Arg<'static> {
         return Arg::new(ARG)
@@ -28,7 +20,7 @@ impl Args for ArgGitlabUrl {
             .global(true);
     }
 
-    fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<Self> {
+    fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<String> {
         sub_matches
             .value_of(ARG)
             .ok_or_else(|| {
@@ -37,9 +29,7 @@ impl Args for ArgGitlabUrl {
                 Error::new(std::io::ErrorKind::InvalidInput, err_msg)
             })
             .and_then(|value| {
-                return Ok(ArgGitlabUrl {
-                    value: value.to_string(),
-                });
+                return Ok(value.to_string());
             })
     }
 }

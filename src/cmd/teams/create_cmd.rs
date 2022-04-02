@@ -23,15 +23,8 @@ struct CreateCmd {
 }
 
 pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>, Error> {
-    let team_name = match ArgTeamName::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(err),
-    };
-
-    let file_name = match ArgFileName::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(err),
-    };
+    let team_name = ArgTeamName::parse(sub_matches)?;
+    let file_name = ArgFileName::parse(sub_matches)?;
 
     Ok(CreateCmd {
         team_name,
