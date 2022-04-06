@@ -8,13 +8,13 @@ mod types;
 use clap::Command;
 use cmd::{
     groups::{self, add_groups_cmd},
-    init::{self, add_init_cmd},
+    init::{self, InitCmd},
     search::{self, add_search_cmd},
     sync::{self, add_sync_cmd},
     teams::{self, add_teams_cmd},
     upgrade::{self, add_upgrade_cmd},
     users::{self, add_users_cmd},
-    CmdOld,
+    Cmd, CmdOld,
 };
 use output::{out_extra::OutExtra, out_message::OutMessage};
 use std::io::{Error, ErrorKind};
@@ -31,7 +31,7 @@ fn main() {
         .version(VERSION)
         .author("allanger")
         .arg_required_else_help(true)
-        .subcommand(add_init_cmd())
+        .subcommand(InitCmd::add())
         .subcommand(add_users_cmd())
         .subcommand(add_teams_cmd())
         .subcommand(add_search_cmd())
@@ -44,7 +44,7 @@ fn main() {
 
     match matches.subcommand() {
         Some(("init", sub_matches)) => {
-            result = match init::prepare(sub_matches) {
+            result = match InitCmd::prepare(sub_matches) {
                 Ok(cmd) => cmd.exec(),
                 Err(err) => Err(err),
             };

@@ -29,20 +29,9 @@ pub(crate) fn add_remove_project_cmd() -> Command<'static> {
 }
 
 pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>, Error> {
-    let gitlab_project_id: u64 = match ArgProjectId::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(err),
-    };
-
-    let gitlab_group_id = match ArgGroupId::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(err),
-    };
-
-    let file_name = match ArgFileName::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(err),
-    };
+    let gitlab_project_id: u64 = ArgProjectId::parse(sub_matches)?;
+    let gitlab_group_id = ArgGroupId::parse(sub_matches)?;
+    let file_name = ArgFileName::parse(sub_matches)?;
 
     Ok(RemoveProjectCmd {
         gitlab_project_id,
@@ -53,10 +42,7 @@ pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>
 
 impl<'a> CmdOld<'a> for RemoveProjectCmd {
     fn exec(&self) -> Result<(), Error> {
-        let mut config_file = match ConfigFile::read(self.file_name.clone()) {
-            Ok(c) => c,
-            Err(err) => return Err(err),
-        };
+        let mut config_file = ConfigFile::read(self.file_name.clone())?;
 
         for g in config_file.config.groups.iter_mut() {
             if g.id == self.gitlab_group_id {
@@ -73,9 +59,6 @@ impl<'a> CmdOld<'a> for RemoveProjectCmd {
             }
         }
 
-        let _ = match config_file.write(self.file_name.clone()) {
-            Ok(()) => return Ok(()),
-            Err(err) => return Err(err),
-        };
+        config_file.write(self.file_name.clone())
     }
 }

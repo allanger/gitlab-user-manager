@@ -3,18 +3,10 @@ use clap::{Arg, ArgMatches};
 use super::Args;
 
 static ARG: &str = "large";
-pub(crate) struct ArgLargeOut {
-    value: bool,
-}
-
-impl ArgLargeOut {
-    pub(crate) fn value(&self) -> bool {
-        self.value
-    }
-}
+pub(crate) struct ArgLargeOut;
 
 impl Args for ArgLargeOut {
-    type ArgType = ArgLargeOut;
+    type ArgType = bool;
 
     fn add() -> Arg<'static> {
         Arg::new(ARG)
@@ -24,9 +16,7 @@ impl Args for ArgLargeOut {
             .help("Display a lot of data")
     }
 
-    fn parse<'b>(sub_matches: &'b ArgMatches) -> std::io::Result<Self::ArgType> {
-        Ok(ArgLargeOut {
-            value: sub_matches.is_present(ARG),
-        })
+    fn parse<'b>(sub_matches: &'b ArgMatches) -> std::io::Result<bool> {
+        Ok(sub_matches.is_present(ARG))
     }
 }

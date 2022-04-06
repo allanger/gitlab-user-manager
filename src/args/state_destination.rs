@@ -5,18 +5,10 @@ use std::io::{Error, Result};
 
 static ARG: &str = "state-destination";
 
-pub(crate) struct ArgStateDestination {
-    value: String,
-}
-
-impl ArgStateDestination {
-    pub(crate) fn value(&self) -> String {
-        self.value.clone()
-    }
-}
+pub(crate) struct ArgStateDestination;
 
 impl Args for ArgStateDestination {
-    type ArgType = ArgStateDestination;
+    type ArgType = String;
 
     fn add() -> Arg<'static> {
         return Arg::new(ARG)
@@ -28,7 +20,7 @@ impl Args for ArgStateDestination {
             .global(true);
     }
 
-    fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<Self> {
+    fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<String> {
         sub_matches
             .value_of(ARG)
             .ok_or_else(|| {
@@ -37,9 +29,7 @@ impl Args for ArgStateDestination {
                 Error::new(std::io::ErrorKind::InvalidInput, err_msg)
             })
             .and_then(|value| {
-                return Ok(ArgStateDestination {
-                    value: value.to_string(),
-                });
+                return Ok(value.to_string());
             })
     }
 }

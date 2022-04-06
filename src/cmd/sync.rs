@@ -15,7 +15,6 @@ use crate::args::state_destination::ArgStateDestination;
 use crate::args::state_source::ArgStateSource;
 use crate::args::write_state::ArgWriteState;
 use crate::cmd::CmdOld;
-use crate::gitlab::{GitlabActions, GitlabClient};
 use crate::output::out_message::OutMessage;
 use crate::types::v1::config_file::ConfigFile;
 use crate::types::v1::state::{EntityType, State};
@@ -50,34 +49,15 @@ pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>
     let dry_run: bool = ArgDryRun::parse(sub_matches).unwrap().value();
     let write_state: bool = ArgWriteState::parse(sub_matches).unwrap().value();
 
-    let gitlab_token = match ArgGitlabToken::parse(sub_matches) {
-        Ok(v) => v.value(),
-        Err(err) => return Err(err),
-    };
-    let gitlab_url = match ArgGitlabUrl::parse(sub_matches) {
-        Ok(v) => v.value(),
-        Err(err) => return Err(err),
-    };
+    let gitlab_token = ArgGitlabToken::parse(sub_matches)?;
+    let gitlab_url = ArgGitlabUrl::parse(sub_matches)?;
 
-    let gitlab_client = match Gitlab::new(gitlab_url, gitlab_token) {
-        Ok(g) => g,
-        Err(err) => return Err(Error::new(ErrorKind::Other, err)),
-    };
+    let gitlab_client =
+        Gitlab::new(gitlab_url, gitlab_token).map_err(|err| Error::new(ErrorKind::Other, err))?;
 
-    let file_name = match ArgFileName::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(err),
-    };
-
-    let state_destination = match ArgStateDestination::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(err),
-    };
-
-    let state_source = match ArgStateSource::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(err),
-    };
+    let file_name = ArgFileName::parse(sub_matches)?;
+    let state_destination = ArgStateDestination::parse(sub_matches)?;
+    let state_source = ArgStateSource::parse(sub_matches)?;
 
     Ok(SyncCmd {
         dry_run,
@@ -91,7 +71,6 @@ pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>
 
 impl<'a> CmdOld<'a> for SyncCmd {
     fn exec(&self) -> Result<(), Error> {
-        let gitlab = GitlabClient::new(self.gitlab_client.to_owned());
         let mut config_file = match ConfigFile::read(self.file_name.clone()) {
             Ok(c) => c,
             Err(err) => return Err(err),
@@ -584,7 +563,7 @@ mod sync_cmd {
         let mut groups: Vec<Namespace> = u.namespaces.clone();
         for t in c.teams.iter() {
             if u.teams.contains(&t.name.to_string()) || t.name == "default" {
-                groups.extend(t.groups.clone());
+                groups.extend(t.namespaces.clone());
             }
         }
 

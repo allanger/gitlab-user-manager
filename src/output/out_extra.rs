@@ -8,13 +8,13 @@ static FAILURE: Emoji<'_, '_> = Emoji("🖕", "F");
 impl OutExtra {
     pub(crate) fn welcome_message(msg: &str, news: &'static [&'static str]) {
         OutExtra::empty_line();
-        println!(" {}", style(msg).black());
+        println!(" {}", style(msg).cyan());
         OutExtra::empty_line();
         if news.len() > 0 {
             println!(
                 " {}",
                 style("I've got news for you, dude")
-                    .black()
+                    .cyan()
                     .underlined()
                     .bold()
             );

@@ -25,19 +25,10 @@ pub(crate) fn add_remove_namespace_cmd() -> Command<'static> {
 }
 
 pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>, Error> {
-    let gitlab_group_id = match ArgNamespaceId::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(Error::new(ErrorKind::InvalidInput, err.to_string())),
-    };
+    let gitlab_group_id = ArgNamespaceId::parse(sub_matches)?;
 
-    let gitlab_user_id = match ArgUserId::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(err),
-    };
-    let file_name = match ArgFileName::parse(sub_matches) {
-        Ok(arg) => arg.value(),
-        Err(err) => return Err(err),
-    };
+    let gitlab_user_id = ArgUserId::parse(sub_matches)?;
+    let file_name = ArgFileName::parse(sub_matches)?;
 
     Ok(RemoveGroupCmd {
         gitlab_group_id,
@@ -48,10 +39,7 @@ pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>
 
 impl<'a> CmdOld<'a> for RemoveGroupCmd {
     fn exec(&self) -> Result<(), Error> {
-        let mut config_file = match ConfigFile::read(self.file_name.clone()) {
-            Ok(c) => c,
-            Err(err) => return Err(err),
-        };
+        let mut config_file = ConfigFile::read(self.file_name.clone())?;
 
         for u in config_file.config.users.iter_mut() {
             if u.id == self.gitlab_user_id {
@@ -68,10 +56,6 @@ impl<'a> CmdOld<'a> for RemoveGroupCmd {
                 }
             }
         }
-
-        let _ = match config_file.write(self.file_name.clone()) {
-            Ok(()) => return Ok(()),
-            Err(err) => return Err(err),
-        };
+        config_file.write(self.file_name.clone())
     }
 }

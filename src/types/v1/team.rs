@@ -8,5 +8,5 @@ pub struct Team {
     #[serde(default)] 
     pub(crate) projects: Vec<Project>,
     #[serde(default)] 
-    pub(crate) groups: Vec<Namespace>,
+    pub(crate) namespaces: Vec<Namespace>,
 }

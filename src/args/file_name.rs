@@ -5,18 +5,10 @@ use std::io::{Error, Result};
 
 static ARG: &str = "file";
 
-pub(crate) struct ArgFileName {
-    value: String,
-}
-
-impl ArgFileName {
-    pub(crate) fn value(&self) -> String {
-        self.value.clone()
-    }
-}
+pub(crate) struct ArgFileName;
 
 impl Args for ArgFileName {
-    type ArgType = ArgFileName;
+    type ArgType = String;
 
     fn add() -> Arg<'static> {
         return Arg::new(ARG)
@@ -29,18 +21,16 @@ impl Args for ArgFileName {
             .global(true);
     }
 
-    fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<Self> {
+    fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<String> {
         sub_matches
             .value_of(ARG)
             .ok_or_else(|| {
-                let err_msg = "GitLab token is not specified";
+                let err_msg = "File is not specified";
                 OutMessage::message_error(err_msg);
                 Error::new(std::io::ErrorKind::InvalidInput, err_msg)
             })
             .and_then(|value| {
-                return Ok(ArgFileName {
-                    value: value.to_string(),
-                });
+                return Ok(value.to_string());
             })
     }
 }

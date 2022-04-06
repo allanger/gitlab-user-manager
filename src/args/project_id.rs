@@ -4,18 +4,10 @@ use std::io::{Error, ErrorKind, Result};
 
 static ARG: &str = "project-id";
 
-pub(crate) struct ArgProjectId {
-    value: u64,
-}
-
-impl ArgProjectId {
-    pub(crate) fn value(&self) -> u64 {
-        self.value.clone()
-    }
-}
+pub(crate) struct ArgProjectId;
 
 impl Args for ArgProjectId {
-    type ArgType = ArgProjectId;
+    type ArgType = u64;
 
     fn add() -> Arg<'static> {
         Arg::new(ARG)
@@ -27,10 +19,10 @@ impl Args for ArgProjectId {
             .global(true)
     }
 
-    fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<Self> {
+    fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<u64> {
         match sub_matches.value_of_t(ARG) {
-            Ok(value) => return Ok(ArgProjectId { value }),
-            Err(err) => return Err(Error::new(ErrorKind::InvalidInput, err.to_string())),
-        };
+            Ok(value) => Ok(value),
+            Err(err) => Err(Error::new(ErrorKind::InvalidInput, err.to_string())),
+        }
     }
 }

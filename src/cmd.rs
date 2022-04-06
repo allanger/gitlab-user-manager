@@ -8,7 +8,7 @@ pub(crate) mod users;
 
 use std::io::Result;
 
-use clap::{Command, ArgMatches};
+use clap::{ArgMatches, Command};
 
 pub(crate) trait CmdOld<'a> {
     fn exec(&self) -> Result<()>;

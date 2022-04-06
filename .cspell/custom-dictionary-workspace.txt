@@ -1,6 +1,7 @@
 # Custom Dictionary Words
 aarch
 autocfg
+automock
 bidi
 bindgen
 bitflags
@@ -30,6 +31,7 @@ lookin
 memchr
 miniz
 miow
+mockall
 ntapi
 reqwest
 rustc
