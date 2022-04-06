@@ -35,7 +35,7 @@ impl<T: GitlabApiInterface> InitService<T> {
             all_groups.push(head_group);
             all_groups.extend(sub_groups);
         }
-        OutMessage::message_info_with_alias(format!("Got {} groups", groups.len()).as_str());
+        OutMessage::message_info_with_alias(format!("Got {} groups", all_groups.len()).as_str());
         Ok(all_groups)
     }
 
