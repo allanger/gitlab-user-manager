@@ -46,7 +46,7 @@ impl Cmd for InitCmd {
 
     fn exec(&self) -> Result<()> {
         InitService::new(GitlabApi::new(&self.gitlab_url, &self.gitlab_token)?)
-            .parse_groups(&self.group_list)?
+            .generate_config(&self.group_list)?
             .save(&self.file_name)
     }
 }

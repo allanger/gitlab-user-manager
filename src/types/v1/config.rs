@@ -12,6 +12,13 @@ pub struct Config {
     pub(crate) groups: Vec<Group>,
 }
 
+impl Config {
+    /// Set the config's groups.
+    pub fn set_groups(&mut self, groups: Vec<Group>) {
+        self.groups = groups;
+    }
+}
+
 impl Default for Config {
     fn default() -> Self {
         Self {
