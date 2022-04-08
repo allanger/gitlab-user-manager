@@ -5,7 +5,9 @@ mod output;
 mod service;
 mod types;
 
+use clap::Arg;
 use clap::Command;
+use clap_complete::{generate, Generator, Shell};
 use cmd::{
     groups::{self, add_groups_cmd},
     init::{self, InitCmd},
@@ -17,6 +19,7 @@ use cmd::{
     Cmd, CmdOld,
 };
 use output::{out_extra::OutExtra, out_message::OutMessage};
+use std::io;
 use std::io::{Error, ErrorKind};
 use std::process::exit;
 
@@ -24,7 +27,39 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 const MESSAGE_OF_THE_DAY: &str = "☮️  Fight war, not wars ☮️";
 const NEWS: &[&str] = &["Now I'm able to print some news, so you'll stay informed"];
 
+fn build_cli() -> Command<'static> {
+    Command::new("gum")
+        .about("Manage your GitLab team access in a better way, dude")
+        .version(VERSION)
+        .author("allanger")
+        .trailing_var_arg(true)
+        .arg_required_else_help(true)
+        .subcommand(InitCmd::add())
+        .subcommand(add_users_cmd())
+        .subcommand(add_teams_cmd())
+        .subcommand(add_search_cmd())
+        .subcommand(add_sync_cmd())
+        .subcommand(add_upgrade_cmd())
+        .subcommand(add_groups_cmd())
+        .arg(
+            Arg::new("generator")
+                .long("generate")
+                .possible_values(Shell::possible_values()),
+        )
+}
+
+fn print_completions<G: Generator>(gen: G, cmd: &mut Command) {
+    generate(gen, cmd, cmd.get_name().to_string(), &mut io::stdout());
+}
+
 fn main() {
+    let matches = build_cli().get_matches();
+
+    if let Ok(generator) = matches.value_of_t::<Shell>("generator") {
+        let mut cmd = build_cli();
+        eprintln!("Generating completion file for {}...", generator);
+        print_completions(generator, &mut cmd);
+    }
     OutExtra::welcome_message(MESSAGE_OF_THE_DAY, NEWS);
     let matches = Command::new("gum")
         .about("Manage your GitLab team access in a better way, dude")
