@@ -14,6 +14,7 @@ pub(crate) mod state_source;
 pub(crate) mod team_name;
 pub(crate) mod user_id;
 pub(crate) mod write_state;
+pub(crate) mod shell;
 
 use clap::{Arg, ArgMatches};
 use std::io::Result;
