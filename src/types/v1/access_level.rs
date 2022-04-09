@@ -5,8 +5,10 @@ use std::{
 };
 
 use serde::{Deserialize, Serialize};
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
 
-#[derive(PartialEq, Debug, Serialize, Deserialize, Copy, Clone)]
+#[derive(PartialEq, Debug, Serialize, Deserialize, Copy, Clone, EnumIter)]
 pub(crate) enum AccessLevel {
     Guest,
     Reporter,
@@ -56,11 +58,13 @@ impl AccessLevel {
         }
     }
 }
+
 impl fmt::Display for AccessLevel {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:?}", self)
     }
 }
+
 impl Default for AccessLevel {
     fn default() -> Self {
         AccessLevel::Guest

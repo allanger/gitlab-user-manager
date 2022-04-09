@@ -626,6 +626,8 @@ dependencies = [
  "serde_json",
  "serde_yaml",
  "spinners",
+ "strum",
+ "strum_macros",
  "tabled",
  "tempfile",
  "termion",
