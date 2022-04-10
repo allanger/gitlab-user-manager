@@ -17,6 +17,7 @@ impl Args for ArgShell {
             .takes_value(true)
             .value_name("SHELL")
             .possible_values(Shell::possible_values())
+            .default_value("zsh")
     }
 
     fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<Shell> {

@@ -26,6 +26,6 @@ impl Cmd for GenerateCmd {
     }
 
     fn exec(&self) -> Result<()> {
-        GenerateService::new(self.shell).create_config_dir()?.generate()
+        GenerateService::new(self.shell).generate()
     }
 }
