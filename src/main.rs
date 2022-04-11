@@ -22,7 +22,10 @@ use std::io::{Error, ErrorKind};
 use std::process::exit;
 
 const MESSAGE_OF_THE_DAY: &str = "☮️  Fight war, not wars ☮️";
-const NEWS: &[&str] = &["Now I'm able to print some news, so you'll stay informed"];
+const NEWS: &[&str] = &[
+    "IMPORTANT: Rename teams.groups to teams.namespace in your config file, otherwise gum shall not pass",
+    "COOL: Now you can generate basic completions for your shell, check the `generate` command out"
+];
 
 
 fn main() {
