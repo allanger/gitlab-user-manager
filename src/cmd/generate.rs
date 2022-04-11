@@ -1,7 +1,7 @@
 use super::Cmd;
 use crate::args::shell::ArgShell;
 use crate::args::Args;
-use crate::service::generate::GenerateService;
+use crate::service::GenerateService;
 use clap::Command;
 use clap_complete::Shell;
 use std::io::Result;

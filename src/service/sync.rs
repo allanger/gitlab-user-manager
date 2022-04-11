@@ -219,4 +219,3 @@ impl<T: GitlabApiInterface> InitService<T> {
         }
     }
 }
-

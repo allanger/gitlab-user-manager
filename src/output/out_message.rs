@@ -29,5 +29,4 @@ impl OutMessage {
         let msg = format!("{} {}", prefix, msg,);
         println!(" {}", style(msg).red());
     }
-
 }

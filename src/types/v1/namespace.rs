@@ -17,6 +17,5 @@ impl Namespace {
         let mut namespace_map: HashMap<u64, Namespace> = HashMap::new();
         namespace_map.insert(self.id, self.clone());
         namespace_map
-
     }
 }

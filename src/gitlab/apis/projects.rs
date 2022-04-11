@@ -146,7 +146,6 @@ impl GitlabProjectsApi for ProjectsGitlab {
         let users: Vec<CustomMember> = query.query(&self.gitlab_client).unwrap();
         OutSpinner::spinner_success(spinner, "Done".to_string());
         users
-
     }
 
     fn share_with_group(&self, gid: u64, pid: u64, access_level: AccessLevel) -> Result<String> {

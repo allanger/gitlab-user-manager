@@ -35,7 +35,7 @@ impl<'a> CmdOld<'a> for ListCmd {
     fn exec(&self) -> Result<(), Error> {
         let config_file = ConfigFile::read(self.file_name.clone())?;
         let total = &config_file.config.groups.len();
-        
+
         for group in config_file.config.groups {
             let mut message = format!("{} - {}", group.id, group.name);
             if self.large_out {
@@ -51,7 +51,11 @@ impl<'a> CmdOld<'a> for ListCmd {
         }
         OutExtra::empty_line();
         OutMessage::message_info_with_alias(
-            format!("You've got {} groups here", style(total).bold().underlined()).as_str(),
+            format!(
+                "You've got {} groups here",
+                style(total).bold().underlined()
+            )
+            .as_str(),
         );
         Ok(())
     }

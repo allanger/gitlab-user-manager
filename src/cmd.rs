@@ -1,3 +1,4 @@
+pub(crate) mod generate;
 pub(crate) mod groups;
 pub(crate) mod init;
 pub(crate) mod search;
@@ -5,7 +6,6 @@ pub(crate) mod sync;
 pub(crate) mod teams;
 pub(crate) mod upgrade;
 pub(crate) mod users;
-pub(crate) mod generate;
 
 use std::io::Result;
 

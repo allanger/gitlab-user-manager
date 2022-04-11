@@ -17,7 +17,7 @@ use crate::args::write_state::ArgWriteState;
 use crate::cmd::CmdOld;
 use crate::output::out_message::OutMessage;
 use crate::types::v1::config_file::ConfigFile;
-use crate::types::v1::state::{EntityType, AccessUnit};
+use crate::types::v1::state::{AccessUnit, EntityType};
 
 use self::sync_cmd::{
     apply, compare_states, configure_groups, configure_projects, gr_configure_groups,

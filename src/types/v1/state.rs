@@ -48,7 +48,7 @@ impl State {
         if S3.is_match(&source) {
             OutMessage::message_info_with_alias("Will try to get a state from the s3 bucket");
         } else if FILE.is_match(&source) {
-                OutMessage::message_info_with_alias("Will try to get a state from the file");
+            OutMessage::message_info_with_alias("Will try to get a state from the file");
         } else if STRING.is_match(&source) {
             OutMessage::message_info_with_alias("Will try to get a state from the config");
         } else {
@@ -56,9 +56,7 @@ impl State {
         }
     }
 
-    pub(crate) fn from_string(source: String) {
-
-    }
+    pub(crate) fn from_string(source: String) {}
 }
 
 impl AccessUnit {
@@ -101,7 +99,7 @@ impl AccessUnit {
             }
         }
     }
-    pub(crate) fn from_string(data: String) -> Result<HashMap<u64, AccessUnit>, Error> { 
+    pub(crate) fn from_string(data: String) -> Result<HashMap<u64, AccessUnit>, Error> {
         let d: std::result::Result<HashMap<u64, AccessUnit>, _> = serde_json::from_str(&data);
         match d {
             Ok(r) => Ok(r),
