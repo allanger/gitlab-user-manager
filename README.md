@@ -10,7 +10,7 @@
 
 As I said, it's just a gitlab user manager. The better question, why do you want to use it? **Because gitlab user management is such a mess**!
 
-*What? You don't think so? Well...I will try to explain my point after I describe what this project exists for. 
+*What? You don't think so? Well...I will try to explain my point after I describe what this project exists for.*
 
 In short, using **gum** you can control who and how can access your projects and groups with the everything-as-code approach. Just create a config file and sync it. 
 
