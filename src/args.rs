@@ -16,6 +16,9 @@ mod team_name;
 mod user_id;
 mod write_state;
 
+
+// Each Argument should be exported like this
+
 pub(crate) use self::access_level::ArgAccess;
 pub(crate) use self::dry_run::ArgDryRun;
 pub(crate) use self::file_name::ArgFileName;
@@ -36,6 +39,28 @@ pub(crate) use self::write_state::ArgWriteState;
 
 use clap::{Arg, ArgMatches};
 use std::io::Result;
+
+/// --------------------------------------------------------------------------
+/// -- This trait should be used for each argument
+/// --
+/// -- Use the 'add' method for adding an argument to command
+/// --------------------------------------------------------------------------
+/// Command::new("some_command")
+///            .arg(ArgName::add())
+/// --------------------------------------------------------------------------
+/// -- Use the 'parse' method for getting a value from
+/// --   the argument
+/// --------------------------------------------------------------------------
+/// struct SomeCmd {
+///     some_key: some_value,
+/// }
+///
+/// fn prepare(sub_matches: &'_ clap::ArgMatches) -> Result<Self::CmdType> {
+///     Ok(SomeCmd {
+///         some_value: ArgName::parse(sub_matches)?,
+///     })
+/// }
+/// --------------------------------------------------------------------------
 
 pub(crate) trait Args {
     type ArgType;
