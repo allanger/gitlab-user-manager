@@ -1,20 +1,13 @@
 use clap::{Arg, ArgMatches};
-
+use std::io::Result;
 use super::Args;
 
 static ARG: &str = "dry-run";
-pub(crate) struct ArgDryRun {
-    value: bool,
-}
+pub(crate) struct ArgDryRun;
 
-impl ArgDryRun {
-    pub(crate) fn value(&self) -> bool {
-        self.value
-    }
-}
 
 impl Args for ArgDryRun {
-    type ArgType = ArgDryRun;
+    type ArgType = bool;
 
     fn add() -> Arg<'static> {
         Arg::new(ARG)
@@ -24,9 +17,7 @@ impl Args for ArgDryRun {
             .help("Use if you wanna see what's gonna happen without actually applying a  new configuration")
     }
 
-    fn parse<'b>(sub_matches: &'b ArgMatches) -> std::io::Result<Self::ArgType> {
-        Ok(ArgDryRun {
-            value: sub_matches.is_present(ARG),
-        })
+    fn parse<'b>(sub_matches: &'b ArgMatches) -> Result<Self::ArgType> {
+        Ok(sub_matches.is_present(ARG))
     }
 }

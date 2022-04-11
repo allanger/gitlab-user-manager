@@ -1,6 +1,6 @@
+use crate::Cmd;
 use std::collections::HashMap;
-use std::io::{Error, ErrorKind};
-use std::result::Result;
+use std::io::{Error, ErrorKind, Result};
 
 use clap::{ArgMatches, Command};
 use gitlab::Gitlab;
@@ -34,22 +34,20 @@ pub(crate) fn add_sync_cmd() -> Command<'static> {
 
 pub(crate) struct SyncCmd {
     dry_run: bool,
-    gitlab_client: Gitlab,
+    gitlab_token: String,
+    gitlab_url: String,
     file_name: String,
     write_state: bool,
     state_destination: String,
     state_source: String,
 }
 
-pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>, Error> {
-    let dry_run: bool = ArgDryRun::parse(sub_matches).unwrap().value();
-    let write_state: bool = ArgWriteState::parse(sub_matches).unwrap().value();
+pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>> {
+    let dry_run: bool = ArgDryRun::parse(sub_matches).unwrap();
+    let write_state: bool = ArgWriteState::parse(sub_matches).unwrap();
 
     let gitlab_token = ArgGitlabToken::parse(sub_matches)?;
     let gitlab_url = ArgGitlabUrl::parse(sub_matches)?;
-
-    let gitlab_client =
-        Gitlab::new(gitlab_url, gitlab_token).map_err(|err| Error::new(ErrorKind::Other, err))?;
 
     let file_name = ArgFileName::parse(sub_matches)?;
     let state_destination = ArgStateDestination::parse(sub_matches)?;
@@ -57,16 +55,52 @@ pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>
 
     Ok(SyncCmd {
         dry_run,
-        gitlab_client,
         file_name,
+        gitlab_token,
+        gitlab_url,
         state_destination,
         state_source,
         write_state,
     })
 }
 
+impl<'a> Cmd for SyncCmd {
+    type CmdType = SyncCmd;
+    fn add() -> Command<'static> {
+        Command::new("sync")
+            .about("Sync your config file with GitLab and generate the state file")
+            .alias("s")
+            .after_help("$ gum sync -f gum-config-example.yaml --dry-run")
+            .before_help("Use this command if you want to apply changes in your configuration file to GitLab")
+            .arg(ArgDryRun::add())
+            .arg(ArgGitlabToken::add())
+            .arg(ArgGitlabUrl::add())
+            .arg(ArgFileName::add())
+            .arg(ArgStateDestination::add())
+            .arg(ArgStateSource::add())
+            .arg(ArgWriteState::add())
+    }
+    
+    fn prepare(sub_matches: &ArgMatches) -> Result<Self> {
+        Ok(SyncCmd {
+            dry_run: ArgDryRun::parse(sub_matches)?,
+            file_name: ArgFileName::parse(sub_matches)?,
+            gitlab_token: ArgGitlabToken::parse(sub_matches)?,
+            gitlab_url: ArgGitlabUrl::parse(sub_matches)?,
+            state_destination: ArgStateDestination::parse(sub_matches)?,
+            state_source: ArgStateSource::parse(sub_matches)?,
+            write_state: ArgWriteState::parse(sub_matches)?,
+        })
+    }
+    fn exec(&self) -> Result<()> {
+        todo!()
+    }
+}
+
 impl<'a> CmdOld<'a> for SyncCmd {
-    fn exec(&self) -> Result<(), Error> {
+    fn exec(&self) -> Result<()> {
+        let gitlab_client = Gitlab::new(&self.gitlab_url, &self.gitlab_token)
+            .map_err(|err| Error::new(ErrorKind::Other, err))?;
         let mut config_file = match ConfigFile::read(self.file_name.clone()) {
             Ok(c) => c,
             Err(err) => return Err(err),
@@ -114,8 +148,7 @@ impl<'a> CmdOld<'a> for SyncCmd {
         }
 
         let actions = compare_states(old_state.clone(), new_state);
-        let state: String = match apply(actions, &self.gitlab_client, &mut old_state, self.dry_run)
-        {
+        let state: String = match apply(actions, &gitlab_client, &mut old_state, self.dry_run) {
             Ok(_) => serde_json::to_string(&old_state).unwrap(),
             Err(err) => {
                 OutMessage::message_error(

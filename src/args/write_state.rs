@@ -3,18 +3,10 @@ use clap::{Arg, ArgMatches};
 use super::Args;
 
 static ARG_DRY_RUN: &str = "write-state";
-pub(crate) struct ArgWriteState {
-    value: bool,
-}
-
-impl ArgWriteState {
-    pub(crate) fn value(&self) -> bool {
-        self.value
-    }
-}
+pub(crate) struct ArgWriteState;
 
 impl Args for ArgWriteState {
-    type ArgType = ArgWriteState;
+    type ArgType = bool;
 
     fn add() -> Arg<'static> {
         Arg::new(ARG_DRY_RUN)
@@ -25,8 +17,6 @@ impl Args for ArgWriteState {
     }
 
     fn parse<'b>(sub_matches: &'b ArgMatches) -> std::io::Result<Self::ArgType> {
-        Ok(ArgWriteState {
-            value: sub_matches.is_present(ARG_DRY_RUN),
-        })
+        Ok(sub_matches.is_present(ARG_DRY_RUN))
     }
 }

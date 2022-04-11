@@ -24,4 +24,12 @@ impl<T: GitlabApiInterface> SyncService<T> {
             gitlab_api,
         }
     }
+
+    pub(crate) fn compare() {
+        /*
+         * self.state = State::get()
+         * self.state.compare(self.config_file.get_config().into())
+         */
+    }
+    pub(crate) fn apply() {}
 }
