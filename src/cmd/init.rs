@@ -8,7 +8,7 @@ use crate::{
         group_list::ArgGroupList, Args,
     },
     gitlab::GitlabApi,
-    service::init::InitService,
+    service::InitService,
 };
 
 use super::Cmd;

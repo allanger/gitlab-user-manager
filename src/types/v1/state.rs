@@ -21,7 +21,7 @@ impl Default for EntityType {
         Self::User
     }
 }
-#[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq)]
 pub(crate) struct AccessUnit {
     pub(crate) entity: EntityType,
     pub(crate) projects: HashMap<u64, AccessLevel>,

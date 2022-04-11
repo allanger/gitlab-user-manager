@@ -18,9 +18,8 @@ use cmd::{
     search,
     Cmd, CmdOld,
 };
-use output::{out_extra::OutExtra, out_message::OutMessage};
+use output::{out_extra::OutExtra};
 use types::v1::state::State;
->>>>>>> 21cc23b (wip)
 use std::io::{Error, ErrorKind};
 use std::process::exit;
 
