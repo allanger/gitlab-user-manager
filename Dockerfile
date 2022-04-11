@@ -8,3 +8,4 @@ FROM ubuntu:latest
 COPY --from=builder /src/target/release/gum /bin/gum
 WORKDIR /config
 ENTRYPOINT ["/bin/gum"]
+
