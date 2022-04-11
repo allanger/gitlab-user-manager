@@ -14,13 +14,22 @@ impl Args for ArgAccess {
     type ArgType = AccessLevel;
 
     fn add() -> Arg<'static> {
-        return Arg::new(ARG)
+        Arg::new(ARG)
+            .long(ARG)
             .short('a')
             .takes_value(true)
             .value_name("ACCESS")
             .help("Provide a valid access level")
             .default_value("guest")
-            .global(true);
+            .global(true)
+            .possible_values([
+                "guest",
+                "reporter",
+                "developer",
+                "maintainer",
+                "owner",
+                "admin",
+            ])
     }
 
     fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<AccessLevel> {

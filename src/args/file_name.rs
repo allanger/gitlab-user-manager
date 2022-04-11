@@ -1,6 +1,6 @@
 use super::Args;
 use crate::output::out_message::OutMessage;
-use clap::{Arg, ArgMatches};
+use clap::{Arg, ArgMatches, ValueHint};
 use std::io::{Error, Result};
 
 static ARG: &str = "file";
@@ -11,14 +11,15 @@ impl Args for ArgFileName {
     type ArgType = String;
 
     fn add() -> Arg<'static> {
-        return Arg::new(ARG)
+        Arg::new(ARG)
             .short('f')
             .long(ARG)
             .takes_value(true)
             .value_name("FILE_PATH")
             .help("Provide a name of the config file")
             .default_value("gum-config.yaml")
-            .global(true);
+            .global(true)
+            .value_hint(ValueHint::AnyPath)
     }
 
     fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<String> {

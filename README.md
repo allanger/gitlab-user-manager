@@ -10,7 +10,7 @@
 
 As I said, it's just a gitlab user manager. The better question, why do you want to use it? **Because gitlab user management is such a mess**!
 
-*What? You don't think so? Well...I will try to explain my point after I describe what this project exists for. 
+*What? You don't think so? Well...I will try to explain my point after I describe what this project exists for.*
 
 In short, using **gum** you can control who and how can access your projects and groups with the everything-as-code approach. Just create a config file and sync it. 
 
@@ -71,6 +71,8 @@ Oh, wait! There is another way. Just use **gum**. It's easy as a pie. I will sho
 Get executable from github releases
 
 Prebuilt binaries exist for **Linux x86_64** and **MacOS arm64** and **x86_64**
+
+Don't forget to add the binary to $PATH
 ```
 $ curl https://raw.githubusercontent.com/allanger/gitlab-user-manager/main/scripts/download_gum.sh | bash
 $ gum -h
@@ -90,6 +92,20 @@ $ docker run ghcr.io/allanger/gitlab-user-manager:latest $PWD:/config gum init
 $ cargo build --release
 ``` 
 2. Run `gum help`
+
+### Auto completions
+
+`Gum` can generate completions (but I've tested them only with ZSH)
+
+To generate them, use the `generate` command
+```
+$ gum generate --help
+$ gum generate -s zsh # if you don't provide the -s argument, the default shell will be taken, which is ZSH
+```
+
+Gum will create a `_gum` file in the current dir, which you should put to your $FPATH. 
+
+_I'm waiting until clap supports dynamic completions, so now they are very basic. 😰_
 
 ## Use
 
