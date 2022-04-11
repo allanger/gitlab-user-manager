@@ -2,7 +2,6 @@ use std::io::Error;
 
 use clap::{ArgMatches, Command};
 
-
 use crate::args::{ArgFileName, ArgNamespaceId, ArgUserId, Args};
 use crate::cmd::CmdOld;
 use crate::output::out_message::OutMessage;
