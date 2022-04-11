@@ -2,10 +2,7 @@ use std::io::{Error, ErrorKind};
 
 use clap::{ArgMatches, Command};
 
-use crate::args::file_name::ArgFileName;
-use crate::args::team_name::ArgTeamName;
-use crate::args::user_id::ArgUserId;
-use crate::args::Args;
+use crate::args::{ArgFileName, ArgTeamName, ArgUserId, Args};
 use crate::cmd::CmdOld;
 use crate::output::out_spinner::OutSpinner;
 use crate::types::v1::config_file::ConfigFile;

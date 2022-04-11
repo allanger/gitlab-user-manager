@@ -2,12 +2,7 @@ use std::io::Error;
 
 use clap::{ArgMatches, Command};
 
-use crate::args::file_name::ArgFileName;
-use crate::args::gitlab_token::ArgGitlabToken;
-use crate::args::gitlab_url::ArgGitlabUrl;
-use crate::args::project_id::ArgProjectId;
-use crate::args::user_id::ArgUserId;
-use crate::args::Args;
+use crate::args::{ArgFileName, ArgGitlabToken, ArgGitlabUrl, ArgProjectId, ArgUserId, Args};
 use crate::cmd::CmdOld;
 use crate::output::out_message::OutMessage;
 use crate::types::v1::config_file::ConfigFile;

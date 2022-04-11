@@ -5,15 +5,11 @@ use std::result::Result;
 use clap::{ArgMatches, Command};
 use gitlab::Gitlab;
 
-use crate::args::dry_run::ArgDryRun;
-use crate::args::file_name::ArgFileName;
-use crate::args::gitlab_token::ArgGitlabToken;
-use crate::args::gitlab_url::ArgGitlabUrl;
-use crate::args::Args;
+use crate::args::{
+    ArgDryRun, ArgFileName, ArgGitlabToken, ArgGitlabUrl, ArgStateDestination, ArgStateSource,
+    ArgWriteState, Args,
+};
 
-use crate::args::state_destination::ArgStateDestination;
-use crate::args::state_source::ArgStateSource;
-use crate::args::write_state::ArgWriteState;
 use crate::cmd::CmdOld;
 use crate::output::out_message::OutMessage;
 use crate::types::v1::config_file::ConfigFile;

@@ -4,10 +4,7 @@ use clap::{ArgMatches, Command};
 use gitlab::Gitlab;
 
 use crate::{
-    args::{
-        access_level::ArgAccess, file_name::ArgFileName, gitlab_token::ArgGitlabToken,
-        gitlab_url::ArgGitlabUrl, group_id::ArgGroupId, project_id::ArgProjectId, Args,
-    },
+    args::{ArgAccess, ArgFileName, ArgGitlabToken, ArgGitlabUrl, ArgGroupId, ArgProjectId, Args},
     gitlab::GitlabActions,
     output::{out_message::OutMessage, out_spinner::OutSpinner},
     types::v1::{access_level::AccessLevel, config_file::ConfigFile, project::Project},

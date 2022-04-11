@@ -1,11 +1,9 @@
-use std::io::{Error, ErrorKind};
+use std::io::Error;
 
 use clap::{ArgMatches, Command};
 
-use crate::args::file_name::ArgFileName;
-use crate::args::namespace_id::ArgNamespaceId;
-use crate::args::user_id::ArgUserId;
-use crate::args::Args;
+
+use crate::args::{ArgFileName, ArgNamespaceId, ArgUserId, Args};
 use crate::cmd::CmdOld;
 use crate::output::out_message::OutMessage;
 use crate::types::v1::config_file::ConfigFile;

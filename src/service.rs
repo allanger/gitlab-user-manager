@@ -1,4 +1,4 @@
-pub(crate) mod generate;
+mod generate;
 mod init;
 pub(crate) mod sync;
 

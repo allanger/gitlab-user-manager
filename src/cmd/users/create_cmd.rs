@@ -3,11 +3,7 @@ use std::io::{Error, ErrorKind};
 use clap::{ArgMatches, Command};
 use gitlab::Gitlab;
 
-use crate::args::file_name::ArgFileName;
-use crate::args::gitlab_token::ArgGitlabToken;
-use crate::args::gitlab_url::ArgGitlabUrl;
-use crate::args::user_id::ArgUserId;
-use crate::args::Args;
+use crate::args::{ArgFileName, ArgGitlabToken, ArgGitlabUrl, ArgUserId, Args};
 use crate::cmd::CmdOld;
 use crate::gitlab::GitlabActions;
 use crate::gitlab::GitlabClient;

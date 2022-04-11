@@ -3,10 +3,7 @@ use std::io::Result;
 use clap::{ArgMatches, Command};
 
 use crate::{
-    args::{
-        file_name::ArgFileName, gitlab_token::ArgGitlabToken, gitlab_url::ArgGitlabUrl,
-        group_list::ArgGroupList, Args,
-    },
+    args::{ArgFileName, ArgGitlabToken, ArgGitlabUrl, ArgGroupList, Args},
     gitlab::GitlabApi,
     service::InitService,
 };

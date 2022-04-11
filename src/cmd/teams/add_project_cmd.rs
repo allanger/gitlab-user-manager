@@ -1,10 +1,6 @@
-use crate::args::access_level::ArgAccess;
-use crate::args::file_name::ArgFileName;
-use crate::args::gitlab_token::ArgGitlabToken;
-use crate::args::gitlab_url::ArgGitlabUrl;
-use crate::args::project_id::ArgProjectId;
-use crate::args::team_name::ArgTeamName;
-use crate::args::Args;
+use crate::args::{
+    ArgAccess, ArgFileName, ArgGitlabToken, ArgGitlabUrl, ArgProjectId, ArgTeamName, Args,
+};
 use crate::cmd::CmdOld;
 use crate::gitlab::GitlabClient;
 use crate::output::out_message::OutMessage;

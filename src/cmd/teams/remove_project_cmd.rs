@@ -1,7 +1,4 @@
-use crate::args::file_name::ArgFileName;
-use crate::args::project_id::ArgProjectId;
-use crate::args::team_name::ArgTeamName;
-use crate::args::Args;
+use crate::args::{ArgFileName, ArgProjectId, ArgTeamName, Args};
 use crate::cmd::CmdOld;
 use crate::output::out_message::OutMessage;
 use crate::types::v1::config_file::ConfigFile;
