@@ -31,5 +31,10 @@ impl<T: GitlabApiInterface> SyncService<T> {
          * self.state.compare(self.config_file.get_config().into())
          */
     }
+
     pub(crate) fn apply() {}
+
+    fn get_state(state_source: String) {
+
+    }
 }

@@ -6,7 +6,7 @@ mod output;
 mod service;
 mod store;
 mod types;
-
+mod config;
 use cmd::{
     generate::GenerateCmd, groups, init::InitCmd, search, sync, teams, upgrade, users, Cmd, CmdOld,
 };

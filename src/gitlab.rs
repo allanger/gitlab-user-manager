@@ -23,7 +23,7 @@ use crate::{
 
 use self::apis::{
     groups::{GitlabGroupsApi, GroupGitlabMock},
-    projects::{GitlabProjectsApi, ProjectsGitlab, ProjectsGitlabMock},
+    projects::{GitlabProjectsApi, ProjectsGitlab},
 };
 
 pub(crate) trait GitlabApiInterface {
@@ -63,20 +63,20 @@ impl GitlabApiInterface for GitlabApi {
         };
     }
 }
-pub(crate) struct GitlabApiMock;
+//pub(crate) struct GitlabApiMock;
 
-impl GitlabApiInterface for GitlabApiMock {
-    type Groups = GroupGitlabMock;
-    fn groups(&self) -> Self::Groups {
-        GroupGitlabMock {}
-    }
-
-    type Projects = ProjectsGitlabMock;
-
-    fn projects(&self) -> Self::Projects {
-        todo!()
-    }
-}
+//impl GitlabApiInterface for GitlabApiMock {
+//    type Groups = GroupGitlabMock;
+//    fn groups(&self) -> Self::Groups {
+//        GroupGitlabMock {}
+//    }
+//
+//    type Projects = ProjectsGitlabMock;
+//
+//    fn projects(&self) -> Self::Projects {
+//        todo!()
+//    }
+//}
 
 /*
 ======================================================================================================================
