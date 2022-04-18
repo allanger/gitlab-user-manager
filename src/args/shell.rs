@@ -1,5 +1,4 @@
 use super::Args;
-use crate::output::out_message::OutMessage;
 use clap::{Arg, ArgMatches};
 use clap_complete::Shell;
 use std::io::{Error, ErrorKind, Result};

@@ -4,12 +4,9 @@ use std::{
     io::{Error, ErrorKind},
 };
 
-use crate::output::out_message::OutMessage;
-
 use super::access_level::AccessLevel;
-use lazy_static::lazy_static;
-use regex::Regex;
 use serde::{Deserialize, Serialize};
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub(crate) enum EntityType {
     User,
@@ -21,6 +18,7 @@ impl Default for EntityType {
         Self::User
     }
 }
+
 #[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq)]
 pub(crate) struct AccessUnit {
     pub(crate) entity: EntityType,

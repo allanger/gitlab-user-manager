@@ -5,7 +5,6 @@ use std::{
 };
 
 use serde::{Deserialize, Serialize};
-use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
 #[derive(PartialEq, Debug, Serialize, Deserialize, Copy, Clone, EnumIter)]

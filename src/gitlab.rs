@@ -9,7 +9,7 @@ use std::{
 
 use gitlab::{
     api::{self, groups, projects, users, ApiError, Query},
-    Gitlab,
+    Gitlab, Member,
 };
 
 use serde::Deserialize;
@@ -23,15 +23,21 @@ use crate::{
 
 use self::apis::{
     groups::{GitlabGroupsApi, GroupGitlabMock},
+    members::{GitlabMembersApi, MemberGitlab},
     projects::{GitlabProjectsApi, ProjectsGitlab},
+    users::{GitlabUsersApi, UserGitlab},
 };
 
 pub(crate) trait GitlabApiInterface {
     type Groups: GitlabGroupsApi;
     type Projects: GitlabProjectsApi;
+    type Users: GitlabUsersApi;
+    type Members: GitlabMembersApi;
 
     fn groups(&self) -> Self::Groups;
     fn projects(&self) -> Self::Projects;
+    fn users(&self) -> Self::Users;
+    fn members(&self) -> Self::Members;
 }
 
 pub(crate) struct GitlabApi {
@@ -61,6 +67,18 @@ impl GitlabApiInterface for GitlabApi {
         return ProjectsGitlab {
             gitlab_client: self.gitlab_client.clone(),
         };
+    }
+
+    type Users = UserGitlab;
+
+    fn users(&self) -> Self::Users {
+        UserGitlab::new(self.gitlab_client.clone())
+    }
+
+    type Members = MemberGitlab;
+
+    fn members(&self) -> Self::Members {
+        MemberGitlab::new(self.gitlab_client.clone())
     }
 }
 //pub(crate) struct GitlabApiMock;
@@ -126,20 +144,7 @@ pub(crate) trait GitlabActions {
         gid: u64,
         access_level: AccessLevel,
     ) -> Result<String, Error>;
-    fn add_group_to_namespace(
-        &self,
-        gid: u64,
-        nid: u64,
-        access_level: AccessLevel,
-    ) -> Result<String, Error>;
-    fn add_group_to_project(
-        &self,
-        gid: u64,
-        pid: u64,
-        access_level: AccessLevel,
-    ) -> Result<String, Error>;
     fn remove_group_from_namespace(&self, gid: u64, nid: u64) -> Result<String, Error>;
-    fn remove_group_from_project(&self, gid: u64, pid: u64) -> Result<String, Error>;
     fn remove_user_from_project(&self, uid: u64, pid: u64) -> Result<String, Error>;
     fn remove_user_from_group(&self, uid: u64, gid: u64) -> Result<String, Error>;
     fn edit_user_in_project(
@@ -539,100 +544,9 @@ impl GitlabActions for GitlabClient {
         users
     }
 
-    fn add_group_to_namespace(
-        &self,
-        gid: u64,
-        nid: u64,
-        access_level: AccessLevel,
-    ) -> Result<String, Error> {
-        let q = match groups::shared::AddGroupShare::builder()
-            .group_access(access_level.to_gitlab_access_level())
-            .id(nid)
-            .group(gid)
-            .build()
-        {
-            Ok(q) => q,
-            Err(err) => {
-                return Err(Error::new(std::io::ErrorKind::Other, err.to_string()));
-            }
-        };
-        let _: () = match api::ignore(q).query(&self.gitlab_client) {
-            Ok(_) => return Ok("Added".to_string()),
-            Err(err) => {
-                if let ApiError::Gitlab { msg } = err {
-                    if msg == "Shared group The group has already been shared with this group" {
-                        return Ok("Already exists".to_string());
-                    }
-                    return Err(Error::new(ErrorKind::AddrNotAvailable, msg));
-                } else {
-                    return Err(Error::new(ErrorKind::AddrNotAvailable, err));
-                };
-            }
-        };
-    }
-
-    fn add_group_to_project(
-        &self,
-        gid: u64,
-        pid: u64,
-        access_level: AccessLevel,
-    ) -> Result<String, Error> {
-        let q = match projects::share::AddProjectShare::builder()
-            .group_access(access_level.to_gitlab_access_level())
-            .project(pid)
-            .group(gid)
-            .build()
-        {
-            Ok(q) => q,
-            Err(err) => {
-                return Err(Error::new(std::io::ErrorKind::Other, err.to_string()));
-            }
-        };
-        let _: () = match api::ignore(q).query(&self.gitlab_client) {
-            Ok(_) => return Ok("Added".to_string()),
-            Err(err) => {
-                if let ApiError::Gitlab { msg } = err {
-                    if msg == "Group already shared with this group" {
-                        return Ok("Already exists".to_string());
-                    }
-                    return Err(Error::new(ErrorKind::AddrNotAvailable, msg));
-                } else {
-                    return Err(Error::new(ErrorKind::AddrNotAvailable, err));
-                };
-            }
-        };
-    }
-
     fn remove_group_from_namespace(&self, gid: u64, nid: u64) -> Result<String, Error> {
         let q = match groups::shared::RemoveGroupShare::builder()
             .id(nid)
-            .group(gid)
-            .build()
-        {
-            Ok(q) => q,
-            Err(err) => {
-                return Err(Error::new(std::io::ErrorKind::Other, err.to_string()));
-            }
-        };
-        let _: () = match api::ignore(q).query(&self.gitlab_client) {
-            Ok(_) => return Ok("Removed".to_string()),
-            Err(err) => {
-                match err {
-                    ApiError::Gitlab { msg } => {
-                        if msg == "404 Group Link Not Found" {
-                            return Ok("Not found".to_string());
-                        }
-                        return Err(Error::new(ErrorKind::AddrNotAvailable, msg));
-                    }
-                    _ => return Err(Error::new(ErrorKind::AddrNotAvailable, err)),
-                };
-            }
-        };
-    }
-
-    fn remove_group_from_project(&self, gid: u64, pid: u64) -> Result<String, Error> {
-        let q = match projects::share::RemoveProjectShare::builder()
-            .project(pid)
             .group(gid)
             .build()
         {
