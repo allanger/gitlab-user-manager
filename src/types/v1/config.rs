@@ -1,6 +1,5 @@
-use serde::{Deserialize, Serialize};
-
 use super::{group::Group, team::Team, user::User};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct Config {
@@ -10,13 +9,6 @@ pub struct Config {
     pub(crate) users: Vec<User>,
     #[serde(default)]
     pub(crate) groups: Vec<Group>,
-}
-
-impl Config {
-    /// Set the config's groups.
-    pub fn set_groups(&mut self, groups: Vec<Group>) {
-        self.groups = groups;
-    }
 }
 
 impl Default for Config {

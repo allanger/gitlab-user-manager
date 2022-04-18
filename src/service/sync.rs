@@ -5,8 +5,10 @@ use crate::{
         GitlabApiInterface, Project,
     },
     output::out_message::OutMessage,
+    store::{self, Store},
     types::v1::{
-        self, access_level::AccessLevel, config_file::ConfigFile, namespace::Namespace, user,
+        self, access_level::AccessLevel, config_file::ConfigFile, namespace::Namespace,
+        state::State, user,
     },
 };
 use std::io::{Error, ErrorKind, Result};
@@ -25,7 +27,9 @@ impl<T: GitlabApiInterface> SyncService<T> {
         }
     }
 
-    pub(crate) fn compare() {
+    pub(crate) fn compare(&self) -> Result<()> {
+        let state = self.get_state(self.config_file.state.clone())?;
+        Ok(())
         /*
          * self.state = State::get()
          * self.state.compare(self.config_file.get_config().into())
@@ -34,7 +38,10 @@ impl<T: GitlabApiInterface> SyncService<T> {
 
     pub(crate) fn apply() {}
 
-    fn get_state(state_source: String) {
-
+    fn get_state(&self, state_source: String) -> Result<State> {
+        match store::get_store_type(state_source) {
+            Ok(store) => Ok(State::new(store.get()?)),
+            Err(err) => Err(err),
+        }
     }
 }

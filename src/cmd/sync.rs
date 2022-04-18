@@ -20,18 +20,6 @@ use self::sync_cmd::{
     gr_configure_projects,
 };
 
-pub(crate) fn add_sync_cmd() -> Command<'static> {
-    Command::new("sync")
-        .about("Sync your config file with GitLab and generate the state file")
-        .arg(ArgDryRun::add())
-        .arg(ArgGitlabToken::add())
-        .arg(ArgGitlabUrl::add())
-        .arg(ArgFileName::add())
-        .arg(ArgStateDestination::add())
-        .arg(ArgStateSource::add())
-        .arg(ArgWriteState::add())
-}
-
 pub(crate) struct SyncCmd {
     dry_run: bool,
     gitlab_token: String,
@@ -80,7 +68,7 @@ impl<'a> Cmd for SyncCmd {
             .arg(ArgStateSource::add())
             .arg(ArgWriteState::add())
     }
-    
+
     fn prepare(sub_matches: &ArgMatches) -> Result<Self> {
         Ok(SyncCmd {
             dry_run: ArgDryRun::parse(sub_matches)?,

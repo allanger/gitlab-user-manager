@@ -30,45 +30,22 @@ pub(crate) struct AccessUnit {
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub(crate) struct State {
-    source: String,
     data: HashMap<u64, AccessUnit>,
 }
 
 impl State {
-    pub(crate) fn get(source: String) {
-        lazy_static! {
-            static ref S3: Regex = Regex::new("^s3://(.*)$").unwrap();
-        };
-        lazy_static! {
-            static ref FILE: Regex = Regex::new(r#"^(\.?/.*)$"#).unwrap();
-        };
-        lazy_static! {
-            static ref STRING: Regex = Regex::new(r#"^\{.*\}$"#).unwrap();
-        };
-        if S3.is_match(&source) {
-            OutMessage::message_info_with_alias("Will try to get a state from the s3 bucket");
-        } else if FILE.is_match(&source) {
-            OutMessage::message_info_with_alias("Will try to get a state from the file");
-        } else if STRING.is_match(&source) {
-            OutMessage::message_info_with_alias("Will try to get a state from the config");
-        } else {
-            OutMessage::message_error("Dude, I don't know where to get a state from");
-        }
+    pub(crate) fn new(data: HashMap<u64, AccessUnit>) -> Self {
+        Self { data }
     }
 
-    pub(crate) fn from_string(source: String) {}
+    /// Get a reference to the state's data.
+    #[must_use]
+    pub(crate) fn data(&self) -> &HashMap<u64, AccessUnit> {
+        &self.data
+    }
 }
 
 impl AccessUnit {
-    pub(crate) fn get(source: String) {
-        lazy_static! {
-            static ref S3: Regex = Regex::new("S3://.*").unwrap();
-        };
-        match source {
-            _ => todo!(),
-        }
-    }
-
     pub(crate) fn new_simple(entity_type: EntityType) -> Self {
         Self {
             entity: entity_type,
