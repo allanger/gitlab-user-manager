@@ -18,7 +18,6 @@ use crate::{
         user::User,
     },
 };
-use gitlab::Gitlab;
 use std::{
     collections::HashMap,
     io::{Error, ErrorKind, Result},
@@ -27,12 +26,14 @@ use std::{
 // SyncService should be used to sync config with GitLab
 pub(crate) struct SyncService<T: GitlabApiInterface> {
     config_file: ConfigFile,
+    config_path: String,
     gitlab_api: T,
     state_source: String,
     state_destination: String,
     write_state: bool,
-    file_name: String,
     state: State,
+    new_state: State,
+    actions: Vec<Actions>,
 }
 
 #[derive(Debug, Clone)]
@@ -58,25 +59,39 @@ enum Action {
 }
 
 impl<T: GitlabApiInterface> SyncService<T> {
-    pub(crate) fn new(gitlab_api: T) -> Self {
+    pub(crate) fn new(
+        config_path: String,
+        gitlab_api: T,
+        state_source: String,
+        state_destination: String,
+        write_state: bool,
+    ) -> Self {
+        let actions: Vec<Actions> = Vec::new();
         Self {
-            config_file: Default::default(),
+            config_file: ConfigFile::default(),
+            config_path,
             gitlab_api,
-            state_source: todo!(),
-            state_destination: todo!(),
-            write_state: todo!(),
-            file_name: todo!(),
+            state_source,
+            state_destination,
+            write_state,
             state: State::default(),
+            new_state: State::default(),
+            actions,
         }
     }
 
-    pub(crate) fn compare(&self) -> Result<()> {
-        let mut old_state: HashMap<u64, AccessUnit> = HashMap::new();
+    pub(crate) fn read_config(&mut self) -> Result<&mut Self> {
+        self.config_file = ConfigFile::read(self.config_path.clone())?;
+        Ok(self)
+    }
+
+    pub(crate) fn create_states(&mut self) -> Result<&mut Self> {
         if !self.state_source.is_empty() {
             OutMessage::message_info_with_alias(
                 format!("I will try to use this file: {}", self.state_source.clone()).as_str(),
             );
-            old_state = AccessUnit::read_from_file(self.state_source.clone())?
+            self.state
+                .set_data(AccessUnit::read_from_file(self.state_source.clone())?);
         } else {
             if self.config_file.state.as_str() == "~" || self.config_file.state.is_empty() {
                 OutMessage::message_info_with_alias(
@@ -84,10 +99,11 @@ impl<T: GitlabApiInterface> SyncService<T> {
                 );
             } else {
                 OutMessage::message_info_with_alias("State is found");
-                old_state = match serde_json::from_str(self.config_file.state.as_str()) {
+                let data = match serde_json::from_str(self.config_file.state.as_str()) {
                     Ok(state) => state,
                     Err(err) => return Err(Error::new(ErrorKind::InvalidData, err)),
                 };
+                self.state.set_data(data);
             }
         }
 
@@ -113,17 +129,17 @@ impl<T: GitlabApiInterface> SyncService<T> {
             );
         }
 
-        Ok(())
+        self.new_state.set_data(new_state);
+        Ok(self)
     }
 
-    pub(crate) fn apply(
-        &self,
-        actions: Vec<Actions>,
-        gitlab_client: &Gitlab,
-        state: &mut HashMap<u64, AccessUnit>,
-        dry: bool,
-    ) -> Result<()> {
-        for a in actions.iter() {
+    pub(crate) fn update_state(&mut self) -> Result<&mut Self> {
+        self.config_file.state = serde_json::to_string(self.state.data())?;
+        Ok(self)
+    }
+
+    pub(crate) fn apply(&mut self, dry: bool) -> Result<&mut Self> {
+        for a in self.actions.iter() {
             let users_api = self.gitlab_api.users();
             let projects_api = self.gitlab_api.projects();
             let groups_api = self.gitlab_api.groups();
@@ -134,7 +150,7 @@ impl<T: GitlabApiInterface> SyncService<T> {
                     Ok(r) => r.name,
                     Err(err) => return Err(err),
                 },
-                EntityType::Group => match users_api.get_data_by_id(a.subject_entity_id) {
+                EntityType::Group => match groups_api.get_data_by_id(a.subject_entity_id) {
                     Ok(r) => r.name,
                     Err(err) => return Err(err),
                 },
@@ -192,13 +208,13 @@ impl<T: GitlabApiInterface> SyncService<T> {
                             } else {
                                 spinner.spinner_close();
                             }
-                            if !state.contains_key(&a.subject_entity_id) {
-                                state.insert(
+                            if !self.state.data_mut().contains_key(&a.subject_entity_id) {
+                                self.state.data_mut().insert(
                                     a.subject_entity_id,
                                     AccessUnit::new_simple(a.subject_entity_type.clone()),
                                 );
                             };
-                            if let Some(x) = state.get_mut(&a.subject_entity_id) {
+                            if let Some(x) = self.state.data_mut().get_mut(&a.subject_entity_id) {
                                 x.projects.insert(a.object_entity_id, a.access);
                             }
                         }
@@ -241,7 +257,7 @@ impl<T: GitlabApiInterface> SyncService<T> {
                             } else {
                                 spinner.spinner_close();
                             }
-                            if let Some(x) = state.get_mut(&a.subject_entity_id) {
+                            if let Some(x) = self.state.data_mut().get_mut(&a.subject_entity_id) {
                                 x.projects
                                     .remove(&a.object_entity_id)
                                     .ok_or_else(|| {
@@ -311,7 +327,7 @@ impl<T: GitlabApiInterface> SyncService<T> {
                             } else {
                                 spinner.spinner_close();
                             }
-                            if let Some(x) = state.get_mut(&a.subject_entity_id) {
+                            if let Some(x) = self.state.data_mut().get_mut(&a.subject_entity_id) {
                                 x.projects.insert(a.object_entity_id, a.access);
                             }
                         }
@@ -367,13 +383,13 @@ impl<T: GitlabApiInterface> SyncService<T> {
                             } else {
                                 spinner.spinner_close();
                             }
-                            if !state.contains_key(&a.subject_entity_id) {
-                                state.insert(
+                            if !self.state.data_mut().contains_key(&a.subject_entity_id) {
+                                self.state.data_mut().insert(
                                     a.subject_entity_id,
                                     AccessUnit::new_simple(a.subject_entity_type.clone()),
                                 );
                             };
-                            if let Some(x) = state.get_mut(&a.subject_entity_id) {
+                            if let Some(x) = self.state.data_mut().get_mut(&a.subject_entity_id) {
                                 x.namespaces.insert(a.object_entity_id, a.access);
                             }
                         }
@@ -416,7 +432,7 @@ impl<T: GitlabApiInterface> SyncService<T> {
                             } else {
                                 spinner.spinner_close();
                             };
-                            if let Some(x) = state.get_mut(&a.subject_entity_id) {
+                            if let Some(x) = self.state.data_mut().get_mut(&a.subject_entity_id) {
                                 x.namespaces
                                     .remove(&a.object_entity_id)
                                     .ok_or_else(|| {
@@ -486,7 +502,7 @@ impl<T: GitlabApiInterface> SyncService<T> {
                             } else {
                                 spinner.spinner_close();
                             }
-                            if let Some(x) = state.get_mut(&a.subject_entity_id) {
+                            if let Some(x) = self.state.data_mut().get_mut(&a.subject_entity_id) {
                                 x.namespaces.insert(a.object_entity_id, a.access);
                             }
                         }
@@ -495,10 +511,10 @@ impl<T: GitlabApiInterface> SyncService<T> {
             }
         }
         OutMessage::message_info_with_alias("You are synchronized, now but not forever");
-        Ok(())
+        Ok(self)
     }
 
-    pub(crate) fn write_state(&self) -> Result<()> {
+    pub(crate) fn write_state(&self, dry: bool) -> Result<()> {
         if self.write_state {
             match AccessUnit::write_to_file(
                 self.state.data().clone(),
@@ -514,10 +530,13 @@ impl<T: GitlabApiInterface> SyncService<T> {
                 Err(_) => OutMessage::message_empty("Couldn't save state to file"),
             };
         }
-
-        match self.config_file.write(self.file_name.clone()) {
-            Ok(_) => Ok(()),
-            Err(err) => Err(err),
+        if !dry {
+            match self.config_file.write(self.config_path.clone()) {
+                Ok(_) => Ok(()),
+                Err(err) => Err(err),
+            }
+        } else {
+            Ok(())
         }
     }
 
@@ -629,29 +648,26 @@ impl<T: GitlabApiInterface> SyncService<T> {
         }
     }
 
-    pub(crate) fn compare_states(
-        &self,
-        mut old_state: HashMap<u64, AccessUnit>,
-        new_state: HashMap<u64, AccessUnit>,
-    ) -> Vec<Actions> {
+    pub(crate) fn compare(&mut self) -> Result<&mut Self> {
         let mut actions: Vec<Actions> = Vec::new();
-        for (id, state) in new_state.iter() {
-            if old_state.contains_key(id) {
+        let mut state_clone = self.state.clone();
+        for (id, state) in self.new_state.data().iter() {
+            if state_clone.data().contains_key(id) {
                 self.compare_projects(
                     state.entity.clone(),
-                    old_state[id].projects.clone(),
+                    state_clone.data()[id].projects.clone(),
                     state.projects.clone(),
                     &mut actions,
                     *id,
                 );
                 self.compare_ownerships(
                     state.entity.clone(),
-                    old_state[id].namespaces.clone(),
+                    state_clone.data()[id].namespaces.clone(),
                     state.namespaces.clone(),
                     &mut actions,
                     *id,
                 );
-                old_state.remove(id);
+                state_clone.data_mut().remove(id);
             } else {
                 for (pid, access) in state.projects.iter() {
                     actions.extend([Actions {
@@ -675,7 +691,7 @@ impl<T: GitlabApiInterface> SyncService<T> {
                 }
             }
         }
-        for (id, state) in old_state.iter() {
+        for (id, state) in  state_clone.data().iter() {
             for (pid, access) in state.projects.iter() {
                 actions.extend([Actions {
                     subject_entity_id: *id,
@@ -698,7 +714,8 @@ impl<T: GitlabApiInterface> SyncService<T> {
             }
         }
 
-        actions
+        self.actions = actions;
+        Ok(self)
     }
 
     fn compare_ownerships(

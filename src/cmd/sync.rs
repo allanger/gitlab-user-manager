@@ -1,4 +1,4 @@
-use crate::Cmd;
+use crate::{gitlab::GitlabApi, service::sync::SyncService, Cmd};
 use std::io::Result;
 
 use clap::{ArgMatches, Command};
@@ -47,7 +47,19 @@ impl<'a> Cmd for SyncCmd {
         })
     }
     fn exec(&self) -> Result<()> {
-        todo!()
+        let mut svc = SyncService::new(
+            self.file_name.clone(),
+            GitlabApi::new(&self.gitlab_url, &self.gitlab_token)?,
+            self.state_source.clone(),
+            self.state_destination.clone(),
+            self.write_state,
+        );
+        svc.read_config()?
+            .create_states()?
+            .compare()?
+            .apply(self.dry_run)?
+            .update_state()?
+            .write_state(self.dry_run)
     }
 }
 

@@ -41,6 +41,17 @@ impl State {
     pub(crate) fn data(&self) -> &HashMap<u64, AccessUnit> {
         &self.data
     }
+
+    /// Get a mutable reference to the state's data.
+    #[must_use]
+    pub(crate) fn data_mut(&mut self) -> &mut HashMap<u64, AccessUnit> {
+        &mut self.data
+    }
+
+    /// Set the state's data.
+    pub(crate) fn set_data(&mut self, data: HashMap<u64, AccessUnit>) {
+        self.data = data;
+    }
 }
 
 impl AccessUnit {

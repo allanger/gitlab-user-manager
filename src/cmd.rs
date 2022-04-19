@@ -1,8 +1,8 @@
 pub mod generate;
 pub(crate) mod groups;
-pub mod init;
+pub(crate) mod init;
 pub(crate) mod search;
-pub mod sync;
+pub(crate) mod sync;
 pub(crate) mod teams;
 pub(crate) mod upgrade;
 pub(crate) mod users;

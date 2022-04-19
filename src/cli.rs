@@ -39,7 +39,7 @@ pub(crate) fn exec(matches: ArgMatches) -> Result<()> {
         }
         Some(("sync", sub_matches)) => {
             match SyncCmd::prepare(sub_matches) {
-                Ok(cmd) => Cmd::exec(&cmd),
+                Ok(cmd) => cmd.exec(),
                 Err(err) => Err(err),
             }
         }
