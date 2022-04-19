@@ -5,7 +5,7 @@ use clap::{ArgMatches, Command};
 use crate::{
     args::{ArgFileName, ArgGitlabToken, ArgGitlabUrl, ArgGroupList, Args},
     gitlab::GitlabApi,
-    service::InitService,
+    service::v1::InitService,
 };
 
 use super::Cmd;

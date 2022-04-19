@@ -1,19 +1,13 @@
 mod args;
 mod cli;
 mod cmd;
-mod config;
 mod gitlab;
 mod output;
 mod service;
 mod store;
 mod types;
-use cmd::{
-    generate::GenerateCmd, groups, init::InitCmd, search, sync, teams, upgrade, users, Cmd, CmdOld,
-};
 use output::out_extra::OutExtra;
-use std::io::{Error, ErrorKind};
 use std::process::exit;
-use types::v1::state::State;
 
 const MESSAGE_OF_THE_DAY: &str = "☮️  Fight war, not wars ☮️";
 const NEWS: &[&str] = &[

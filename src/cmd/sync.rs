@@ -1,4 +1,4 @@
-use crate::{gitlab::GitlabApi, service::sync::SyncService, Cmd};
+use crate::{gitlab::GitlabApi, service::v1::SyncService, cmd::Cmd};
 use std::io::Result;
 
 use clap::{ArgMatches, Command};

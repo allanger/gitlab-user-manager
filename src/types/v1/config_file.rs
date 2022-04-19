@@ -5,6 +5,8 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
+use crate::types::{Version, Versions};
+
 use super::{config::Config, meta::Meta};
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
 pub struct ConfigFile {
@@ -49,5 +51,11 @@ impl ConfigFile {
             Ok(()) => Ok(()),
             Err(err) => Err(Error::new(ErrorKind::Other, err.to_string())),
         }
+    }
+}
+
+impl Version for ConfigFile {
+    fn get_version() -> Result<Versions> {
+        todo!()
     }
 }
