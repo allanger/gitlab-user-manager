@@ -1,8 +1,8 @@
 use crate::args::{ArgFileName, ArgProjectId, ArgTeamName, Args};
 use crate::cmd::CmdOld;
 use crate::output::out_message::OutMessage;
-use crate::types::v1::config_file::ConfigFile;
-use crate::types::v1::project::Project;
+use crate::types::v1::ConfigFile;
+use crate::types::v1::Project;
 use clap::{ArgMatches, Command};
 
 use std::io::{Error, ErrorKind};
@@ -38,7 +38,7 @@ impl<'a> CmdOld<'a> for RemoveProjectCmd {
         let mut config_file = ConfigFile::read(self.file_name.clone())?;
 
         // TODO: This should be refactored
-        for team in config_file.config.teams.iter_mut() {
+        for team in config_file.config_mut().teams.iter_mut() {
             if team.name == self.team_name {
                 for (i, p) in team.projects.iter().enumerate() {
                     if self.gitlab_project_id == p.id {

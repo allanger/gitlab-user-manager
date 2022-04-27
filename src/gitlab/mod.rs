@@ -18,7 +18,7 @@ use tabled::Tabled;
 use crate::{
     gitlab::apis::groups::GroupGitlab,
     output::{out_message::OutMessage, out_spinner::OutSpinner},
-    types::v1::{access_level::AccessLevel, project},
+    types::v1::{AccessLevel, self},
 };
 
 use self::apis::{
@@ -175,8 +175,8 @@ pub(crate) struct Project {
 }
 
 impl Project {
-    pub(crate) fn to_gum_project(&self, member: CustomMember) -> Result<project::Project, Error> {
-        let project = project::Project {
+    pub(crate) fn to_gum_project(&self, member: CustomMember) -> Result<v1::Project, Error> {
+        let project = v1::Project {
             id: self.id,
             name: self.name.clone(),
             access_level: AccessLevel::from_gitlab_access_level(member.access_level),

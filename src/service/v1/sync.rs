@@ -8,14 +8,8 @@ use crate::{
     },
     output::{out_message::OutMessage, out_spinner::OutSpinner},
     types::v1::{
-        access_level::AccessLevel,
-        config::Config,
-        config_file::ConfigFile,
-        group::Group,
-        namespace::Namespace,
-        project::Project,
-        state::{AccessUnit, EntityType, State},
-        user::User,
+        self, AccessLevel, AccessUnit, Config, ConfigFile, EntityType, Group, Namespace, Project,
+        State, User,
     },
 };
 use std::{
@@ -31,8 +25,8 @@ pub(crate) struct SyncService<T: GitlabApiInterface> {
     state_source: String,
     state_destination: String,
     write_state: bool,
-    state: State,
-    new_state: State,
+    state: v1::State,
+    new_state: v1::State,
     actions: Vec<Actions>,
 }
 
@@ -93,13 +87,13 @@ impl<T: GitlabApiInterface> SyncService<T> {
             self.state
                 .set_data(AccessUnit::read_from_file(self.state_source.clone())?);
         } else {
-            if self.config_file.state.as_str() == "~" || self.config_file.state.is_empty() {
+            if self.config_file.state() == "~" || self.config_file.state().is_empty() {
                 OutMessage::message_info_with_alias(
                     "State is not found, I will generate a new one",
                 );
             } else {
                 OutMessage::message_info_with_alias("State is found");
-                let data = match serde_json::from_str(self.config_file.state.as_str()) {
+                let data = match serde_json::from_str(self.config_file.state()) {
                     Ok(state) => state,
                     Err(err) => return Err(Error::new(ErrorKind::InvalidData, err)),
                 };
@@ -108,17 +102,17 @@ impl<T: GitlabApiInterface> SyncService<T> {
         }
 
         let mut new_state: HashMap<u64, AccessUnit> = HashMap::new();
-        for u in self.config_file.config.users.iter().clone() {
+        for u in self.config_file.config().users.iter().clone() {
             new_state.insert(
                 u.id,
                 AccessUnit {
-                    projects: self.configure_projects(u, self.config_file.config.clone()),
-                    namespaces: self.configure_groups(u, self.config_file.config.clone()),
+                    projects: self.configure_projects(u, self.config_file.config().clone()),
+                    namespaces: self.configure_groups(u, self.config_file.config().clone()),
                     entity: EntityType::User,
                 },
             );
         }
-        for u in self.config_file.config.groups.iter().clone() {
+        for u in self.config_file.config().groups.iter().clone() {
             new_state.insert(
                 u.id,
                 AccessUnit {
@@ -134,7 +128,8 @@ impl<T: GitlabApiInterface> SyncService<T> {
     }
 
     pub(crate) fn update_state(&mut self) -> Result<&mut Self> {
-        self.config_file.state = serde_json::to_string(self.state.data())?;
+        self.config_file
+            .set_state(serde_json::to_string(self.state.data())?);
         Ok(self)
     }
 
@@ -691,7 +686,7 @@ impl<T: GitlabApiInterface> SyncService<T> {
                 }
             }
         }
-        for (id, state) in  state_clone.data().iter() {
+        for (id, state) in state_clone.data().iter() {
             for (pid, access) in state.projects.iter() {
                 actions.extend([Actions {
                     subject_entity_id: *id,

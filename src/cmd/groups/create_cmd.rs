@@ -8,8 +8,8 @@ use crate::cmd::CmdOld;
 use crate::gitlab::GitlabActions;
 use crate::gitlab::GitlabClient;
 use crate::output::out_message::OutMessage;
-use crate::types::v1::config_file::ConfigFile;
-use crate::types::v1::group::Group;
+use crate::types::v1::ConfigFile;
+use crate::types::v1::Group;
 
 pub(crate) fn add_create_cmd() -> Command<'static> {
     return Command::new("create")
@@ -61,7 +61,7 @@ impl<'a> CmdOld<'a> for CreateCmd {
         };
 
         if config_file
-            .config
+            .config()
             .groups
             .iter()
             .any(|i| i.id == self.gitlab_group_id)
@@ -71,7 +71,7 @@ impl<'a> CmdOld<'a> for CreateCmd {
                 format!("Group {} is already in the config file", new_user.name),
             ));
         } else {
-            config_file.config.groups.extend([new_user]);
+            config_file.config_mut().groups.extend([new_user]);
             OutMessage::message_info_clean(
                 format!("Group {} is added to the config", group.name).as_str(),
             );

@@ -5,7 +5,7 @@ use std::{
 };
 
 use super::Store;
-use crate::types::v1::state::AccessUnit;
+use crate::types::v1::AccessUnit;
 
 pub(crate) struct FileStore {
     file_path: String,
@@ -67,9 +67,9 @@ mod tests {
     use tempfile::tempdir;
 
     use crate::store::Store;
-    use crate::types::v1::access_level::AccessLevel;
-    use crate::types::v1::state::AccessUnit;
-    use crate::types::v1::state::EntityType::User;
+    use crate::types::v1::AccessLevel;
+    use crate::types::v1::AccessUnit;
+    use crate::types::v1::EntityType::User;
 
     use super::FileStore;
 

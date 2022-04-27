@@ -5,9 +5,7 @@ use crate::{
         GitlabApiInterface, Project,
     },
     output::out_message::OutMessage,
-    types::v1::{
-        self, access_level::AccessLevel, config_file::ConfigFile, namespace::Namespace, user,
-    },
+    types::v1::{self, AccessLevel, ConfigFile, Namespace},
 };
 use std::io::{Error, ErrorKind, Result};
 
@@ -67,20 +65,20 @@ impl<T: GitlabApiInterface> InitService<T> {
                         // TODO: Use a HashMap here to avoid a loop
 
                         let mut found = false;
-                        for group in self.config_file.config.groups.iter_mut() {
+                        for group in self.config_file.config_mut().groups.iter_mut() {
                             if ns.group_id == group.id {
                                 found = true;
                                 group.namespaces.push(item.clone());
                             }
                         }
                         if !found {
-                            let group_entry = v1::group::Group {
+                            let group_entry = v1::Group {
                                 name: ns.group_name.clone(),
                                 id: ns.group_id,
                                 projects: Default::default(),
                                 namespaces: vec![item],
                             };
-                            self.config_file.config.groups.push(group_entry);
+                            self.config_file.config_mut().groups.push(group_entry);
                         }
                     }
                 }
@@ -92,7 +90,7 @@ impl<T: GitlabApiInterface> InitService<T> {
             for member in groups_users.iter() {
                 // TODO: Use a HashMap here to avoid a loop
                 let mut found = false;
-                for u in self.config_file.config.users.iter_mut() {
+                for u in self.config_file.config_mut().users.iter_mut() {
                     if u.id == member.id {
                         found = true;
                         u.namespaces.push(g.to_gum_group(member.clone()).unwrap());
@@ -100,7 +98,7 @@ impl<T: GitlabApiInterface> InitService<T> {
                     }
                 }
                 if !found {
-                    self.config_file.config.users.push(user::User {
+                    self.config_file.config_mut().users.push(v1::User {
                         id: member.id,
                         name: member.name.clone(),
                         teams: Default::default(),
@@ -121,7 +119,7 @@ impl<T: GitlabApiInterface> InitService<T> {
             match projects_api.get_groups_shared_with(p.id) {
                 Ok(group) => {
                     for ns in group.iter() {
-                        let item = v1::project::Project {
+                        let item = v1::Project {
                             id: p.id,
                             name: p.name.clone(),
                             access_level: AccessLevel::from_gitlab_access_level(
@@ -129,20 +127,20 @@ impl<T: GitlabApiInterface> InitService<T> {
                             ),
                         };
                         let mut found = false;
-                        for group in self.config_file.config.groups.iter_mut() {
+                        for group in self.config_file.config_mut().groups.iter_mut() {
                             if ns.group_id == group.id {
                                 found = true;
                                 group.projects.push(item.clone());
                             }
                         }
                         if !found {
-                            let group_entry = v1::group::Group {
+                            let group_entry = v1::Group {
                                 name: ns.group_name.clone(),
                                 id: ns.group_id,
                                 namespaces: Default::default(),
                                 projects: vec![item],
                             };
-                            self.config_file.config.groups.push(group_entry);
+                            self.config_file.config_mut().groups.push(group_entry);
                         }
                     }
                 }
@@ -154,7 +152,7 @@ impl<T: GitlabApiInterface> InitService<T> {
             for member in projects_users.iter() {
                 // TODO: Use a HashMap here to avoid a loop
                 let mut found = false;
-                for u in self.config_file.config.users.iter_mut() {
+                for u in self.config_file.config_mut().users.iter_mut() {
                     if u.id == member.id {
                         found = true;
                         u.projects.push(p.to_gum_project(member.clone()).unwrap());
@@ -162,7 +160,7 @@ impl<T: GitlabApiInterface> InitService<T> {
                     }
                 }
                 if !found {
-                    self.config_file.config.users.push(user::User {
+                    self.config_file.config_mut().users.push(v1::User {
                         id: member.id,
                         name: member.name.clone(),
                         projects: vec![p.to_gum_project(member.clone()).unwrap()],

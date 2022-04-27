@@ -4,7 +4,7 @@ use crate::{
         CustomMember, Project,
     },
     output::{out_message::OutMessage, out_spinner::OutSpinner},
-    types::v1::access_level::AccessLevel,
+    types::v1::AccessLevel,
 };
 use core::time;
 use gitlab::{

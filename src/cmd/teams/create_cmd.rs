@@ -6,7 +6,7 @@ use crate::{
     args::{ArgFileName, ArgTeamName, Args},
     cmd::CmdOld,
     output::out_message::OutMessage,
-    types::v1::{config_file::ConfigFile, team::Team},
+    types::v1::{ConfigFile, Team},
 };
 
 pub(crate) fn add_create_cmd() -> Command<'static> {
@@ -44,7 +44,7 @@ impl<'a> CmdOld<'a> for CreateCmd {
             ..Default::default()
         };
         if config_file
-            .config
+            .config()
             .teams
             .iter()
             .any(|i| i.name == new_team.name)
@@ -55,7 +55,7 @@ impl<'a> CmdOld<'a> for CreateCmd {
             ));
         }
 
-        config_file.config.teams.extend([new_team]);
+        config_file.config_mut().teams.extend([new_team]);
 
         match config_file.write(self.file_name.clone()) {
             Ok(()) => {

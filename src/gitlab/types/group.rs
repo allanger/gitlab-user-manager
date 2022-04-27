@@ -1,6 +1,6 @@
 use crate::{
     gitlab::CustomMember,
-    types::v1::{access_level::AccessLevel, namespace::Namespace},
+    types::v1::{AccessLevel, Namespace},
 };
 use mockall::automock;
 use serde::Deserialize;

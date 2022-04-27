@@ -4,7 +4,7 @@ use gitlab::{
 };
 use std::io::{Error, ErrorKind, Result};
 
-use crate::{gitlab::types::members::CustomMember, types::v1::access_level::AccessLevel};
+use crate::types::v1::AccessLevel;
 pub(crate) trait GitlabMembersApi {
     fn add_user_to_project(&self, uid: u64, pid: u64, access_level: AccessLevel) -> Result<String>;
     fn add_user_to_group(&self, uid: u64, gid: u64, access_level: AccessLevel) -> Result<String>;

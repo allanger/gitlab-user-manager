@@ -1,7 +1,7 @@
 mod file;
 mod string;
 use crate::output::out_message::OutMessage;
-use crate::types::v1::state::AccessUnit;
+use crate::types::v1::AccessUnit;
 use lazy_static::lazy_static;
 use regex::Regex;
 use std::collections::HashMap;

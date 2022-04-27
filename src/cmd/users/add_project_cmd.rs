@@ -7,7 +7,7 @@ use crate::{
     args::{ArgAccess, ArgFileName, ArgGitlabToken, ArgGitlabUrl, ArgProjectId, ArgUserId, Args},
     gitlab::GitlabActions,
     output::{out_message::OutMessage, out_spinner::OutSpinner},
-    types::v1::{access_level::AccessLevel, config_file::ConfigFile, project::Project},
+    types::v1::{AccessLevel, ConfigFile, Project},
 };
 use crate::{cmd::CmdOld, gitlab::GitlabClient};
 
@@ -60,7 +60,7 @@ impl<'a> CmdOld<'a> for AddProjectCmd {
 
         let project = gitlab.get_project_data_by_id(self.gitlab_project_id)?;
 
-        for user in config_file.config.users.iter_mut() {
+        for user in config_file.config_mut().users.iter_mut() {
             if user.id == self.gitlab_user_id {
                 let spinner = OutSpinner::spinner_start(format!(
                     "Adding {} to {} as {}",

@@ -9,9 +9,9 @@ use crate::args::{
 use crate::cmd::CmdOld;
 use crate::gitlab::{GitlabActions, GitlabClient};
 use crate::output::{out_message::OutMessage, out_spinner::OutSpinner};
-use crate::types::v1::access_level::AccessLevel;
-use crate::types::v1::config_file::ConfigFile;
-use crate::types::v1::namespace::Namespace;
+use crate::types::v1::AccessLevel;
+use crate::types::v1::ConfigFile;
+use crate::types::v1::Namespace;
 
 pub(crate) struct AddGroupCmd {
     file_name: String,
@@ -67,7 +67,7 @@ impl<'a> CmdOld<'a> for AddGroupCmd {
 
         let namespace = gitlab.get_group_data_by_id(self.gitlab_namespace_id)?;
 
-        for group in config_file.config.groups.iter_mut() {
+        for group in config_file.config_mut().groups.iter_mut() {
             if group.id == self.gitlab_group_id {
                 let spinner = OutSpinner::spinner_start(format!(
                     "Adding {} to {} as owner",

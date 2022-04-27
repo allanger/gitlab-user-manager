@@ -2,7 +2,7 @@ use crate::{
     args::{ArgFileName, ArgLargeOut, Args},
     cmd::CmdOld,
     output::{out_extra::OutExtra, out_message::OutMessage},
-    types::v1::config_file::ConfigFile,
+    types::v1::ConfigFile,
 };
 use clap::{ArgMatches, Command};
 use console::style;
@@ -34,9 +34,9 @@ pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>
 impl<'a> CmdOld<'a> for ListCmd {
     fn exec(&self) -> Result<(), Error> {
         let config_file = ConfigFile::read(self.file_name.clone())?;
-        let total = &config_file.config.groups.len();
+        let total = &config_file.config().groups.len();
 
-        for group in config_file.config.groups {
+        for group in config_file.config().groups.clone() {
             let mut message = format!("{} - {}", group.id, group.name);
             if self.large_out {
                 message.push_str(

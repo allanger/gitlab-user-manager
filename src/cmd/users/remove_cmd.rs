@@ -6,7 +6,7 @@ use crate::{
     args::{ArgFileName, ArgUserId, Args},
     cmd::CmdOld,
     output::out_message::OutMessage,
-    types::v1::{config_file::ConfigFile, user::User},
+    types::v1::{ConfigFile, User},
 };
 
 pub(crate) fn add_remove_cmd() -> Command<'static> {
@@ -36,7 +36,7 @@ impl<'a> CmdOld<'a> for RemoveCmd {
     fn exec(&self) -> Result<(), Error> {
         let mut config_file = ConfigFile::read(self.file_name.clone())?;
 
-        for (i, user) in config_file.config.users.iter().enumerate() {
+        for (i, user) in config_file.config().users.iter().enumerate() {
             if user.id == self.gitlab_user_id {
                 let u = User {
                     id: user.id,
@@ -46,7 +46,7 @@ impl<'a> CmdOld<'a> for RemoveCmd {
                 OutMessage::message_info_clean(
                     format!("removing user {} from config", u.name).as_str(),
                 );
-                config_file.config.users.remove(i);
+                config_file.config_mut().users.remove(i);
                 break;
             }
         }
