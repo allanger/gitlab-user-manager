@@ -1,4 +1,11 @@
-pub(crate) use std::{io::{Error, ErrorKind, Result}, str::FromStr};
+pub(crate) use std::{
+    io::{Error, ErrorKind, Result},
+    str::FromStr,
+};
+
+use serde::{Deserialize, Serialize};
+
+#[derive(PartialEq, Eq, Debug, Clone, Copy, Serialize, Deserialize)]
 pub(crate) enum Versions {
     V1,
 }

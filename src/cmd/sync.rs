@@ -2,7 +2,7 @@ use crate::{
     cmd::Cmd,
     gitlab::GitlabApi,
     output::out_message::OutMessage,
-    service::{self, v1},
+    service::v1,
     types::{
         common::{Version, Versions},
         v1::ConfigFile,

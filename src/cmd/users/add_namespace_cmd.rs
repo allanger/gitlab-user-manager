@@ -20,6 +20,7 @@ pub(crate) struct AddGroupCmd {
     gitlab_client: Gitlab,
     access_level: AccessLevel,
 }
+
 pub(crate) fn add_add_namespace_cmd() -> Command<'static> {
     return Command::new("add-namespace")
         .alias("an")

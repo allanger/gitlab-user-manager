@@ -16,6 +16,7 @@ darwin
 dawg
 demangle
 fastrand
+FPATH
 gimli
 hashbrown
 httparse

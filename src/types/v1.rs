@@ -85,28 +85,28 @@ impl ConfigFile {
 
 impl Version for ConfigFile {
     fn get_version(&self) -> Result<Versions> {
-        Versions::from_str(&self.meta().version())
+        Ok(self.meta().version())
     }
 }
 
 // First version of metadata object in the config file
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub(crate) struct Meta {
-    version: String,
+    version: Versions,
 }
 
 impl Meta {
-    /// Get a reference to the meta's version.
+    /// Get the meta's version.
     #[must_use]
-    pub(crate) fn version(&self) -> &str {
-        self.version.as_ref()
+    pub(crate) fn version(&self) -> Versions {
+        self.version
     }
 }
 
 impl Default for Meta {
     fn default() -> Self {
         Self {
-            version: "v1".to_string(),
+            version: Versions::V1,
         }
     }
 }
