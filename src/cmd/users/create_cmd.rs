@@ -3,17 +3,13 @@ use std::io::{Error, ErrorKind};
 use clap::{ArgMatches, Command};
 use gitlab::Gitlab;
 
-use crate::args::file_name::ArgFileName;
-use crate::args::gitlab_token::ArgGitlabToken;
-use crate::args::gitlab_url::ArgGitlabUrl;
-use crate::args::user_id::ArgUserId;
-use crate::args::Args;
+use crate::args::{ArgFileName, ArgGitlabToken, ArgGitlabUrl, ArgUserId, Args};
 use crate::cmd::CmdOld;
 use crate::gitlab::GitlabActions;
 use crate::gitlab::GitlabClient;
 use crate::output::out_message::OutMessage;
-use crate::types::v1::config_file::ConfigFile;
-use crate::types::v1::user::User;
+use crate::types::v1::ConfigFile;
+use crate::types::v1::User;
 
 pub(crate) fn add_create_cmd() -> Command<'static> {
     return Command::new("create")
@@ -63,7 +59,7 @@ impl<'a> CmdOld<'a> for CreateCmd {
         };
 
         if config_file
-            .config
+            .config()
             .users
             .iter()
             .any(|i| i.id == self.gitlab_user_id)
@@ -73,7 +69,7 @@ impl<'a> CmdOld<'a> for CreateCmd {
                 format!("User {} is already in the config file", new_user.name),
             ));
         } else {
-            config_file.config.users.extend([new_user]);
+            config_file.config_mut().users.extend([new_user]);
             OutMessage::message_info_clean(
                 format!("User {} is added to the config", user.name).as_str(),
             );

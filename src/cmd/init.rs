@@ -3,12 +3,9 @@ use std::io::Result;
 use clap::{ArgMatches, Command};
 
 use crate::{
-    args::{
-        file_name::ArgFileName, gitlab_token::ArgGitlabToken, gitlab_url::ArgGitlabUrl,
-        group_list::ArgGroupList, Args,
-    },
+    args::{ArgFileName, ArgGitlabToken, ArgGitlabUrl, ArgGroupList, Args},
     gitlab::GitlabApi,
-    service::init::InitService,
+    service::v1,
 };
 
 use super::Cmd;
@@ -45,7 +42,13 @@ impl Cmd for InitCmd {
     }
 
     fn exec(&self) -> Result<()> {
-        InitService::new(GitlabApi::new(&self.gitlab_url, &self.gitlab_token)?)
+        self.exec_v1()
+    }
+}
+
+impl InitCmd {
+    fn exec_v1(&self) -> Result<()> {
+        v1::InitService::new(GitlabApi::new(&self.gitlab_url, &self.gitlab_token)?)
             .generate_config(&self.group_list)?
             .save(&self.file_name)
     }

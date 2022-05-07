@@ -9,7 +9,7 @@ use clap::{ArgMatches, Command};
 use gitlab::Gitlab;
 
 use crate::{
-    args::{gitlab_token::ArgGitlabToken, gitlab_url::ArgGitlabUrl, Args},
+    args::{ArgGitlabToken, ArgGitlabUrl, Args},
     cmd::CmdOld,
 };
 

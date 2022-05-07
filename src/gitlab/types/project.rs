@@ -1,10 +1,7 @@
 use serde::Deserialize;
 use tabled::Tabled;
 
-use crate::{
-    gitlab::CustomMember,
-    types::v1::{access_level::AccessLevel, project},
-};
+use crate::{gitlab::CustomMember, types::v1::{AccessLevel, self}};
 use std::io::Result;
 
 #[derive(Debug, Deserialize, Tabled)]
@@ -15,8 +12,8 @@ pub(crate) struct Project {
 }
 
 impl Project {
-    pub(crate) fn to_gum_project(&self, member: CustomMember) -> Result<project::Project> {
-        let project = project::Project {
+    pub(crate) fn to_gum_project(&self, member: CustomMember) -> Result<v1::Project> {
+        let project = v1::Project {
             id: self.id,
             name: self.name.clone(),
             access_level: AccessLevel::from_gitlab_access_level(member.access_level),

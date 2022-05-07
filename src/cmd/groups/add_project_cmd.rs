@@ -4,13 +4,10 @@ use clap::{ArgMatches, Command};
 use gitlab::Gitlab;
 
 use crate::{
-    args::{
-        access_level::ArgAccess, file_name::ArgFileName, gitlab_token::ArgGitlabToken,
-        gitlab_url::ArgGitlabUrl, group_id::ArgGroupId, project_id::ArgProjectId, Args,
-    },
+    args::{ArgAccess, ArgFileName, ArgGitlabToken, ArgGitlabUrl, ArgGroupId, ArgProjectId, Args},
     gitlab::GitlabActions,
     output::{out_message::OutMessage, out_spinner::OutSpinner},
-    types::v1::{access_level::AccessLevel, config_file::ConfigFile, project::Project},
+    types::v1::{AccessLevel, ConfigFile, Project},
 };
 use crate::{cmd::CmdOld, gitlab::GitlabClient};
 
@@ -38,8 +35,8 @@ pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>
     let gitlab_url = ArgGitlabUrl::parse(sub_matches)?;
 
     // Connect to gitlab
-    let gitlab_client: Gitlab =
-        Gitlab::new(gitlab_url, gitlab_token).map_err(|err| Error::new(ErrorKind::InvalidInput, err))?;
+    let gitlab_client: Gitlab = Gitlab::new(gitlab_url, gitlab_token)
+        .map_err(|err| Error::new(ErrorKind::InvalidInput, err))?;
     let gitlab_project_id: u64 = ArgProjectId::parse(sub_matches)?;
 
     let access_level = ArgAccess::parse(sub_matches)?;
@@ -64,7 +61,7 @@ impl<'a> CmdOld<'a> for AddProjectCmd {
 
         let project = gitlab.get_project_data_by_id(self.gitlab_project_id)?;
 
-        for group in config_file.config.groups.iter_mut() {
+        for group in config_file.config_mut().groups.iter_mut() {
             if group.id == self.gitlab_group_id {
                 let spinner = OutSpinner::spinner_start(format!(
                     "Adding {} to {} as {}",

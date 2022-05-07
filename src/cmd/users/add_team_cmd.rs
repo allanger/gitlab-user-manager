@@ -2,13 +2,10 @@ use std::io::{Error, ErrorKind};
 
 use clap::{ArgMatches, Command};
 
-use crate::args::file_name::ArgFileName;
-use crate::args::team_name::ArgTeamName;
-use crate::args::user_id::ArgUserId;
-use crate::args::Args;
+use crate::args::{ArgFileName, ArgTeamName, ArgUserId, Args};
 use crate::cmd::CmdOld;
 use crate::output::out_spinner::OutSpinner;
-use crate::types::v1::config_file::ConfigFile;
+use crate::types::v1::ConfigFile;
 
 pub(crate) struct AddTeamCmd {
     gitlab_user_id: u64,
@@ -40,7 +37,7 @@ impl<'a> CmdOld<'a> for AddTeamCmd {
     fn exec(&self) -> Result<(), Error> {
         let mut config_file = ConfigFile::read(self.file_name.clone())?;
 
-        for user in config_file.config.users.iter_mut() {
+        for user in config_file.config_mut().users.iter_mut() {
             if user.id == self.gitlab_user_id {
                 let spinner = OutSpinner::spinner_start(format!(
                     "Adding {} to {}",

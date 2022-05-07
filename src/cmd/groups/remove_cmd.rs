@@ -3,10 +3,10 @@ use std::io::Error;
 use clap::{ArgMatches, Command};
 
 use crate::{
-    args::{file_name::ArgFileName, group_id::ArgGroupId, Args},
+    args::{ArgFileName, ArgGroupId, Args},
     cmd::CmdOld,
     output::out_message::OutMessage,
-    types::v1::{config_file::ConfigFile, user::User},
+    types::v1::{ConfigFile, User},
 };
 
 pub(crate) fn add_remove_cmd() -> Command<'static> {
@@ -36,7 +36,7 @@ impl<'a> CmdOld<'a> for RemoveCmd {
     fn exec(&self) -> Result<(), Error> {
         let mut config_file = ConfigFile::read(self.file_name.clone())?;
 
-        for (i, user) in config_file.config.groups.iter().enumerate() {
+        for (i, user) in config_file.config().groups.iter().enumerate() {
             if user.id == self.gitlab_group_id {
                 let u = User {
                     id: user.id,
@@ -46,7 +46,7 @@ impl<'a> CmdOld<'a> for RemoveCmd {
                 OutMessage::message_info_clean(
                     format!("removing group {} from config", u.name).as_str(),
                 );
-                config_file.config.groups.remove(i);
+                config_file.config_mut().groups.remove(i);
                 break;
             }
         }

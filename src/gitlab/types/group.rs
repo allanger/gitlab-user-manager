@@ -1,11 +1,11 @@
-use mockall::automock;
-use serde::Deserialize;
-use tabled::Tabled;
 use crate::{
     gitlab::CustomMember,
-    types::v1::{access_level::AccessLevel, namespace::Namespace},
+    types::v1::{AccessLevel, Namespace},
 };
+use mockall::automock;
+use serde::Deserialize;
 use std::io::Result;
+use tabled::Tabled;
 
 // Simple group struct
 #[derive(Debug, Deserialize, Tabled, Clone)]

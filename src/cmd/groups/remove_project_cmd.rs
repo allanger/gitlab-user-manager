@@ -2,15 +2,10 @@ use std::io::Error;
 
 use clap::{ArgMatches, Command};
 
-use crate::args::file_name::ArgFileName;
-use crate::args::gitlab_token::ArgGitlabToken;
-use crate::args::gitlab_url::ArgGitlabUrl;
-use crate::args::group_id::ArgGroupId;
-use crate::args::project_id::ArgProjectId;
-use crate::args::Args;
+use crate::args::{ArgFileName, ArgGitlabToken, ArgGitlabUrl, ArgGroupId, ArgProjectId, Args};
 use crate::cmd::CmdOld;
 use crate::output::out_message::OutMessage;
-use crate::types::v1::config_file::ConfigFile;
+use crate::types::v1::ConfigFile;
 
 pub(crate) struct RemoveProjectCmd {
     gitlab_group_id: u64,
@@ -44,7 +39,7 @@ impl<'a> CmdOld<'a> for RemoveProjectCmd {
     fn exec(&self) -> Result<(), Error> {
         let mut config_file = ConfigFile::read(self.file_name.clone())?;
 
-        for g in config_file.config.groups.iter_mut() {
+        for g in config_file.config_mut().groups.iter_mut() {
             if g.id == self.gitlab_group_id {
                 for (i, p) in g.projects.iter().enumerate() {
                     if p.id == self.gitlab_project_id {

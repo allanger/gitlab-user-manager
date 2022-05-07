@@ -3,10 +3,10 @@ use std::io::Error;
 use clap::{ArgMatches, Command};
 
 use crate::{
-    args::{file_name::ArgFileName, team_name::ArgTeamName, Args},
+    args::{ArgFileName, ArgTeamName, Args},
     cmd::CmdOld,
     output::out_message::OutMessage,
-    types::v1::config_file::ConfigFile,
+    types::v1::ConfigFile,
 };
 
 pub(crate) fn add_remove_cmd() -> Command<'static> {
@@ -37,7 +37,7 @@ impl<'a> CmdOld<'a> for RemoveCmd {
         let mut config_file = ConfigFile::read(self.file_name.clone())?;
 
         config_file
-            .config
+            .config_mut()
             .teams
             .retain(|t| t.name != self.team_name);
 

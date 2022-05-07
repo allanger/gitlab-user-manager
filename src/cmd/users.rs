@@ -10,7 +10,7 @@ mod remove_team_cmd;
 
 use std::io::Error;
 
-use clap::{Command, ArgMatches};
+use clap::{ArgMatches, Command};
 
 use self::{
     add_namespace_cmd::add_add_namespace_cmd, add_project_cmd::add_add_project_cmd,
@@ -57,17 +57,14 @@ impl<'a> CmdOld<'a> for UsersCmd<'a> {
                     Err(err) => Err(err),
                 }
             }
-            Some(("remove", sub_matches
-        )) => {
+            Some(("remove", sub_matches)) => {
                 result = match remove_cmd::prepare(sub_matches) {
                     Ok(cmd) => cmd.exec(),
                     Err(err) => Err(err),
                 }
             }
-            Some(("list", sub_matches
-        )) => {
-                result = match list_cmd::prepare(sub_matches
-                ) {
+            Some(("list", sub_matches)) => {
+                result = match list_cmd::prepare(sub_matches) {
                     Ok(cmd) => cmd.exec(),
                     Err(err) => Err(err),
                 }

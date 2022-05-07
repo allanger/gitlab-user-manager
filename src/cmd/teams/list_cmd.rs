@@ -1,8 +1,8 @@
 use crate::{
-    args::{file_name::ArgFileName, Args},
+    args::{ArgFileName, Args},
     cmd::CmdOld,
-    output::{out_message::OutMessage, out_extra::OutExtra},
-    types::v1::config_file::ConfigFile,
+    output::{out_extra::OutExtra, out_message::OutMessage},
+    types::v1::ConfigFile,
 };
 use clap::{ArgMatches, Command};
 use console::style;
@@ -30,13 +30,15 @@ impl<'a> CmdOld<'a> for ListCmd {
             Ok(c) => c,
             Err(err) => return Err(err),
         };
-        let total = &config_file.config.teams.len();
+        let total = &config_file.config().teams.len();
 
-        for team in config_file.config.teams.iter() {
+        for team in config_file.config().teams.iter() {
             OutMessage::message_empty(format!("{}: {:?}\n", team.name, team.projects).as_str());
         }
         OutExtra::empty_line();
-        OutMessage::message_info_with_alias(format!("You've got {} teams here", style(total).bold().underlined()).as_str());
+        OutMessage::message_info_with_alias(
+            format!("You've got {} teams here", style(total).bold().underlined()).as_str(),
+        );
 
         Ok(())
     }

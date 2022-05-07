@@ -1,8 +1,8 @@
 use crate::{
-    args::{file_name::ArgFileName, large_out::ArgLargeOut, Args},
+    args::{ArgFileName, ArgLargeOut, Args},
     cmd::CmdOld,
     output::{out_extra::OutExtra, out_message::OutMessage},
-    types::v1::config_file::ConfigFile,
+    types::v1::ConfigFile,
 };
 use clap::{ArgMatches, Command};
 use console::style;
@@ -34,9 +34,9 @@ pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>
 impl<'a> CmdOld<'a> for ListCmd {
     fn exec(&self) -> Result<(), Error> {
         let config_file = ConfigFile::read(self.file_name.clone())?;
-        let total = &config_file.config.groups.len();
-        
-        for group in config_file.config.groups {
+        let total = &config_file.config().groups.len();
+
+        for group in config_file.config().groups.clone() {
             let mut message = format!("{} - {}", group.id, group.name);
             if self.large_out {
                 message.push_str(
@@ -51,7 +51,11 @@ impl<'a> CmdOld<'a> for ListCmd {
         }
         OutExtra::empty_line();
         OutMessage::message_info_with_alias(
-            format!("You've got {} groups here", style(total).bold().underlined()).as_str(),
+            format!(
+                "You've got {} groups here",
+                style(total).bold().underlined()
+            )
+            .as_str(),
         );
         Ok(())
     }

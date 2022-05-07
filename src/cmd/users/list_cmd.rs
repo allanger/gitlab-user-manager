@@ -1,8 +1,8 @@
 use crate::{
-    args::{file_name::ArgFileName, large_out::ArgLargeOut, Args},
+    args::{ArgFileName, ArgLargeOut, Args},
     cmd::CmdOld,
-    output::{out_message::OutMessage, out_extra::OutExtra},
-    types::v1::config_file::ConfigFile,
+    output::{out_extra::OutExtra, out_message::OutMessage},
+    types::v1::ConfigFile,
 };
 use clap::{ArgMatches, Command};
 use console::style;
@@ -34,9 +34,9 @@ pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>
 impl<'a> CmdOld<'a> for ListCmd {
     fn exec(&self) -> Result<(), Error> {
         let config_file = ConfigFile::read(self.file_name.clone())?;
-        let total = &config_file.config.users.len();
+        let total = &config_file.config().users.len();
 
-        for user in config_file.config.users {
+        for user in config_file.config().users.clone() {
             let mut message = format!("{} - {}", user.id, user.name);
             if self.large_out {
                 message.push_str(
@@ -50,7 +50,9 @@ impl<'a> CmdOld<'a> for ListCmd {
             OutMessage::message_empty(message.as_str());
         }
         OutExtra::empty_line();
-        OutMessage::message_info_with_alias(format!("You've got {} users here", style(total).bold().underlined()).as_str());
+        OutMessage::message_info_with_alias(
+            format!("You've got {} users here", style(total).bold().underlined()).as_str(),
+        );
         Ok(())
     }
 }

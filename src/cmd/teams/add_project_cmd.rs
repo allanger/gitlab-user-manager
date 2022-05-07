@@ -1,16 +1,11 @@
-use crate::args::access_level::ArgAccess;
-use crate::args::file_name::ArgFileName;
-use crate::args::gitlab_token::ArgGitlabToken;
-use crate::args::gitlab_url::ArgGitlabUrl;
-use crate::args::project_id::ArgProjectId;
-use crate::args::team_name::ArgTeamName;
-use crate::args::Args;
+use crate::args::{
+    ArgAccess, ArgFileName, ArgGitlabToken, ArgGitlabUrl, ArgProjectId, ArgTeamName, Args,
+};
 use crate::cmd::CmdOld;
 use crate::gitlab::GitlabClient;
 use crate::output::out_message::OutMessage;
-use crate::types::v1::config_file::ConfigFile;
-use crate::types::v1::project::Project;
-use crate::{gitlab::GitlabActions, types::v1::access_level::AccessLevel};
+use crate::types::v1::{ConfigFile, Project};
+use crate::{gitlab::GitlabActions, types::v1::AccessLevel};
 use clap::{ArgMatches, Command};
 use gitlab::Gitlab;
 use std::io::{Error, ErrorKind};
@@ -70,7 +65,7 @@ impl<'a> CmdOld<'a> for AddProjectCmd {
             Ok(p) => p,
             Err(err) => return Err(err),
         };
-        for team in config_file.config.teams.iter_mut() {
+        for team in config_file.config_mut().teams.iter_mut() {
             if team.name == self.team_name {
                 let p = Project {
                     name: project.name.to_string(),

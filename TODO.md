@@ -1,3 +1,5 @@
+- [ ] Create a system config to get url and token from there
+
 # MVP
 What needs to be done before the tool can actually be used.
 - [ ] Add tests

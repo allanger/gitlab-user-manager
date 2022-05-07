@@ -1,14 +1,11 @@
-use std::io::{Error, ErrorKind};
+use std::io::Error;
 
 use clap::{ArgMatches, Command};
 
-use crate::args::file_name::ArgFileName;
-use crate::args::group_id::ArgGroupId;
-use crate::args::namespace_id::ArgNamespaceId;
-use crate::args::Args;
+use crate::args::{ArgFileName, ArgGroupId, ArgNamespaceId, Args};
 use crate::cmd::CmdOld;
 use crate::output::out_message::OutMessage;
-use crate::types::v1::config_file::ConfigFile;
+use crate::types::v1::ConfigFile;
 
 pub(crate) struct RemoveGroupCmd {
     gitlab_group_id: u64,
@@ -41,7 +38,7 @@ impl<'a> CmdOld<'a> for RemoveGroupCmd {
     fn exec(&self) -> Result<(), Error> {
         let mut config_file = ConfigFile::read(self.file_name.clone())?;
 
-        for g in config_file.config.groups.iter_mut() {
+        for g in config_file.config_mut().groups.iter_mut() {
             if g.id == self.gitlab_group_id {
                 for (i, o) in g.namespaces.iter().enumerate() {
                     if o.id == self.gitlab_namespace_id {

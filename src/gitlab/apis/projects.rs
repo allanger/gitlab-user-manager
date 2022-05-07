@@ -1,14 +1,14 @@
 use crate::{
     gitlab::{
-        types::project::{ProjectsWithShared, SharedWithGroups},
-        CustomMember, Project,
+        types::project::{ProjectsWithShared, SharedWithGroups, Project},
+        CustomMember,
     },
     output::{out_message::OutMessage, out_spinner::OutSpinner},
-    types::v1::access_level::AccessLevel,
+    types::v1::AccessLevel,
 };
 use core::time;
 use gitlab::{
-    api::{self, groups, projects, ApiError, Query},
+    api::{self, projects, ApiError, Query},
     Gitlab,
 };
 use std::{
@@ -17,14 +17,14 @@ use std::{
 };
 
 pub(crate) trait GitlabProjectsApi {
-    fn get_data_by_id(&self, id: u64) -> Result<Project>;
     fn add_user(&self, uid: u64, pid: u64, access_level: AccessLevel) -> Result<String>;
-    fn remove_user(&self, uid: u64, pid: u64) -> Result<String>;
     fn edit_user(&self, uid: u64, pid: u64, access_level: AccessLevel) -> Result<String>;
+    fn get_data_by_id(&self, id: u64) -> Result<Project>;
+    fn get_groups_shared_with(&self, pid: u64) -> Result<Vec<SharedWithGroups>>;
     fn get_members(&self, name: String, id: u64) -> Vec<CustomMember>;
+    fn remove_user(&self, uid: u64, pid: u64) -> Result<String>;
     fn share_with_group(&self, gid: u64, pid: u64, access_level: AccessLevel) -> Result<String>;
     fn stop_sharing_with_group(&self, gid: u64, pid: u64) -> Result<String>;
-    fn get_groups_shared_with(&self, pid: u64) -> Result<Vec<SharedWithGroups>>;
 }
 
 pub(crate) struct ProjectsGitlab {
@@ -32,6 +32,52 @@ pub(crate) struct ProjectsGitlab {
 }
 
 impl GitlabProjectsApi for ProjectsGitlab {
+    fn add_user(&self, uid: u64, pid: u64, access_level: AccessLevel) -> Result<String> {
+        let q = match projects::members::AddProjectMember::builder()
+            .access_level(access_level.to_gitlab_access_level())
+            .user(uid)
+            .project(pid)
+            .build()
+        {
+            Ok(q) => q,
+            Err(err) => {
+                return Err(Error::new(std::io::ErrorKind::Other, err.to_string()));
+            }
+        };
+        let _: () = match api::ignore(q).query(&self.gitlab_client) {
+            Ok(_) => return Ok("Added".to_string()),
+            Err(err) => {
+                if let ApiError::Gitlab { msg } = err {
+                    if msg == "Member already exists" {
+                        return Ok("Already added".to_string());
+                    }
+                    return Err(Error::new(ErrorKind::AddrNotAvailable, msg));
+                } else {
+                    return Err(Error::new(ErrorKind::AddrNotAvailable, err));
+                };
+            }
+        };
+    }
+
+    fn edit_user(&self, uid: u64, pid: u64, access_level: AccessLevel) -> Result<String> {
+        let q = match projects::members::EditProjectMember::builder()
+            .access_level(access_level.to_gitlab_access_level())
+            .user(uid)
+            .project(pid)
+            .build()
+        {
+            Ok(q) => q,
+            Err(err) => {
+                return Err(Error::new(std::io::ErrorKind::Other, err.to_string()));
+            }
+        };
+        let _: () = match api::ignore(q).query(&self.gitlab_client) {
+            Ok(_) => return Ok("Updated".to_string()),
+            Err(_) => return Err(Error::new(ErrorKind::AddrNotAvailable, "asd")),
+        };
+    }
+
+
     fn get_data_by_id(&self, id: u64) -> Result<Project> {
         let project = match projects::Project::builder().project(id).build() {
             Ok(project) => project,
@@ -62,31 +108,34 @@ impl GitlabProjectsApi for ProjectsGitlab {
         Ok(output)
     }
 
-    fn add_user(&self, uid: u64, pid: u64, access_level: AccessLevel) -> Result<String> {
-        let q = match projects::members::AddProjectMember::builder()
-            .access_level(access_level.to_gitlab_access_level())
-            .user(uid)
-            .project(pid)
-            .build()
-        {
-            Ok(q) => q,
+    fn get_groups_shared_with(&self, id: u64) -> Result<Vec<SharedWithGroups>> {
+        let group = match projects::Project::builder().project(id).build() {
+            Ok(group) => group,
             Err(err) => {
                 return Err(Error::new(std::io::ErrorKind::Other, err.to_string()));
             }
         };
-        let _: () = match api::ignore(q).query(&self.gitlab_client) {
-            Ok(_) => return Ok("Added".to_string()),
-            Err(err) => {
-                if let ApiError::Gitlab { msg } = err {
-                    if msg == "Member already exists" {
-                        return Ok("Already added".to_string());
-                    }
-                    return Err(Error::new(ErrorKind::AddrNotAvailable, msg));
-                } else {
-                    return Err(Error::new(ErrorKind::AddrNotAvailable, err));
-                };
-            }
+        let shared: ProjectsWithShared = group.query(&self.gitlab_client).unwrap_or_else(|err| {
+            OutMessage::message_info_clean(format!("{}", err).as_str());
+
+            return ProjectsWithShared::default();
+        });
+        let r = shared.shared_with_groups();
+        Ok(r)
+    }
+
+    fn get_members(&self, name: String, id: u64) -> Vec<CustomMember> {
+        let spinner = OutSpinner::spinner_start(format!("Getting projects from {}", name));
+        let query = match projects::members::ProjectMembers::builder()
+            .project(id)
+            .build()
+        {
+            Ok(q) => q,
+            Err(_) => todo!(),
         };
+        let users: Vec<CustomMember> = query.query(&self.gitlab_client).unwrap();
+        OutSpinner::spinner_success(spinner, "Done".to_string());
+        users
     }
 
     fn remove_user(&self, uid: u64, pid: u64) -> Result<String> {
@@ -114,39 +163,6 @@ impl GitlabProjectsApi for ProjectsGitlab {
                 };
             }
         };
-    }
-
-    fn edit_user(&self, uid: u64, pid: u64, access_level: AccessLevel) -> Result<String> {
-        let q = match projects::members::EditProjectMember::builder()
-            .access_level(access_level.to_gitlab_access_level())
-            .user(uid)
-            .project(pid)
-            .build()
-        {
-            Ok(q) => q,
-            Err(err) => {
-                return Err(Error::new(std::io::ErrorKind::Other, err.to_string()));
-            }
-        };
-        let _: () = match api::ignore(q).query(&self.gitlab_client) {
-            Ok(_) => return Ok("Updated".to_string()),
-            Err(_) => return Err(Error::new(ErrorKind::AddrNotAvailable, "asd")),
-        };
-    }
-
-    fn get_members(&self, name: String, id: u64) -> Vec<CustomMember> {
-        let spinner = OutSpinner::spinner_start(format!("Getting projects from {}", name));
-        let query = match projects::members::ProjectMembers::builder()
-            .project(id)
-            .build()
-        {
-            Ok(q) => q,
-            Err(_) => todo!(),
-        };
-        let users: Vec<CustomMember> = query.query(&self.gitlab_client).unwrap();
-        OutSpinner::spinner_success(spinner, "Done".to_string());
-        users
-
     }
 
     fn share_with_group(&self, gid: u64, pid: u64, access_level: AccessLevel) -> Result<String> {
@@ -202,56 +218,5 @@ impl GitlabProjectsApi for ProjectsGitlab {
             }
         };
     }
-
-    fn get_groups_shared_with(&self, id: u64) -> Result<Vec<SharedWithGroups>> {
-        let group = match projects::Project::builder().project(id).build() {
-            Ok(group) => group,
-            Err(err) => {
-                return Err(Error::new(std::io::ErrorKind::Other, err.to_string()));
-            }
-        };
-        let shared: ProjectsWithShared = group.query(&self.gitlab_client).unwrap_or_else(|err| {
-            OutMessage::message_info_clean(format!("{}", err).as_str());
-
-            return ProjectsWithShared::default();
-        });
-        let r = shared.shared_with_groups();
-        Ok(r)
-    }
 }
 
-pub(crate) struct ProjectsGitlabMock;
-
-impl GitlabProjectsApi for ProjectsGitlabMock {
-    fn get_data_by_id(&self, id: u64) -> Result<Project> {
-        todo!()
-    }
-
-    fn add_user(&self, uid: u64, pid: u64, access_level: AccessLevel) -> Result<String> {
-        todo!()
-    }
-
-    fn remove_user(&self, uid: u64, pid: u64) -> Result<String> {
-        todo!()
-    }
-
-    fn edit_user(&self, uid: u64, pid: u64, access_level: AccessLevel) -> Result<String> {
-        todo!()
-    }
-
-    fn get_members(&self, name: String, id: u64) -> Vec<CustomMember> {
-        todo!()
-    }
-
-    fn share_with_group(&self, gid: u64, pid: u64, access_level: AccessLevel) -> Result<String> {
-        todo!()
-    }
-
-    fn stop_sharing_with_group(&self, gid: u64, pid: u64) -> Result<String> {
-        todo!()
-    }
-
-    fn get_groups_shared_with(&self, group_id: u64) -> Result<Vec<SharedWithGroups>> {
-        todo!()
-    }
-}
