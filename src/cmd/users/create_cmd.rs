@@ -1,28 +1,13 @@
 use std::io::Result;
-use std::io::{Error, ErrorKind};
 
 use clap::{ArgMatches, Command};
-use gitlab::Gitlab;
 
 use crate::args::{ArgFileName, ArgGitlabToken, ArgGitlabUrl, ArgUserId, Args};
-use crate::cmd::{Cmd, CmdOld};
-use crate::gitlab::GitlabClient;
-use crate::gitlab::{GitlabActions, GitlabApi};
-use crate::output::out_message::OutMessage;
+use crate::cmd::Cmd;
+use crate::gitlab::GitlabApi;
 use crate::service::v1;
 use crate::types::common::{Version, Versions};
 use crate::types::v1::ConfigFile;
-use crate::types::v1::User;
-
-pub(crate) fn add_create_cmd() -> Command<'static> {
-    return Command::new("create")
-        .alias("c")
-        .about("Add user to the config file")
-        .arg(ArgUserId::add())
-        .arg(ArgGitlabToken::add())
-        .arg(ArgGitlabUrl::add())
-        .arg(ArgFileName::add());
-}
 
 pub(crate) struct CreateCmd {
     gitlab_user_id: u64,
