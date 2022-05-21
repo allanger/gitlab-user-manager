@@ -1,11 +1,10 @@
 use crate::{
     gitlab::{
-        apis::{groups::GitlabGroupsApi, projects::GitlabProjectsApi, users::GitlabUsersApi},
-        types::group::Group,
-        GitlabApiInterface, Project,
+        apis::users::GitlabUsersApi,
+        GitlabApiInterface,
     },
     output::out_message::OutMessage,
-    types::v1::{self, AccessLevel, ConfigFile, Namespace, User},
+    types::v1::{ConfigFile, User},
 };
 use std::io::{Error, ErrorKind, Result};
 
