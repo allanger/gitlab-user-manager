@@ -14,12 +14,12 @@ use clap::{ArgMatches, Command};
 
 use self::{
     add_namespace_cmd::add_add_namespace_cmd, add_project_cmd::add_add_project_cmd,
-    add_team_cmd::add_add_team_cmd, create_cmd::{add_create_cmd, CreateCmd}, list_cmd::add_list_cmd,
-    remove_cmd::add_remove_cmd, remove_namespace_cmd::add_remove_namespace_cmd,
+    add_team_cmd::add_add_team_cmd, create_cmd::CreateCmd, list_cmd::add_list_cmd,
+    remove_cmd::RemoveCmd, remove_namespace_cmd::add_remove_namespace_cmd,
     remove_project_cmd::add_remove_project_cmd, remove_team_cmd::add_remove_team_cmd,
 };
 
-use super::{CmdOld, Cmd};
+use super::{Cmd, CmdOld};
 
 pub(crate) fn add_users_cmd() -> Command<'static> {
     return Command::new("users")
@@ -28,7 +28,7 @@ pub(crate) fn add_users_cmd() -> Command<'static> {
         .arg_required_else_help(true)
         .subcommand(CreateCmd::add())
         .subcommand(add_list_cmd())
-        .subcommand(add_remove_cmd())
+        .subcommand(RemoveCmd::add())
         .subcommand(add_add_project_cmd())
         .subcommand(add_remove_project_cmd())
         .subcommand(add_add_team_cmd())
@@ -58,7 +58,7 @@ impl<'a> CmdOld<'a> for UsersCmd<'a> {
                 }
             }
             Some(("remove", sub_matches)) => {
-                result = match remove_cmd::prepare(sub_matches) {
+                result = match RemoveCmd::prepare(sub_matches) {
                     Ok(cmd) => cmd.exec(),
                     Err(err) => Err(err),
                 }

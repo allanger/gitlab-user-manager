@@ -21,10 +21,17 @@ pub(crate) struct UsersService<T: GitlabApiInterface> {
 #[derive(Debug, Clone)]
 pub(crate) enum Action {
     Create,
+    Remove,
 }
 
 impl<T: GitlabApiInterface> UsersService<T> {
-    pub(crate) fn new(config_path: String, file_path: String, gitlab_api: T, user_id: u64, action: Action) -> Self {
+    pub(crate) fn new(
+        config_path: String,
+        file_path: String,
+        gitlab_api: T,
+        user_id: u64,
+        action: Action,
+    ) -> Self {
         Self {
             config_file: ConfigFile::read(config_path).unwrap(),
             file_path,
@@ -65,8 +72,25 @@ impl<T: GitlabApiInterface> UsersService<T> {
                     OutMessage::message_info_clean(
                         format!("User {} is added to the config", user.name).as_str(),
                     );
-                    return Ok(self);
+                    Ok(self)
                 }
+            }
+            Action::Remove => {
+                for (i, user) in self.config_file.config().users.iter().enumerate() {
+                    if user.id == self.user_id {
+                        let u = User {
+                            id: user.id,
+                            name: user.name.to_string(),
+                            ..Default::default()
+                        };
+                        OutMessage::message_info_clean(
+                            format!("removing user {} from config", u.name).as_str(),
+                        );
+                        self.config_file.config_mut().users.remove(i);
+                        break;
+                    }
+                }
+                Ok(self)
             }
         }
     }
