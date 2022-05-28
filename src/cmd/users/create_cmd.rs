@@ -1,13 +1,11 @@
-use std::io::Result;
-
-use clap::{ArgMatches, Command};
-
 use crate::args::{ArgFileName, ArgGitlabToken, ArgGitlabUrl, ArgUserId, Args};
 use crate::cmd::Cmd;
 use crate::gitlab::GitlabApi;
 use crate::service::v1;
 use crate::types::common::{Version, Versions};
 use crate::types::v1::ConfigFile;
+use clap::{ArgMatches, Command};
+use std::io::Result;
 
 pub(crate) struct CreateCmd {
     gitlab_user_id: u64,
@@ -50,10 +48,9 @@ impl CreateCmd {
         let mut svc = v1::users::UsersService::new(
             self.file_name.clone(),
             self.file_name.clone(),
-            GitlabApi::new(&self.gitlab_url, &self.gitlab_token)?,
             self.gitlab_user_id,
-            v1::users::Action::Create,
         );
-        svc.exec()?.write_state()
+        svc.create(GitlabApi::new(&self.gitlab_url, &self.gitlab_token)?)?
+            .write_state()
     }
 }

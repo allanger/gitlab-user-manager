@@ -14,7 +14,7 @@ use clap::{ArgMatches, Command};
 
 use self::{
     add_namespace_cmd::add_add_namespace_cmd, add_project_cmd::add_add_project_cmd,
-    add_team_cmd::add_add_team_cmd, create_cmd::CreateCmd, list_cmd::add_list_cmd,
+    add_team_cmd::add_add_team_cmd, create_cmd::CreateCmd, list_cmd::{add_list_cmd, ListCmd},
     remove_cmd::RemoveCmd, remove_namespace_cmd::add_remove_namespace_cmd,
     remove_project_cmd::add_remove_project_cmd, remove_team_cmd::add_remove_team_cmd,
 };
@@ -27,7 +27,7 @@ pub(crate) fn add_users_cmd() -> Command<'static> {
         .about("Manage GitLab users")
         .arg_required_else_help(true)
         .subcommand(CreateCmd::add())
-        .subcommand(add_list_cmd())
+        .subcommand(ListCmd::add())
         .subcommand(RemoveCmd::add())
         .subcommand(add_add_project_cmd())
         .subcommand(add_remove_project_cmd())
@@ -64,7 +64,7 @@ impl<'a> CmdOld<'a> for UsersCmd<'a> {
                 }
             }
             Some(("list", sub_matches)) => {
-                result = match list_cmd::prepare(sub_matches) {
+                result = match ListCmd::prepare(sub_matches) {
                     Ok(cmd) => cmd.exec(),
                     Err(err) => Err(err),
                 }
