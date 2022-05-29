@@ -1,55 +1,44 @@
-use std::io::Error;
-
+use crate::args::{ArgFileName, ArgUserId, Args};
+use crate::cmd::Cmd;
+use crate::service::v1;
+use crate::types::common::{Version, Versions};
+use crate::types::v1::ConfigFile;
 use clap::{ArgMatches, Command};
+use std::io::Result;
 
-use crate::{
-    args::{ArgFileName, ArgUserId, Args},
-    cmd::CmdOld,
-    output::out_message::OutMessage,
-    types::v1::{ConfigFile, User},
-};
-
-pub(crate) fn add_remove_cmd() -> Command<'static> {
-    return Command::new("remove")
-        .alias("r")
-        .about("Remove user from the config file")
-        .arg(ArgUserId::add())
-        .arg(ArgFileName::add());
-}
-
-struct RemoveCmd {
+pub(crate) struct RemoveCmd {
     gitlab_user_id: u64,
     file_name: String,
 }
 
-pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>, Error> {
-    let gitlab_user_id = ArgUserId::parse(sub_matches)?;
-    let file_name = ArgFileName::parse(sub_matches)?;
+impl Cmd for RemoveCmd {
+    type CmdType = RemoveCmd;
 
-    Ok(RemoveCmd {
-        gitlab_user_id,
-        file_name,
-    })
+    fn add() -> Command<'static> {
+        Command::new("remove")
+            .alias("r")
+            .about("Remove user from config file")
+            .arg(ArgUserId::add())
+            .arg(ArgFileName::add())
+    }
+
+    fn prepare(sub_matches: &'_ ArgMatches) -> std::io::Result<Self::CmdType> {
+        Ok(Self {
+            gitlab_user_id: ArgUserId::parse(sub_matches)?,
+            file_name: ArgFileName::parse(sub_matches)?,
+        })
+    }
+
+    fn exec(&self) -> std::io::Result<()> {
+        match ConfigFile::read(self.file_name.clone())?.get_version()? {
+            Versions::V1 => self.exec_v1(),
+        }
+    }
 }
 
-impl<'a> CmdOld<'a> for RemoveCmd {
-    fn exec(&self) -> Result<(), Error> {
-        let mut config_file = ConfigFile::read(self.file_name.clone())?;
-
-        for (i, user) in config_file.config().users.iter().enumerate() {
-            if user.id == self.gitlab_user_id {
-                let u = User {
-                    id: user.id,
-                    name: user.name.to_string(),
-                    ..Default::default()
-                };
-                OutMessage::message_info_clean(
-                    format!("removing user {} from config", u.name).as_str(),
-                );
-                config_file.config_mut().users.remove(i);
-                break;
-            }
-        }
-        config_file.write(self.file_name.clone())
+impl RemoveCmd {
+    fn exec_v1(&self) -> Result<()> {
+        let mut svc = v1::users::UsersService::new(self.file_name.clone(), self.file_name.clone());
+        svc.remove(self.gitlab_user_id)?.write_state()
     }
 }

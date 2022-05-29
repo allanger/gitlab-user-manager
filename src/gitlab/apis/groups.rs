@@ -210,7 +210,7 @@ pub(crate) struct GroupGitlabMock;
 impl GitlabGroupsApi for GroupGitlabMock {
     fn get_data_by_id(&self, id: u64) -> Result<Group> {
         let group = Group {
-            id: id,
+            id,
             name: "group_name".to_string(),
             web_url: "http://localhost/group".to_string(),
         };

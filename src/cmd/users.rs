@@ -7,34 +7,30 @@ mod remove_cmd;
 mod remove_namespace_cmd;
 mod remove_project_cmd;
 mod remove_team_cmd;
-
-use std::io::Error;
-
-use clap::{ArgMatches, Command};
-
 use self::{
-    add_namespace_cmd::add_add_namespace_cmd, add_project_cmd::add_add_project_cmd,
-    add_team_cmd::add_add_team_cmd, create_cmd::add_create_cmd, list_cmd::add_list_cmd,
-    remove_cmd::add_remove_cmd, remove_namespace_cmd::add_remove_namespace_cmd,
-    remove_project_cmd::add_remove_project_cmd, remove_team_cmd::add_remove_team_cmd,
+    add_namespace_cmd::AddNamespaceCmd, add_project_cmd::AddProjectCmd, add_team_cmd::AddTeamCmd,
+    create_cmd::CreateCmd, list_cmd::ListCmd, remove_cmd::RemoveCmd,
+    remove_namespace_cmd::RemoveNamespaceCmd, remove_project_cmd::RemoveProjectCmd,
+    remove_team_cmd::RemoveTeamCmd,
 };
-
-use super::CmdOld;
+use super::{Cmd, CmdOld};
+use clap::{ArgMatches, Command};
+use std::io::Error;
 
 pub(crate) fn add_users_cmd() -> Command<'static> {
     return Command::new("users")
         .aliases(&["u", "users"])
         .about("Manage GitLab users")
         .arg_required_else_help(true)
-        .subcommand(add_create_cmd())
-        .subcommand(add_list_cmd())
-        .subcommand(add_remove_cmd())
-        .subcommand(add_add_project_cmd())
-        .subcommand(add_remove_project_cmd())
-        .subcommand(add_add_team_cmd())
-        .subcommand(add_remove_team_cmd())
-        .subcommand(add_add_namespace_cmd())
-        .subcommand(add_remove_namespace_cmd());
+        .subcommand(CreateCmd::add())
+        .subcommand(ListCmd::add())
+        .subcommand(RemoveCmd::add())
+        .subcommand(AddProjectCmd::add())
+        .subcommand(RemoveProjectCmd::add())
+        .subcommand(AddTeamCmd::add())
+        .subcommand(RemoveTeamCmd::add())
+        .subcommand(AddNamespaceCmd::add())
+        .subcommand(RemoveNamespaceCmd::add());
 }
 
 pub(crate) struct UsersCmd<'a> {
@@ -52,55 +48,55 @@ impl<'a> CmdOld<'a> for UsersCmd<'a> {
         let result;
         match self.users_sub {
             Some(("create", sub_matches)) => {
-                result = match create_cmd::prepare(sub_matches) {
+                result = match CreateCmd::prepare(sub_matches) {
                     Ok(cmd) => cmd.exec(),
                     Err(err) => Err(err),
                 }
             }
             Some(("remove", sub_matches)) => {
-                result = match remove_cmd::prepare(sub_matches) {
+                result = match RemoveCmd::prepare(sub_matches) {
                     Ok(cmd) => cmd.exec(),
                     Err(err) => Err(err),
                 }
             }
             Some(("list", sub_matches)) => {
-                result = match list_cmd::prepare(sub_matches) {
+                result = match ListCmd::prepare(sub_matches) {
                     Ok(cmd) => cmd.exec(),
                     Err(err) => Err(err),
                 }
             }
             Some(("add-project", sub_matches)) => {
-                result = match add_project_cmd::prepare(sub_matches) {
+                result = match AddProjectCmd::prepare(sub_matches) {
                     Ok(cmd) => cmd.exec(),
                     Err(err) => Err(err),
                 }
             }
             Some(("remove-project", sub_matches)) => {
-                result = match remove_project_cmd::prepare(sub_matches) {
+                result = match RemoveProjectCmd::prepare(sub_matches) {
                     Ok(cmd) => cmd.exec(),
                     Err(err) => Err(err),
                 }
             }
             Some(("add-team", sub_matches)) => {
-                result = match add_team_cmd::prepare(sub_matches) {
+                result = match AddTeamCmd::prepare(sub_matches) {
                     Ok(cmd) => cmd.exec(),
                     Err(err) => Err(err),
                 }
             }
             Some(("remove-team", sub_matches)) => {
-                result = match remove_team_cmd::prepare(sub_matches) {
+                result = match RemoveTeamCmd::prepare(sub_matches) {
                     Ok(cmd) => cmd.exec(),
                     Err(err) => Err(err),
                 }
             }
             Some(("add-namespace", sub_matches)) => {
-                result = match add_namespace_cmd::prepare(sub_matches) {
+                result = match AddNamespaceCmd::prepare(sub_matches) {
                     Ok(cmd) => cmd.exec(),
                     Err(err) => Err(err),
                 }
             }
             Some(("remove-namespace", sub_matches)) => {
-                result = match remove_namespace_cmd::prepare(sub_matches) {
+                result = match RemoveNamespaceCmd::prepare(sub_matches) {
                     Ok(cmd) => cmd.exec(),
                     Err(err) => Err(err),
                 }

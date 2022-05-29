@@ -1,11 +1,10 @@
-use std::io::Error;
-
-use clap::{ArgMatches, Command};
-
 use crate::args::{ArgFileName, ArgTeamName, ArgUserId, Args};
-use crate::cmd::CmdOld;
-use crate::output::out_message::OutMessage;
+use crate::cmd::Cmd;
+use crate::service::v1;
+use crate::types::common::{Version, Versions};
 use crate::types::v1::ConfigFile;
+use clap::{ArgMatches, Command};
+use std::io::Result;
 
 pub(crate) struct RemoveTeamCmd {
     gitlab_user_id: u64,
@@ -13,46 +12,37 @@ pub(crate) struct RemoveTeamCmd {
     file_name: String,
 }
 
-pub(crate) fn add_remove_team_cmd() -> Command<'static> {
-    return Command::new("remove-team")
-        .alias("rt")
-        .about("Remove a user from the team")
-        .arg(ArgUserId::add())
-        .arg(ArgTeamName::add())
-        .arg(ArgFileName::add());
-}
+impl Cmd for RemoveTeamCmd {
+    type CmdType = RemoveTeamCmd;
 
-pub(crate) fn prepare(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'_>, Error> {
-    let gitlab_user_id = ArgUserId::parse(sub_matches)?;
+    fn add() -> Command<'static> {
+        Command::new("remove-team")
+            .alias("rt")
+            .about("Remove a user from the team")
+            .arg(ArgUserId::add())
+            .arg(ArgTeamName::add())
+            .arg(ArgFileName::add())
+    }
 
-    let team_name = ArgTeamName::parse(sub_matches)?;
-    let file_name = ArgFileName::parse(sub_matches)?;
+    fn prepare(sub_matches: &'_ ArgMatches) -> std::io::Result<Self::CmdType> {
+        Ok(Self {
+            gitlab_user_id: ArgUserId::parse(sub_matches)?,
+            team_name: ArgTeamName::parse(sub_matches)?,
+            file_name: ArgFileName::parse(sub_matches)?,
+        })
+    }
 
-    Ok(RemoveTeamCmd {
-        team_name,
-        gitlab_user_id,
-        file_name,
-    })
-}
-
-impl<'a> CmdOld<'a> for RemoveTeamCmd {
-    fn exec(&self) -> Result<(), Error> {
-        let mut config_file = ConfigFile::read(self.file_name.clone())?;
-
-        for u in config_file.config_mut().users.iter_mut() {
-            if u.id == self.gitlab_user_id {
-                for (i, p) in u.teams.iter().enumerate() {
-                    if p == &self.team_name {
-                        OutMessage::message_info_clean(
-                            format!("removing user {} from team {}", u.name, p).as_str(),
-                        );
-
-                        u.teams.remove(i);
-                        break;
-                    }
-                }
-            }
+    fn exec(&self) -> std::io::Result<()> {
+        match ConfigFile::read(self.file_name.clone())?.get_version()? {
+            Versions::V1 => self.exec_v1(),
         }
-        config_file.write(self.file_name.clone())
+    }
+}
+
+impl RemoveTeamCmd {
+    fn exec_v1(&self) -> Result<()> {
+        let mut svc = v1::users::UsersService::new(self.file_name.clone(), self.file_name.clone());
+        svc.remove_from_team(self.gitlab_user_id, self.team_name.clone())?
+            .write_state()
     }
 }
