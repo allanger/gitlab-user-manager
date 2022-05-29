@@ -1,17 +1,16 @@
-use std::io::Result;
-use clap::{ArgMatches, Command};
-
 use crate::args::{ArgFileName, ArgNamespaceId, ArgUserId, Args};
-use crate::cmd::{Cmd, CmdOld};
-use crate::output::out_message::OutMessage;
+use crate::cmd::Cmd;
+use crate::service::v1;
+use crate::types::common::{Version, Versions};
 use crate::types::v1::ConfigFile;
+use clap::{ArgMatches, Command};
+use std::io::Result;
 
 pub(crate) struct RemoveNamespaceCmd {
     gitlab_user_id: u64,
     gitlab_group_id: u64,
     file_name: String,
 }
-
 
 impl Cmd for RemoveNamespaceCmd {
     type CmdType = RemoveNamespaceCmd;
@@ -43,6 +42,7 @@ impl Cmd for RemoveNamespaceCmd {
 impl RemoveNamespaceCmd {
     fn exec_v1(&self) -> Result<()> {
         let mut svc = v1::users::UsersService::new(self.file_name.clone(), self.file_name.clone());
-        svc.remove_from_namespace(self.gitlab_user_id)?.write_state()
+        svc.remove_from_namespace(self.gitlab_user_id, self.gitlab_group_id)?
+            .write_state()
     }
 }

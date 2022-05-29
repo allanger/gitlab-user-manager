@@ -224,6 +224,42 @@ impl UsersService {
         Ok(self)
     }
 
+    pub(crate) fn remove_from_project(&mut self, uid: u64, pid: u64) -> Result<&mut Self> {
+        for u in self.config_file.config_mut().users.iter_mut() {
+            if u.id == uid {
+                for (i, p) in u.projects.iter().enumerate() {
+                    if p.id == pid {
+                        OutMessage::message_info_clean(
+                            format!("removing user {} from project {}", u.name, p.name).as_str(),
+                        );
+
+                        u.projects.remove(i);
+                        break;
+                    }
+                }
+            }
+        }
+        Ok(self)
+    }
+
+    pub(crate) fn remove_from_team(&mut self, uid: u64, team_name: String) -> Result<&mut Self> {
+        for u in self.config_file.config_mut().users.iter_mut() {
+            if u.id == uid {
+                for (i, p) in u.teams.iter().enumerate() {
+                    if p == &team_name {
+                        OutMessage::message_info_clean(
+                            format!("removing user {} from team {}", u.name, p).as_str(),
+                        );
+
+                        u.teams.remove(i);
+                        break;
+                    }
+                }
+            }
+        }
+        Ok(self)
+    }
+
     pub(crate) fn write_state(&self) -> Result<()> {
         match self.config_file.write(self.file_path.clone()) {
             Ok(_) => Ok(()),
