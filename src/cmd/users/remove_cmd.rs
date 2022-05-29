@@ -23,7 +23,7 @@ impl Cmd for RemoveCmd {
     }
 
     fn prepare(sub_matches: &'_ ArgMatches) -> std::io::Result<Self::CmdType> {
-        Ok(RemoveCmd {
+        Ok(Self {
             gitlab_user_id: ArgUserId::parse(sub_matches)?,
             file_name: ArgFileName::parse(sub_matches)?,
         })
@@ -41,8 +41,7 @@ impl RemoveCmd {
         let mut svc = v1::users::UsersService::new(
             self.file_name.clone(),
             self.file_name.clone(),
-            self.gitlab_user_id,
         );
-        svc.remove()?.write_state()
+        svc.remove(self.gitlab_user_id,)?.write_state()
     }
 }

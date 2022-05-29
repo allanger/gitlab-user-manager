@@ -1,10 +1,13 @@
-use std::io::{Error, ErrorKind};
+use std::io::{Error, ErrorKind, Result};
 
 use clap::{ArgMatches, Command};
 
 use crate::args::{ArgFileName, ArgTeamName, ArgUserId, Args};
-use crate::cmd::CmdOld;
+use crate::cmd::{Cmd, CmdOld};
+use crate::gitlab::GitlabApi;
 use crate::output::out_spinner::OutSpinner;
+use crate::service::v1;
+use crate::types::common::{Versions, Version};
 use crate::types::v1::ConfigFile;
 
 pub(crate) struct AddTeamCmd {
@@ -12,53 +15,38 @@ pub(crate) struct AddTeamCmd {
     team_name: String,
     file_name: String,
 }
-pub(crate) fn add_add_team_cmd() -> Command<'static> {
-    return Command::new("add-team")
-        .alias("at")
-        .about("Add user to the team")
-        .arg(ArgTeamName::add())
-        .arg(ArgUserId::add())
-        .arg(ArgFileName::add());
-}
 
-pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>, Error> {
-    let gitlab_user_id = ArgUserId::parse(sub_matches)?;
-    let team_name = ArgTeamName::parse(sub_matches)?;
-    let file_name = ArgFileName::parse(sub_matches)?;
+impl Cmd for AddTeamCmd {
+    type CmdType = AddTeamCmd;
 
-    Ok(AddTeamCmd {
-        team_name,
-        gitlab_user_id,
-        file_name,
-    })
-}
+    fn add() -> Command<'static> {
+        Command::new("add-team")
+            .alias("at")
+            .about("Add user to the team")
+            .arg(ArgTeamName::add())
+            .arg(ArgUserId::add())
+            .arg(ArgFileName::add())
+    }
 
-impl<'a> CmdOld<'a> for AddTeamCmd {
-    fn exec(&self) -> Result<(), Error> {
-        let mut config_file = ConfigFile::read(self.file_name.clone())?;
+    fn prepare(sub_matches: &'_ ArgMatches) -> std::io::Result<Self::CmdType> {
+        Ok(Self {
+            gitlab_user_id: ArgUserId::parse(sub_matches)?,
+            team_name: ArgTeamName::parse(sub_matches)?,
+            file_name: ArgFileName::parse(sub_matches)?,
+        })
+    }
 
-        for user in config_file.config_mut().users.iter_mut() {
-            if user.id == self.gitlab_user_id {
-                let spinner = OutSpinner::spinner_start(format!(
-                    "Adding {} to {}",
-                    user.name, self.team_name
-                ));
-
-                if user.teams.iter().any(|t| *t == self.team_name) {
-                    return Err(Error::new(
-                        ErrorKind::AlreadyExists,
-                        format!(
-                            "the user {} is already a member of the team '{}'",
-                            user.name, self.team_name
-                        ),
-                    ));
-                }
-                user.teams.extend([self.team_name.to_string()]);
-                spinner.spinner_success("Added".to_string());
-
-                break;
-            }
+    fn exec(&self) -> std::io::Result<()> {
+        match ConfigFile::read(self.file_name.clone())?.get_version()? {
+            Versions::V1 => self.exec_v1(),
         }
-        config_file.write(self.file_name.clone())
+    }
+}
+
+impl AddTeamCmd {
+    fn exec_v1(&self) -> Result<()> {
+        let mut svc = v1::users::UsersService::new(self.file_name.clone(), self.file_name.clone());
+        svc.add_to_team(self.gitlab_user_id, self.team_name.clone())?
+            .write_state()
     }
 }

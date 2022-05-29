@@ -1,33 +1,34 @@
+use console::style;
+
 use crate::{
-    gitlab::{apis::users::GitlabUsersApi, GitlabApiInterface},
-    output::{out_extra::OutExtra, out_message::OutMessage},
-    types::v1::{ConfigFile, User},
+    gitlab::{
+        apis::{groups::GitlabGroupsApi, projects::GitlabProjectsApi, users::GitlabUsersApi},
+        GitlabApiInterface,
+    },
+    output::{out_extra::OutExtra, out_message::OutMessage, out_spinner::OutSpinner},
+    types::v1::{AccessLevel, ConfigFile, Namespace, Project, User},
 };
 use std::io::{Error, ErrorKind, Result};
 
-//InitService should be used to generate an initial config file
-// pub(crate) struct UsersService<T: GitlabApiInterface> {
 pub(crate) struct UsersService {
     config_file: ConfigFile,
     file_path: String,
-    user_id: u64,
 }
 
 impl UsersService {
-    pub(crate) fn new(config_path: String, file_path: String, user_id: u64) -> Self {
+    pub(crate) fn new(config_path: String, file_path: String) -> Self {
         Self {
             config_file: ConfigFile::read(config_path).unwrap(),
             file_path,
-            user_id,
         }
     }
 
-    pub(crate) fn list(&mut self) -> Result<()> {
+    pub(crate) fn list(&mut self, large_out: bool) -> Result<()> {
         let total = &self.config_file.config().users.len();
 
         for user in self.config_file.config().users.clone() {
             let mut message = format!("{} - {}", user.id, user.name);
-            if self.large_out {
+            if large_out {
                 message.push_str(
                     format!(
                         "\nprojects: {:?}\nteams: {:?}\ngroups: {:?}\n",
@@ -45,14 +46,18 @@ impl UsersService {
         Ok(())
     }
 
-    pub(crate) fn create<T: GitlabApiInterface>(&mut self, gitlab_api: T) -> Result<&mut Self> {
+    pub(crate) fn create<T: GitlabApiInterface>(
+        &mut self,
+        gitlab_api: T,
+        user_id: u64,
+    ) -> Result<&mut Self> {
         OutMessage::message_info_with_alias("I'm getting data about the user from Gitlab");
         let users_api = gitlab_api.users();
 
-        let user = users_api.get_data_by_id(self.user_id)?;
+        let user = users_api.get_data_by_id(user_id)?;
 
         let new_user = User {
-            id: self.user_id,
+            id: user_id,
             name: user.name.to_string(),
             ..Default::default()
         };
@@ -62,7 +67,7 @@ impl UsersService {
             .config()
             .users
             .iter()
-            .any(|i| i.id == self.user_id)
+            .any(|i| i.id == user_id)
         {
             return Err(Error::new(
                 ErrorKind::AlreadyExists,
@@ -77,9 +82,9 @@ impl UsersService {
         }
     }
 
-    pub(crate) fn remove(&mut self) -> Result<&mut Self> {
+    pub(crate) fn remove(&mut self, user_id: u64) -> Result<&mut Self> {
         for (i, user) in self.config_file.config().users.iter().enumerate() {
-            if user.id == self.user_id {
+            if user.id == user_id {
                 let u = User {
                     id: user.id,
                     name: user.name.to_string(),
@@ -92,6 +97,111 @@ impl UsersService {
                 break;
             }
         }
+        Ok(self)
+    }
+
+    pub(crate) fn add_to_namespace<T: GitlabApiInterface>(
+        &mut self,
+        gitlab_api: T,
+        gid: u64,
+        uid: u64,
+        access_level: AccessLevel,
+    ) -> Result<&mut Self> {
+        OutMessage::message_info_with_alias("I'm getting data about the group from Gitlab");
+        let group_api = gitlab_api.groups();
+        let namespace = group_api.get_data_by_id(gid)?;
+
+        for user in self.config_file.config_mut().users.iter_mut() {
+            if user.id == uid {
+                let spinner = OutSpinner::spinner_start(format!(
+                    "Adding {} to {} as owner",
+                    user.name, namespace.name
+                ));
+                let o = Namespace {
+                    name: namespace.name.to_string(),
+                    access_level: access_level,
+                    id: namespace.id,
+                    url: namespace.web_url.to_string(),
+                };
+                if user.namespaces.iter().any(|i| i.id == o.id) {
+                    return Err(Error::new(
+                        ErrorKind::AlreadyExists,
+                        format!(
+                            "the user {} is already owner of this group: '{}'",
+                            user.name, o.name
+                        ),
+                    ));
+                }
+                user.namespaces.extend([o]);
+                spinner.spinner_success("Added".to_string());
+            }
+        }
+        Ok(self)
+    }
+
+    pub(crate) fn add_to_team(&mut self, uid: u64, team_name: String) -> Result<&mut Self> {
+        for user in self.config_file.config_mut().users.iter_mut() {
+            if user.id == uid {
+                let spinner =
+                    OutSpinner::spinner_start(format!("Adding {} to {}", user.name, team_name));
+
+                if user.teams.iter().any(|t| *t == team_name) {
+                    return Err(Error::new(
+                        ErrorKind::AlreadyExists,
+                        format!(
+                            "the user {} is already a member of the team '{}'",
+                            user.name, team_name
+                        ),
+                    ));
+                }
+                user.teams.extend([team_name.to_string()]);
+                spinner.spinner_success("Added".to_string());
+
+                break;
+            }
+        }
+        Ok(self)
+    }
+
+    pub(crate) fn add_to_project<T: GitlabApiInterface>(
+        &mut self,
+        gitlab_api: T,
+        pid: u64,
+        uid: u64,
+        access_level: AccessLevel,
+    ) -> Result<&mut Self> {
+        let projects_api = gitlab_api.projects();
+        OutMessage::message_info_with_alias("I'm getting data about the project from Gitlab");
+        let project = projects_api.get_data_by_id(pid)?;
+
+        for user in self.config_file.config_mut().users.iter_mut() {
+            if user.id == uid {
+                let spinner = OutSpinner::spinner_start(format!(
+                    "Adding {} to {} as {}",
+                    user.name, project.name, access_level,
+                ));
+
+                let p = Project {
+                    access_level: access_level,
+                    id: project.id,
+                    name: project.name,
+                };
+                if user.projects.iter().any(|i| i.id == p.id) {
+                    return Err(Error::new(
+                        ErrorKind::AlreadyExists,
+                        format!(
+                            "the user {} already has an access to this project: '{}'",
+                            user.name, p.name
+                        ),
+                    ));
+                }
+
+                user.projects.extend([p]);
+                spinner.spinner_success("Added".to_string());
+                break;
+            }
+        }
+
         Ok(self)
     }
 

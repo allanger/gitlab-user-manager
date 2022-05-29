@@ -28,7 +28,7 @@ impl Cmd for CreateCmd {
     }
 
     fn prepare(sub_matches: &'_ ArgMatches) -> std::io::Result<Self::CmdType> {
-        Ok(CreateCmd {
+        Ok(Self {
             gitlab_user_id: ArgUserId::parse(sub_matches)?,
             gitlab_url: ArgGitlabUrl::parse(sub_matches)?,
             gitlab_token: ArgGitlabToken::parse(sub_matches)?,
@@ -45,12 +45,11 @@ impl Cmd for CreateCmd {
 
 impl CreateCmd {
     fn exec_v1(&self) -> Result<()> {
-        let mut svc = v1::users::UsersService::new(
-            self.file_name.clone(),
-            self.file_name.clone(),
+        let mut svc = v1::users::UsersService::new(self.file_name.clone(), self.file_name.clone());
+        svc.create(
+            GitlabApi::new(&self.gitlab_url, &self.gitlab_token)?,
             self.gitlab_user_id,
-        );
-        svc.create(GitlabApi::new(&self.gitlab_url, &self.gitlab_token)?)?
-            .write_state()
+        )?
+        .write_state()
     }
 }

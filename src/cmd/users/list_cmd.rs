@@ -1,39 +1,25 @@
 use crate::{
     args::{ArgFileName, ArgLargeOut, Args},
-    cmd::{Cmd, CmdOld},
+    cmd::Cmd,
     service::v1,
+    types::{
+        common::{Version, Versions},
+        v1::ConfigFile,
+    },
 };
 use clap::{ArgMatches, Command};
-use std::io::Error;
 use std::io::Result;
 
-pub(crate) fn add_list_cmd() -> Command<'static> {
-    return Command::new("list")
-        .alias("l")
-        .about("List teams from config file")
-        .arg(ArgFileName::add())
-        .arg(ArgLargeOut::add());
-}
 pub(crate) struct ListCmd {
     file_name: String,
     large_out: bool,
-}
-
-pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl Cmd> {
-    let file_name = ArgFileName::parse(sub_matches)?;
-    let large_out: bool = ArgLargeOut::parse(sub_matches)?;
-
-    Ok(ListCmd {
-        file_name,
-        large_out,
-    })
 }
 
 impl Cmd for ListCmd {
     type CmdType = ListCmd;
 
     fn add() -> Command<'static> {
-        Command::new("create")
+        Command::new("list")
             .alias("l")
             .about("Add user to the config file")
             .arg(ArgFileName::add())
@@ -41,27 +27,22 @@ impl Cmd for ListCmd {
     }
 
     fn prepare(sub_matches: &'_ ArgMatches) -> std::io::Result<Self::CmdType> {
-        let file_name = ArgFileName::parse(sub_matches)?;
-        let large_out: bool = ArgLargeOut::parse(sub_matches)?;
-
-        Ok(ListCmd {
-            file_name,
-            large_out,
+        Ok(Self {
+            file_name: ArgFileName::parse(sub_matches)?,
+            large_out: ArgLargeOut::parse(sub_matches)?,
         })
     }
 
     fn exec(&self) -> std::io::Result<()> {
-        todo!()
+        match ConfigFile::read(self.file_name.clone())?.get_version()? {
+            Versions::V1 => self.exec_v1(),
+        }
     }
 }
 
 impl ListCmd {
     fn exec_v1(&self) -> Result<()> {
-        let mut svc = v1::users::UsersService::new(
-            self.file_name.clone(),
-            self.file_name.clone(),
-            self.gitlab_user_id,
-        );
-        svc.list()?.write_state()
+        let mut svc = v1::users::UsersService::new(self.file_name.clone(), self.file_name.clone());
+        svc.list(self.large_out)
     }
 }

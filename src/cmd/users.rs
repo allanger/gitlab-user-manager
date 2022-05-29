@@ -13,10 +13,10 @@ use std::io::Error;
 use clap::{ArgMatches, Command};
 
 use self::{
-    add_namespace_cmd::add_add_namespace_cmd, add_project_cmd::add_add_project_cmd,
-    add_team_cmd::add_add_team_cmd, create_cmd::CreateCmd, list_cmd::{add_list_cmd, ListCmd},
-    remove_cmd::RemoveCmd, remove_namespace_cmd::add_remove_namespace_cmd,
-    remove_project_cmd::add_remove_project_cmd, remove_team_cmd::add_remove_team_cmd,
+    add_namespace_cmd::AddNamespaceCmd, add_project_cmd::AddProjectCmd, add_team_cmd::AddTeamCmd,
+    create_cmd::CreateCmd, list_cmd::ListCmd, remove_cmd::RemoveCmd,
+    remove_namespace_cmd::add_remove_namespace_cmd, remove_project_cmd::add_remove_project_cmd,
+    remove_team_cmd::add_remove_team_cmd,
 };
 
 use super::{Cmd, CmdOld};
@@ -29,11 +29,11 @@ pub(crate) fn add_users_cmd() -> Command<'static> {
         .subcommand(CreateCmd::add())
         .subcommand(ListCmd::add())
         .subcommand(RemoveCmd::add())
-        .subcommand(add_add_project_cmd())
+        .subcommand(AddProjectCmd::add())
         .subcommand(add_remove_project_cmd())
-        .subcommand(add_add_team_cmd())
+        .subcommand(AddTeamCmd::add())
         .subcommand(add_remove_team_cmd())
-        .subcommand(add_add_namespace_cmd())
+        .subcommand(AddNamespaceCmd::add())
         .subcommand(add_remove_namespace_cmd());
 }
 
@@ -70,7 +70,7 @@ impl<'a> CmdOld<'a> for UsersCmd<'a> {
                 }
             }
             Some(("add-project", sub_matches)) => {
-                result = match add_project_cmd::prepare(sub_matches) {
+                result = match AddProjectCmd::prepare(sub_matches) {
                     Ok(cmd) => cmd.exec(),
                     Err(err) => Err(err),
                 }
@@ -82,7 +82,7 @@ impl<'a> CmdOld<'a> for UsersCmd<'a> {
                 }
             }
             Some(("add-team", sub_matches)) => {
-                result = match add_team_cmd::prepare(sub_matches) {
+                result = match AddTeamCmd::prepare(sub_matches) {
                     Ok(cmd) => cmd.exec(),
                     Err(err) => Err(err),
                 }
@@ -94,7 +94,7 @@ impl<'a> CmdOld<'a> for UsersCmd<'a> {
                 }
             }
             Some(("add-namespace", sub_matches)) => {
-                result = match add_namespace_cmd::prepare(sub_matches) {
+                result = match AddNamespaceCmd::prepare(sub_matches) {
                     Ok(cmd) => cmd.exec(),
                     Err(err) => Err(err),
                 }
