@@ -119,7 +119,7 @@ impl UsersService {
                 ));
                 let o = Namespace {
                     name: namespace.name.to_string(),
-                    access_level: access_level,
+                    access_level,
                     id: namespace.id,
                     url: namespace.web_url.to_string(),
                 };
@@ -182,7 +182,7 @@ impl UsersService {
                 ));
 
                 let p = Project {
-                    access_level: access_level,
+                    access_level,
                     id: project.id,
                     name: project.name,
                 };
@@ -202,6 +202,25 @@ impl UsersService {
             }
         }
 
+        Ok(self)
+    }
+
+    pub(crate) fn remove_from_namespace(&mut self, uid: u64, gid: u64) -> Result<&mut Self> {
+        for u in self.config_file.config_mut().users.iter_mut() {
+            if u.id == uid {
+                for (i, o) in u.namespaces.iter().enumerate() {
+                    if o.id == gid {
+                        OutMessage::message_info_clean(
+                            format!("Removing ownership on {} for user {}", o.name, u.name)
+                                .as_str(),
+                        );
+
+                        u.namespaces.remove(i);
+                        break;
+                    }
+                }
+            }
+        }
         Ok(self)
     }
 

@@ -1,13 +1,12 @@
-use std::io::{Error, ErrorKind, Result};
+use std::io::Result;
 
 use clap::{ArgMatches, Command};
 
 use crate::args::{ArgFileName, ArgTeamName, ArgUserId, Args};
-use crate::cmd::{Cmd, CmdOld};
-use crate::gitlab::GitlabApi;
+use crate::cmd::{Cmd};
 use crate::output::out_spinner::OutSpinner;
 use crate::service::v1;
-use crate::types::common::{Versions, Version};
+use crate::types::common::{Version, Versions};
 use crate::types::v1::ConfigFile;
 
 pub(crate) struct AddTeamCmd {
