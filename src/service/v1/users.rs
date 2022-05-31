@@ -16,9 +16,9 @@ pub(crate) struct UsersService {
 }
 
 impl UsersService {
-    pub(crate) fn new(config_path: String, file_path: String) -> Self {
+    pub(crate) fn new(file_path: String) -> Self {
         Self {
-            config_file: ConfigFile::read(config_path).unwrap(),
+            config_file: ConfigFile::read(file_path.clone()).unwrap(),
             file_path,
         }
     }

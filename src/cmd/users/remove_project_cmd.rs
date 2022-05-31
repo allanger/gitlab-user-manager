@@ -43,7 +43,7 @@ impl Cmd for RemoveProjectCmd {
 
 impl RemoveProjectCmd {
     fn exec_v1(&self) -> Result<()> {
-        let mut svc = v1::users::UsersService::new(self.file_name.clone(), self.file_name.clone());
+        let mut svc = v1::users::UsersService::new(self.file_name.clone());
         svc.remove_from_project(self.gitlab_user_id, self.gitlab_project_id)?
             .write_state()
     }

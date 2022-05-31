@@ -55,7 +55,7 @@ impl Cmd for AddProjectCmd {
 
 impl AddProjectCmd {
     fn exec_v1(&self) -> Result<()> {
-        let mut svc = v1::users::UsersService::new(self.file_name.clone(), self.file_name.clone());
+        let mut svc = v1::users::UsersService::new(self.file_name.clone());
         svc.add_to_project(
             GitlabApi::new(&self.gitlab_url, &self.gitlab_token)?,
             self.gitlab_project_id,

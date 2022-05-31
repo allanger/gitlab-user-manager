@@ -53,7 +53,7 @@ impl Cmd for AddNamespaceCmd {
 
 impl AddNamespaceCmd {
     fn exec_v1(&self) -> Result<()> {
-        let mut svc = v1::users::UsersService::new(self.file_name.clone(), self.file_name.clone());
+        let mut svc = v1::users::UsersService::new(self.file_name.clone());
         svc.add_to_namespace(
             GitlabApi::new(&self.gitlab_url, &self.gitlab_token)?,
             self.gitlab_group_id,

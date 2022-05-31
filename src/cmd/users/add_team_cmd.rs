@@ -41,7 +41,7 @@ impl Cmd for AddTeamCmd {
 
 impl AddTeamCmd {
     fn exec_v1(&self) -> Result<()> {
-        let mut svc = v1::users::UsersService::new(self.file_name.clone(), self.file_name.clone());
+        let mut svc = v1::users::UsersService::new(self.file_name.clone());
         svc.add_to_team(self.gitlab_user_id, self.team_name.clone())?
             .write_state()
     }
