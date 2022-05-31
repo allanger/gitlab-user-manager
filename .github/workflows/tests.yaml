@@ -9,6 +9,22 @@ on:
       - "src/**"
 
 jobs:
+  cargo_udeps:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+
+      - name: Install cargo-udeps
+        run: cargo install cargo-udeps --locked
+
+      - name: Check dependencies
+        run: cargo +nightly udeps
+  
   cargo_test:
     runs-on: ubuntu-latest
     steps:
