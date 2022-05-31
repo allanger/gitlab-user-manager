@@ -1,4 +1,5 @@
 use console::style;
+use log::info;
 
 use crate::{
     gitlab::{apis::projects::GitlabProjectsApi, GitlabApiInterface},
@@ -14,6 +15,7 @@ pub(crate) struct TeamsService {
 
 impl TeamsService {
     pub(crate) fn new(file_path: String) -> Self {
+        info!("{}", file_path.clone());
         Self {
             config_file: ConfigFile::read(file_path.clone()).unwrap(),
             file_path,
@@ -53,24 +55,18 @@ impl TeamsService {
     }
 
     pub(crate) fn list(&mut self, large_out: bool) -> Result<()> {
-        let total = &self.config_file.config().users.len();
+        let total = &self.config_file.config().teams.len();
 
-        for user in self.config_file.config().users.clone() {
-            let mut message = format!("{} - {}", user.id, user.name);
+        for team in self.config_file.config().teams.clone() {
+            let mut message = format!("{}", team.name);
             if large_out {
-                message.push_str(
-                    format!(
-                        "\nprojects: {:?}\nteams: {:?}\ngroups: {:?}\n",
-                        user.projects, user.teams, user.namespaces
-                    )
-                    .as_str(),
-                );
+                message.push_str(format!("\nprojects: {:?}\n", team.projects,).as_str());
             }
             OutMessage::message_empty(message.as_str());
         }
         OutExtra::empty_line();
         OutMessage::message_info_with_alias(
-            format!("You've got {} users here", style(total).bold().underlined()).as_str(),
+            format!("You've got {} teams here", style(total).bold().underlined()).as_str(),
         );
         Ok(())
     }
@@ -115,18 +111,13 @@ impl TeamsService {
             if team.name == team_name {
                 for (i, p) in team.projects.iter().enumerate() {
                     if pid == p.id {
-                        let project = Project {
-                            name: p.name.to_string(),
-                            id: p.id,
-                            ..Default::default()
-                        };
                         team.projects.remove(i);
                         return Ok(self);
                     }
                 }
                 let error_message = format!(
                     "The team {} doesn't have access to the this project",
-                    team_name
+                    team_name,
                 );
                 OutMessage::message_error(error_message.as_str());
                 return Err(Error::new(ErrorKind::NotFound, error_message));

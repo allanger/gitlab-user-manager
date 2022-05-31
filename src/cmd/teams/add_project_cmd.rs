@@ -24,7 +24,7 @@ impl Cmd for AddProjectCmd {
     fn add() -> Command<'static> {
         Command::new("add-project")
             .alias("ap")
-            .about("Remove the team from the config file")
+            .about("Grant team access to a project")
             .arg(ArgTeamName::add())
             .arg(ArgAccess::add())
             .arg(ArgProjectId::add())
@@ -35,12 +35,12 @@ impl Cmd for AddProjectCmd {
 
     fn prepare(sub_matches: &'_ ArgMatches) -> std::io::Result<Self::CmdType> {
         Ok(Self {
-            file_name: ArgGitlabToken::parse(sub_matches)?,
-            team_name: ArgGitlabUrl::parse(sub_matches)?,
+            file_name: ArgFileName::parse(sub_matches)?,
+            team_name: ArgTeamName::parse(sub_matches)?,
             access_level: ArgAccess::parse(sub_matches)?,
             gitlab_project_id: ArgProjectId::parse(sub_matches)?,
-            gitlab_token: ArgTeamName::parse(sub_matches)?,
-            gitlab_url: ArgFileName::parse(sub_matches)?,
+            gitlab_token: ArgGitlabToken::parse(sub_matches)?,
+            gitlab_url: ArgGitlabUrl::parse(sub_matches)?,
         })
     }
 
