@@ -1,59 +1,48 @@
-use std::io::Error;
-
-use clap::{ArgMatches, Command};
-
 use crate::args::{ArgFileName, ArgGroupId, ArgNamespaceId, Args};
-use crate::cmd::CmdOld;
-use crate::output::out_message::OutMessage;
+use crate::cmd::Cmd;
+use crate::service::v1;
+use crate::types::common::{Version, Versions};
 use crate::types::v1::ConfigFile;
+use clap::{ArgMatches, Command};
+use std::io::Result;
 
-pub(crate) struct RemoveGroupCmd {
+pub(crate) struct RemoveNamespaceCmd {
     gitlab_group_id: u64,
     gitlab_namespace_id: u64,
     file_name: String,
 }
-pub(crate) fn add_remove_namespace_cmd() -> Command<'static> {
-    return Command::new("remove-namespace")
-        .alias("rn")
-        .about("Remove group from namespace")
-        .arg(ArgGroupId::add())
-        .arg(ArgNamespaceId::add())
-        .arg(ArgFileName::add());
-}
 
-pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>, Error> {
-    let gitlab_namespace_id = ArgNamespaceId::parse(sub_matches)?;
+impl Cmd for RemoveNamespaceCmd {
+    type CmdType = RemoveNamespaceCmd;
 
-    let gitlab_group_id = ArgGroupId::parse(sub_matches)?;
-    let file_name = ArgFileName::parse(sub_matches)?;
+    fn add() -> Command<'static> {
+        Command::new("remove-namespace")
+            .alias("rn")
+            .about("Remove group from the namespace")
+            .arg(ArgGroupId::add())
+            .arg(ArgNamespaceId::add())
+            .arg(ArgFileName::add())
+    }
 
-    Ok(RemoveGroupCmd {
-        gitlab_namespace_id,
-        gitlab_group_id,
-        file_name,
-    })
-}
+    fn prepare(sub_matches: &'_ ArgMatches) -> std::io::Result<Self::CmdType> {
+        Ok(Self {
+            gitlab_namespace_id: ArgNamespaceId::parse(sub_matches)?,
+            gitlab_group_id: ArgGroupId::parse(sub_matches)?,
+            file_name: ArgFileName::parse(sub_matches)?,
+        })
+    }
 
-impl<'a> CmdOld<'a> for RemoveGroupCmd {
-    fn exec(&self) -> Result<(), Error> {
-        let mut config_file = ConfigFile::read(self.file_name.clone())?;
-
-        for g in config_file.config_mut().groups.iter_mut() {
-            if g.id == self.gitlab_group_id {
-                for (i, o) in g.namespaces.iter().enumerate() {
-                    if o.id == self.gitlab_namespace_id {
-                        OutMessage::message_info_clean(
-                            format!("Removing ownership on {} for user {}", o.name, g.name)
-                                .as_str(),
-                        );
-
-                        g.namespaces.remove(i);
-                        break;
-                    }
-                }
-            }
+    fn exec(&self) -> std::io::Result<()> {
+        match ConfigFile::read(self.file_name.clone())?.get_version()? {
+            Versions::V1 => self.exec_v1(),
         }
+    }
+}
 
-        config_file.write(self.file_name.clone())
+impl RemoveNamespaceCmd {
+    fn exec_v1(&self) -> Result<()> {
+        let mut svc = v1::GroupsService::new(self.file_name.clone());
+        svc.remove_from_namespace(self.gitlab_group_id, self.gitlab_namespace_id)?
+            .write_state()
     }
 }

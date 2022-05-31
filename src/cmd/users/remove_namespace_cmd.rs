@@ -41,7 +41,7 @@ impl Cmd for RemoveNamespaceCmd {
 
 impl RemoveNamespaceCmd {
     fn exec_v1(&self) -> Result<()> {
-        let mut svc = v1::users::UsersService::new(self.file_name.clone(), self.file_name.clone());
+        let mut svc = v1::users::UsersService::new(self.file_name.clone());
         svc.remove_from_namespace(self.gitlab_user_id, self.gitlab_group_id)?
             .write_state()
     }

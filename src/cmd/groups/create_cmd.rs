@@ -1,81 +1,55 @@
-use std::io::{Error, ErrorKind};
-
-use clap::{ArgMatches, Command};
-use gitlab::Gitlab;
-
 use crate::args::{ArgFileName, ArgGitlabToken, ArgGitlabUrl, ArgGroupId, Args};
-use crate::cmd::CmdOld;
-use crate::gitlab::GitlabActions;
-use crate::gitlab::GitlabClient;
-use crate::output::out_message::OutMessage;
+use crate::cmd::Cmd;
+use crate::gitlab::GitlabApi;
+use crate::service::v1;
+use crate::types::common::{Version, Versions};
 use crate::types::v1::ConfigFile;
-use crate::types::v1::Group;
+use clap::{ArgMatches, Command};
+use std::io::Result;
 
-pub(crate) fn add_create_cmd() -> Command<'static> {
-    return Command::new("create")
-        .alias("c")
-        .about("Add group to the config file")
-        .arg(ArgGroupId::add())
-        .arg(ArgGitlabToken::add())
-        .arg(ArgGitlabUrl::add())
-        .arg(ArgFileName::add());
-}
-
-struct CreateCmd {
+pub(crate) struct CreateCmd {
     gitlab_group_id: u64,
-    gitlab_client: Gitlab,
+    gitlab_url: String,
+    gitlab_token: String,
     file_name: String,
 }
 
-pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>, Error> {
-    let gitlab_token = ArgGitlabToken::parse(sub_matches)?;
-    let gitlab_url = ArgGitlabUrl::parse(sub_matches)?;
+impl Cmd for CreateCmd {
+    type CmdType = CreateCmd;
 
-    let gitlab_client: Gitlab =
-        Gitlab::new(gitlab_url, gitlab_token).map_err(|err| Error::new(ErrorKind::Other, err))?;
+    fn add() -> Command<'static> {
+        Command::new("create")
+            .alias("c")
+            .about("Add group to the config file")
+            .arg(ArgGroupId::add())
+            .arg(ArgGitlabToken::add())
+            .arg(ArgGitlabUrl::add())
+            .arg(ArgFileName::add())
+    }
 
-    let gitlab_group_id = ArgGroupId::parse(sub_matches)?;
+    fn prepare(sub_matches: &'_ ArgMatches) -> std::io::Result<Self::CmdType> {
+        Ok(Self {
+            gitlab_group_id: ArgGroupId::parse(sub_matches)?,
+            gitlab_url: ArgGitlabUrl::parse(sub_matches)?,
+            gitlab_token: ArgGitlabToken::parse(sub_matches)?,
+            file_name: ArgFileName::parse(sub_matches)?,
+        })
+    }
 
-    let file_name = ArgFileName::parse(sub_matches)?;
-
-    Ok(CreateCmd {
-        gitlab_group_id,
-        gitlab_client,
-        file_name,
-    })
+    fn exec(&self) -> std::io::Result<()> {
+        match ConfigFile::read(self.file_name.clone())?.get_version()? {
+            Versions::V1 => self.exec_v1(),
+        }
+    }
 }
 
-impl<'a> CmdOld<'a> for CreateCmd {
-    fn exec(&self) -> Result<(), Error> {
-        let mut config_file = ConfigFile::read(self.file_name.clone())?;
-
-        let gitlab = GitlabClient::new(self.gitlab_client.to_owned());
-        OutMessage::message_info_with_alias("I'm getting data about the group from Gitlab");
-
-        let group = gitlab.get_group_data_by_id(self.gitlab_group_id)?;
-
-        let new_user = Group {
-            id: self.gitlab_group_id,
-            name: group.name.to_string(),
-            ..Default::default()
-        };
-
-        if config_file
-            .config()
-            .groups
-            .iter()
-            .any(|i| i.id == self.gitlab_group_id)
-        {
-            return Err(Error::new(
-                ErrorKind::AlreadyExists,
-                format!("Group {} is already in the config file", new_user.name),
-            ));
-        } else {
-            config_file.config_mut().groups.extend([new_user]);
-            OutMessage::message_info_clean(
-                format!("Group {} is added to the config", group.name).as_str(),
-            );
-        }
-        config_file.write(self.file_name.clone())
+impl CreateCmd {
+    fn exec_v1(&self) -> Result<()> {
+        let mut svc = v1::GroupsService::new(self.file_name.clone());
+        svc.create(
+            GitlabApi::new(&self.gitlab_url, &self.gitlab_token)?,
+            self.gitlab_group_id,
+        )?
+        .write_state()
     }
 }

@@ -21,7 +21,7 @@ impl Cmd for ListCmd {
     fn add() -> Command<'static> {
         Command::new("list")
             .alias("l")
-            .about("Add user to the config file")
+            .about("List users from defined in the config file")
             .arg(ArgFileName::add())
             .arg(ArgLargeOut::add())
     }
@@ -42,7 +42,7 @@ impl Cmd for ListCmd {
 
 impl ListCmd {
     fn exec_v1(&self) -> Result<()> {
-        let mut svc = v1::users::UsersService::new(self.file_name.clone(), self.file_name.clone());
+        let mut svc = v1::users::UsersService::new(self.file_name.clone());
         svc.list(self.large_out)
     }
 }
