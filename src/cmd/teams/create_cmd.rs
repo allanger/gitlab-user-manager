@@ -1,70 +1,48 @@
-use std::io::{Error, ErrorKind};
-
-use clap::{ArgMatches, Command};
-
 use crate::{
     args::{ArgFileName, ArgTeamName, Args},
-    cmd::CmdOld,
-    output::out_message::OutMessage,
-    types::v1::{ConfigFile, Team},
+    cmd::Cmd,
+    service::v1,
+    types::{
+        common::{Version, Versions},
+        v1::ConfigFile,
+    },
 };
+use clap::{ArgMatches, Command};
+use std::io::Result;
 
-pub(crate) fn add_create_cmd() -> Command<'static> {
-    return Command::new("create")
-        .alias("c")
-        .about("Add a team to the config file")
-        .arg(ArgFileName::add())
-        .arg(ArgTeamName::add());
-}
-
-struct CreateCmd {
+pub(crate) struct CreateCmd {
     file_name: String,
     team_name: String,
 }
 
-pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>, Error> {
-    let team_name = ArgTeamName::parse(sub_matches)?;
-    let file_name = ArgFileName::parse(sub_matches)?;
+impl Cmd for CreateCmd {
+    type CmdType = CreateCmd;
 
-    Ok(CreateCmd {
-        team_name,
-        file_name,
-    })
+    fn add() -> Command<'static> {
+        Command::new("create")
+            .alias("c")
+            .about("Add a team to the config file")
+            .arg(ArgFileName::add())
+            .arg(ArgTeamName::add())
+    }
+
+    fn prepare(sub_matches: &'_ ArgMatches) -> std::io::Result<Self::CmdType> {
+        Ok(Self {
+            team_name: ArgTeamName::parse(sub_matches)?,
+            file_name: ArgFileName::parse(sub_matches)?,
+        })
+    }
+
+    fn exec(&self) -> std::io::Result<()> {
+        match ConfigFile::read(self.file_name.clone())?.get_version()? {
+            Versions::V1 => self.exec_v1(),
+        }
+    }
 }
 
-impl<'a> CmdOld<'a> for CreateCmd {
-    fn exec(&self) -> Result<(), Error> {
-        let mut config_file = match ConfigFile::read(self.file_name.clone()) {
-            Ok(c) => c,
-            Err(err) => return Err(err),
-        };
-
-        let new_team = Team {
-            name: self.team_name.to_string(),
-            ..Default::default()
-        };
-        if config_file
-            .config()
-            .teams
-            .iter()
-            .any(|i| i.name == new_team.name)
-        {
-            return Err(Error::new(
-                ErrorKind::AlreadyExists,
-                "team with this name already exists",
-            ));
-        }
-
-        config_file.config_mut().teams.extend([new_team]);
-
-        match config_file.write(self.file_name.clone()) {
-            Ok(()) => {
-                OutMessage::message_info_clean(
-                    format!("New team is created: {}", self.team_name).as_str(),
-                );
-                Ok(())
-            }
-            Err(err) => Err(err),
-        }
+impl CreateCmd {
+    fn exec_v1(&self) -> Result<()> {
+        let mut svc = v1::TeamsService::new(self.file_name.clone());
+        svc.create(self.team_name.clone())?.write_state()
     }
 }

@@ -1,45 +1,48 @@
 use crate::{
-    args::{ArgFileName, Args},
-    cmd::CmdOld,
-    output::{out_extra::OutExtra, out_message::OutMessage},
-    types::v1::ConfigFile,
+    args::{ArgFileName, ArgLargeOut, Args},
+    cmd::Cmd,
+    service::v1,
+    types::{
+        common::{Version, Versions},
+        v1::ConfigFile,
+    },
 };
 use clap::{ArgMatches, Command};
-use console::style;
+use std::io::Result;
 
-use std::io::Error;
-
-pub(crate) fn add_list_cmd() -> Command<'static> {
-    return Command::new("list")
-        .alias("l")
-        .about("List teams from config file")
-        .arg(ArgFileName::add());
-}
-struct ListCmd {
+pub(crate) struct ListCmd {
     file_name: String,
+    large_out: bool,
 }
 
-pub(crate) fn prepare<'a>(sub_matches: &'_ ArgMatches) -> Result<impl CmdOld<'a>, Error> {
-    let file_name = ArgFileName::parse(sub_matches)?;
-    Ok(ListCmd { file_name })
-}
+impl Cmd for ListCmd {
+    type CmdType = ListCmd;
 
-impl<'a> CmdOld<'a> for ListCmd {
-    fn exec(&self) -> Result<(), Error> {
-        let config_file = match ConfigFile::read(self.file_name.clone()) {
-            Ok(c) => c,
-            Err(err) => return Err(err),
-        };
-        let total = &config_file.config().teams.len();
+    fn add() -> Command<'static> {
+        Command::new("list")
+            .alias("l")
+            .about("List teams defined in the config file")
+            .arg(ArgFileName::add())
+            .arg(ArgLargeOut::add())
+    }
 
-        for team in config_file.config().teams.iter() {
-            OutMessage::message_empty(format!("{}: {:?}\n", team.name, team.projects).as_str());
+    fn prepare(sub_matches: &'_ ArgMatches) -> std::io::Result<Self::CmdType> {
+        Ok(Self {
+            file_name: ArgFileName::parse(sub_matches)?,
+            large_out: ArgLargeOut::parse(sub_matches)?,
+        })
+    }
+
+    fn exec(&self) -> std::io::Result<()> {
+        match ConfigFile::read(self.file_name.clone())?.get_version()? {
+            Versions::V1 => self.exec_v1(),
         }
-        OutExtra::empty_line();
-        OutMessage::message_info_with_alias(
-            format!("You've got {} teams here", style(total).bold().underlined()).as_str(),
-        );
+    }
+}
 
-        Ok(())
+impl ListCmd {
+    fn exec_v1(&self) -> Result<()> {
+        let mut svc = v1::TeamsService::new(self.file_name.clone());
+        svc.list(self.large_out)
     }
 }
