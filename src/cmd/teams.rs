@@ -9,11 +9,11 @@ use std::io::Error;
 use clap::{ArgMatches, Command};
 
 use self::{
-    add_project_cmd::add_add_project_cmd, create_cmd::add_create_cmd, list_cmd::add_list_cmd,
-    remove_cmd::add_remove_cmd, remove_project_cmd::add_remove_project_cmd,
+    add_project_cmd::AddProjectCmd, create_cmd::CreateCmd, list_cmd::ListCmd,
+    remove_cmd::RemoveCmd, remove_project_cmd::RemoveProjectCmd,
 };
 
-use super::CmdOld;
+use super::{Cmd, CmdOld};
 
 pub(crate) fn add_teams_cmd() -> Command<'static> {
     // Register command
@@ -21,11 +21,11 @@ pub(crate) fn add_teams_cmd() -> Command<'static> {
         .aliases(&["t", "team"])
         .about("Manage GUM teams")
         .arg_required_else_help(true)
-        .subcommand(add_create_cmd())
-        .subcommand(add_list_cmd())
-        .subcommand(add_remove_cmd())
-        .subcommand(add_add_project_cmd())
-        .subcommand(add_remove_project_cmd());
+        .subcommand(CreateCmd::add())
+        .subcommand(ListCmd::add())
+        .subcommand(RemoveCmd::add())
+        .subcommand(AddProjectCmd::add())
+        .subcommand(RemoveProjectCmd::add());
 }
 
 pub(crate) struct TeamsCmd<'a> {
@@ -43,31 +43,31 @@ impl<'a> CmdOld<'a> for TeamsCmd<'a> {
         let result;
         match self.teams_sub {
             Some(("create", sub_matches)) => {
-                result = match create_cmd::prepare(sub_matches) {
+                result = match CreateCmd::prepare(sub_matches) {
                     Ok(cmd) => cmd.exec(),
                     Err(err) => Err(err),
                 }
             }
             Some(("remove", sub_matches)) => {
-                result = match remove_cmd::prepare(sub_matches) {
+                result = match RemoveCmd::prepare(sub_matches) {
                     Ok(cmd) => cmd.exec(),
                     Err(err) => Err(err),
                 }
             }
             Some(("list", sub_matches)) => {
-                result = match list_cmd::prepare(sub_matches) {
+                result = match ListCmd::prepare(sub_matches) {
                     Ok(cmd) => cmd.exec(),
                     Err(err) => Err(err),
                 }
             }
             Some(("add-project", sub_matches)) => {
-                result = match add_project_cmd::prepare(sub_matches) {
+                result = match AddProjectCmd::prepare(sub_matches) {
                     Ok(cmd) => cmd.exec(),
                     Err(err) => Err(err),
                 }
             }
             Some(("remove-project", sub_matches)) => {
-                result = match remove_project_cmd::prepare(sub_matches) {
+                result = match RemoveProjectCmd::prepare(sub_matches) {
                     Ok(cmd) => cmd.exec(),
                     Err(err) => Err(err),
                 }
