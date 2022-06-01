@@ -26,13 +26,13 @@ impl UsersService {
     pub(crate) fn list(&mut self, large_out: bool) -> Result<()> {
         let total = &self.config_file.config().users.len();
 
-        for user in self.config_file.config().users.clone() {
-            let mut message = format!("{} - {}", user.id, user.name);
+        for u in self.config_file.config().users.clone() {
+            let mut message = format!("{} - {}", u.id, u.name);
             if large_out {
                 message.push_str(
                     format!(
                         "\nprojects: {:?}\nteams: {:?}\ngroups: {:?}\n",
-                        user.projects, user.teams, user.namespaces
+                        u.projects, u.teams, u.namespaces
                     )
                     .as_str(),
                 );
@@ -53,7 +53,6 @@ impl UsersService {
     ) -> Result<&mut Self> {
         OutMessage::message_info_with_alias("I'm getting data about the user from Gitlab");
         let users_api = gitlab_api.users();
-
         let user = users_api.get_data_by_id(user_id)?;
 
         let new_user = User {
@@ -83,11 +82,11 @@ impl UsersService {
     }
 
     pub(crate) fn remove(&mut self, user_id: u64) -> Result<&mut Self> {
-        for (i, user) in self.config_file.config().users.iter().enumerate() {
-            if user.id == user_id {
+        for (i, u) in self.config_file.config().users.iter().enumerate() {
+            if u.id == user_id {
                 let u = User {
-                    id: user.id,
-                    name: user.name.to_string(),
+                    id: u.id,
+                    name: u.name.to_string(),
                     ..Default::default()
                 };
                 OutMessage::message_info_clean(
@@ -111,11 +110,11 @@ impl UsersService {
         let group_api = gitlab_api.groups();
         let namespace = group_api.get_data_by_id(gid)?;
 
-        for user in self.config_file.config_mut().users.iter_mut() {
-            if user.id == uid {
+        for u in self.config_file.config_mut().users.iter_mut() {
+            if u.id == uid {
                 let spinner = OutSpinner::spinner_start(format!(
                     "Adding {} to {} as owner",
-                    user.name, namespace.name
+                    u.name, namespace.name
                 ));
                 let o = Namespace {
                     name: namespace.name.to_string(),
@@ -123,16 +122,16 @@ impl UsersService {
                     id: namespace.id,
                     url: namespace.web_url.to_string(),
                 };
-                if user.namespaces.iter().any(|i| i.id == o.id) {
+                if u.namespaces.iter().any(|i| i.id == o.id) {
                     return Err(Error::new(
                         ErrorKind::AlreadyExists,
                         format!(
                             "the user {} is already owner of this group: '{}'",
-                            user.name, o.name
+                            u.name, o.name
                         ),
                     ));
                 }
-                user.namespaces.extend([o]);
+                u.namespaces.extend([o]);
                 spinner.spinner_success("Added".to_string());
             }
         }
@@ -140,21 +139,21 @@ impl UsersService {
     }
 
     pub(crate) fn add_to_team(&mut self, uid: u64, team_name: String) -> Result<&mut Self> {
-        for user in self.config_file.config_mut().users.iter_mut() {
-            if user.id == uid {
+        for u in self.config_file.config_mut().users.iter_mut() {
+            if u.id == uid {
                 let spinner =
-                    OutSpinner::spinner_start(format!("Adding {} to {}", user.name, team_name));
+                    OutSpinner::spinner_start(format!("Adding {} to {}", u.name, team_name));
 
-                if user.teams.iter().any(|t| *t == team_name) {
+                if u.teams.iter().any(|t| *t == team_name) {
                     return Err(Error::new(
                         ErrorKind::AlreadyExists,
                         format!(
                             "the user {} is already a member of the team '{}'",
-                            user.name, team_name
+                            u.name, team_name
                         ),
                     ));
                 }
-                user.teams.extend([team_name.to_string()]);
+                u.teams.extend([team_name.to_string()]);
                 spinner.spinner_success("Added".to_string());
 
                 break;
@@ -174,11 +173,11 @@ impl UsersService {
         OutMessage::message_info_with_alias("I'm getting data about the project from Gitlab");
         let project = projects_api.get_data_by_id(pid)?;
 
-        for user in self.config_file.config_mut().users.iter_mut() {
-            if user.id == uid {
+        for u in self.config_file.config_mut().users.iter_mut() {
+            if u.id == uid {
                 let spinner = OutSpinner::spinner_start(format!(
                     "Adding {} to {} as {}",
-                    user.name, project.name, access_level,
+                    u.name, project.name, access_level,
                 ));
 
                 let p = Project {
@@ -186,17 +185,17 @@ impl UsersService {
                     id: project.id,
                     name: project.name,
                 };
-                if user.projects.iter().any(|i| i.id == p.id) {
+                if u.projects.iter().any(|i| i.id == p.id) {
                     return Err(Error::new(
                         ErrorKind::AlreadyExists,
                         format!(
                             "the user {} already has an access to this project: '{}'",
-                            user.name, p.name
+                            u.name, p.name
                         ),
                     ));
                 }
 
-                user.projects.extend([p]);
+                u.projects.extend([p]);
                 spinner.spinner_success("Added".to_string());
                 break;
             }
