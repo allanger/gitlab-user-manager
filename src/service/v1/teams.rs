@@ -3,7 +3,7 @@ use log::info;
 
 use crate::{
     gitlab::{apis::projects::GitlabProjectsApi, GitlabApiInterface},
-    output::{out_extra::OutExtra, out_message::OutMessage, out_spinner::OutSpinner},
+    output::{out_extra::OutExtra, out_message::OutMessage},
     types::v1::{AccessLevel, ConfigFile, Project, Team},
 };
 use std::io::{Error, ErrorKind, Result};
@@ -84,7 +84,7 @@ impl TeamsService {
                 let p = Project {
                     name: project.name.to_string(),
                     id: project.id,
-                    access_level: access_level,
+                    access_level,
                 };
                 if team.projects.iter().any(|i| i.id == p.id) {
                     return Err(Error::new(
