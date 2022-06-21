@@ -16,7 +16,7 @@ rand = "0.8.5"
 tabled = "0.7.0"
 serde_json = "1.0.79"
 self_update = "0.30.0"
-gitlab = { git = "https://gitlab.kitware.com/allanger/rust-gitlab.git", tag = "temp-version-fix"}
+gitlab = { git = "https://gitlab.kitware.com/utils/rust-gitlab", branch = "master"}
 indicatif = "0.16.2"
 console = "0.15.0"
 mockall = "0.11.0"

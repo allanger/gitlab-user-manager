@@ -150,10 +150,10 @@ impl GitlabMembersApi for MemberGitlab {
         pid: u64,
         access_level: AccessLevel,
     ) -> Result<String> {
-        let q = match projects::share::AddProjectShare::builder()
+        let q = match projects::ShareProject::builder()
             .group_access(access_level.to_gitlab_access_level())
             .project(pid)
-            .group(gid)
+            .group_id(gid)
             .build()
         {
             Ok(q) => q,
@@ -176,9 +176,9 @@ impl GitlabMembersApi for MemberGitlab {
         };
     }
     fn remove_group_from_project(&self, gid: u64, pid: u64) -> Result<String> {
-        let q = match projects::share::RemoveProjectShare::builder()
+        let q = match projects::UnshareProject::builder()
             .project(pid)
-            .group(gid)
+            .group_id(gid)
             .build()
         {
             Ok(q) => q,
@@ -231,10 +231,10 @@ impl GitlabMembersApi for MemberGitlab {
         nid: u64,
         access_level: AccessLevel,
     ) -> Result<String> {
-        let q = match groups::shared::AddGroupShare::builder()
+        let q = match groups::ShareGroup::builder()
             .group_access(access_level.to_gitlab_access_level())
             .id(nid)
-            .group(gid)
+            .group_id(gid)
             .build()
         {
             Ok(q) => q,
@@ -258,9 +258,9 @@ impl GitlabMembersApi for MemberGitlab {
     }
 
     fn remove_group_from_namespace(&self, gid: u64, nid: u64) -> Result<String> {
-        let q = match groups::shared::RemoveGroupShare::builder()
+        let q = match groups::UnshareGroup::builder()
             .id(nid)
-            .group(gid)
+            .group_id(gid)
             .build()
         {
             Ok(q) => q,
