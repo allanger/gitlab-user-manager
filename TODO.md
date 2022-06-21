@@ -21,8 +21,8 @@ What needs to be done before the tool can actually be used.
   ```
 
 - [ ] Async actions
-- [ ] Add auto suggestions for every command
-- [ ] Start versioning the config file and add possibility to migrate from to a newer version. And add kinda annotation to let gum know it's a gum-config. Something like that
+- [x] Add auto suggestions for every command
+- [x] Start versioning the config file and add possibility to migrate from to a newer version. And add kinda annotation to let gum know it's a gum-config. Something like that
   ```
   meta: 
     kind: gum-config
@@ -30,13 +30,13 @@ What needs to be done before the tool can actually be used.
   teams: []
   users: []
   ```
-- [ ] Add ability to set custom file names
+- [x] Add ability to set custom file names
 - [ ] Add information about the latest sync (When, Who)
 - [ ] Add possibility to write sync logs to file to have a better history
 - [ ] Rollback on errors or save the actual state if rollback is failed too.
 - [ ] Put temp state (dry-run) to the /tmp/gum folder and remove old ones
 - [ ] Add a `refresh` command to update gitlab Projects/Groups/Users name
-- [ ] Get rid of Ownerships and migrate to Groups
+- [x] Get rid of Ownerships and migrate to Groups
 - [ ] Add a head group to the config. Gum should be able to manage access only in these groups. (Maybe use a better name for this)
   ```
   meta: 

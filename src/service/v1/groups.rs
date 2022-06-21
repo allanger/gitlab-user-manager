@@ -24,10 +24,10 @@ impl GroupsService {
     }
 
     pub(crate) fn remove(&mut self, gid: u64) -> Result<&mut Self> {
-        for (i, group) in self.config_file.config().groups.iter().enumerate() {
-            if group.id == gid {
+        for (i, g) in self.config_file.config().groups.iter().enumerate() {
+            if g.id == gid {
                 OutMessage::message_info_clean(
-                    format!("removing group {} from config", group.name.to_string()).as_str(),
+                    format!("removing group {} from config", g.name.to_string()).as_str(),
                 );
                 self.config_file.config_mut().groups.remove(i);
                 break;
@@ -65,7 +65,6 @@ impl GroupsService {
     ) -> Result<&mut Self> {
         OutMessage::message_info_with_alias("I'm getting data about the group from Gitlab");
         let group_api = gitlab_api.groups();
-
         let group = group_api.get_data_by_id(gid)?;
 
         let new_group = Group {
@@ -95,30 +94,31 @@ impl GroupsService {
         gid: u64,
         access_level: AccessLevel,
     ) -> Result<&mut Self> {
-        let projects_api = gitlab_api.projects();
         OutMessage::message_info_with_alias("I'm getting data about the project from Gitlab");
+        let projects_api = gitlab_api.projects();
         let project = projects_api.get_data_by_id(pid)?;
-        for group in self.config_file.config_mut().groups.iter_mut() {
-            if group.id == gid {
+
+        for g in self.config_file.config_mut().groups.iter_mut() {
+            if g.id == gid {
                 let spinner = OutSpinner::spinner_start(format!(
                     "Adding {} to {} as {}",
-                    group.name, project.name, access_level,
+                    g.name, project.name, access_level,
                 ));
                 let p = Project {
                     access_level,
                     id: project.id,
                     name: project.name,
                 };
-                if group.projects.iter().any(|i| i.id == p.id) {
+                if g.projects.iter().any(|i| i.id == p.id) {
                     return Err(Error::new(
                         ErrorKind::AlreadyExists,
                         format!(
                             "the group {} already has an access to this project: '{}'",
-                            group.name, p.name
+                            g.name, p.name
                         ),
                     ));
                 }
-                group.projects.extend([p]);
+                g.projects.extend([p]);
                 spinner.spinner_success("Added".to_string());
                 break;
             }
@@ -137,11 +137,11 @@ impl GroupsService {
         let group_api = gitlab_api.groups();
         let namespace = group_api.get_data_by_id(nid)?;
 
-        for group in self.config_file.config_mut().groups.iter_mut() {
-            if group.id == gid {
+        for g in self.config_file.config_mut().groups.iter_mut() {
+            if g.id == gid {
                 let spinner = OutSpinner::spinner_start(format!(
                     "Adding {} to {} as owner",
-                    group.name, namespace.name
+                    g.name, namespace.name
                 ));
                 let o = Namespace {
                     name: namespace.name.to_string(),
@@ -149,16 +149,16 @@ impl GroupsService {
                     id: namespace.id,
                     url: namespace.web_url.to_string(),
                 };
-                if group.namespaces.iter().any(|i| i.id == o.id) {
+                if g.namespaces.iter().any(|i| i.id == o.id) {
                     return Err(Error::new(
                         ErrorKind::AlreadyExists,
                         format!(
                             "the group {} is already a {} in this namespace: '{}'",
-                            group.name, o.access_level, o.name
+                            g.name, o.access_level, o.name
                         ),
                     ));
                 }
-                group.namespaces.extend([o]);
+                g.namespaces.extend([o]);
                 spinner.spinner_success("Added".to_string());
             }
         }
@@ -168,13 +168,13 @@ impl GroupsService {
     pub(crate) fn list(&mut self, large_out: bool) -> Result<()> {
         let total = &self.config_file.config().groups.len();
 
-        for group in self.config_file.config().groups.clone() {
-            let mut message = format!("{} - {}", group.id, group.name);
+        for g in self.config_file.config().groups.clone() {
+            let mut message = format!("{} - {}", g.id, g.name);
             if large_out {
                 message.push_str(
                     format!(
                         "\nprojects: {:?}\ngroups: {:?}\n",
-                        group.projects, group.namespaces
+                        g.projects, g.namespaces
                     )
                     .as_str(),
                 );

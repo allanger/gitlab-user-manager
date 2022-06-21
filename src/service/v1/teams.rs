@@ -3,7 +3,7 @@ use log::info;
 
 use crate::{
     gitlab::{apis::projects::GitlabProjectsApi, GitlabApiInterface},
-    output::{out_extra::OutExtra, out_message::OutMessage, out_spinner::OutSpinner},
+    output::{out_extra::OutExtra, out_message::OutMessage},
     types::v1::{AccessLevel, ConfigFile, Project, Team},
 };
 use std::io::{Error, ErrorKind, Result};
@@ -27,6 +27,7 @@ impl TeamsService {
             name: team_name.to_string(),
             ..Default::default()
         };
+
         if self
             .config_file
             .config()
@@ -39,9 +40,7 @@ impl TeamsService {
                 "team with this name already exists",
             ));
         }
-
         self.config_file.config_mut().teams.extend([new_team]);
-
         Ok(self)
     }
 
@@ -50,7 +49,6 @@ impl TeamsService {
             .config_mut()
             .teams
             .retain(|t| t.name != team_name);
-
         Ok(self)
     }
 
@@ -77,8 +75,8 @@ impl TeamsService {
         pid: u64,
         access_level: AccessLevel,
     ) -> Result<&mut Self> {
-        let projects_api = gitlab_api.projects();
         OutMessage::message_info_with_alias("I'm getting data about the project from Gitlab");
+        let projects_api = gitlab_api.projects();
         let project = projects_api.get_data_by_id(pid)?;
 
         for team in self.config_file.config_mut().teams.iter_mut() {
@@ -86,7 +84,7 @@ impl TeamsService {
                 let p = Project {
                     name: project.name.to_string(),
                     id: project.id,
-                    access_level: access_level,
+                    access_level,
                 };
                 if team.projects.iter().any(|i| i.id == p.id) {
                     return Err(Error::new(
@@ -101,6 +99,7 @@ impl TeamsService {
                 return Ok(self);
             }
         }
+
         let error_message = format!("The team with this name can't be found: {}", team_name);
         OutMessage::message_error(error_message.as_str());
         Err(Error::new(ErrorKind::NotFound, error_message))
