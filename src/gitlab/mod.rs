@@ -532,7 +532,7 @@ impl GitlabActions for GitlabClient {
     }
 
     fn get_shared_projects(&self, group_id: u64) -> Vec<Project> {
-        let query = match groups::shared::GroupSharedProjects::builder()
+        let query = match groups::ShareGroup::builder()
             .id(group_id)
             .build()
         {
@@ -545,9 +545,9 @@ impl GitlabActions for GitlabClient {
     }
 
     fn remove_group_from_namespace(&self, gid: u64, nid: u64) -> Result<String, Error> {
-        let q = match groups::shared::RemoveGroupShare::builder()
+        let q = match groups::UnshareGroup::builder()
             .id(nid)
-            .group(gid)
+            .group_id(gid)
             .build()
         {
             Ok(q) => q,

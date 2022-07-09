@@ -106,10 +106,7 @@ impl GitlabGroupsApi for GroupGitlab {
     }
 
     fn get_shared_projects(&self, group_id: u64) -> Vec<Project> {
-        let query = match groups::shared::GroupSharedProjects::builder()
-            .id(group_id)
-            .build()
-        {
+        let query = match groups::ShareGroup::builder().id(group_id).build() {
             Ok(q) => q,
             Err(_) => todo!(),
         };
@@ -135,9 +132,9 @@ impl GitlabGroupsApi for GroupGitlab {
     }
 
     fn remove_from_namespace(&self, gid: u64, nid: u64) -> Result<String> {
-        let q = match groups::shared::RemoveGroupShare::builder()
+        let q = match groups::UnshareGroup::builder()
             .id(nid)
-            .group(gid)
+            .group_id(gid)
             .build()
         {
             Ok(q) => q,
@@ -162,10 +159,10 @@ impl GitlabGroupsApi for GroupGitlab {
     }
 
     fn add_to_namespace(&self, gid: u64, nid: u64, access_level: AccessLevel) -> Result<String> {
-        let q = match groups::shared::AddGroupShare::builder()
+        let q = match groups::ShareGroup::builder()
             .group_access(access_level.to_gitlab_access_level())
             .id(nid)
-            .group(gid)
+            .group_id(gid)
             .build()
         {
             Ok(q) => q,

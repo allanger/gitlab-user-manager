@@ -166,10 +166,10 @@ impl GitlabProjectsApi for ProjectsGitlab {
     }
 
     fn share_with_group(&self, gid: u64, pid: u64, access_level: AccessLevel) -> Result<String> {
-        let q = match projects::share::AddProjectShare::builder()
+        let q = match projects::ShareProject::builder()
             .group_access(access_level.to_gitlab_access_level())
             .project(pid)
-            .group(gid)
+            .group_id(gid)
             .build()
         {
             Ok(q) => q,
@@ -193,9 +193,9 @@ impl GitlabProjectsApi for ProjectsGitlab {
     }
 
     fn stop_sharing_with_group(&self, gid: u64, pid: u64) -> Result<String> {
-        let q = match projects::share::RemoveProjectShare::builder()
+        let q = match projects::ShareProject::builder()
             .project(pid)
-            .group(gid)
+            .group_id(gid)
             .build()
         {
             Ok(q) => q,

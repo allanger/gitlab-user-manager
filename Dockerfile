@@ -5,6 +5,7 @@ COPY ./ .
 RUN cargo build --release
 
 FROM ubuntu:latest
+RUN apt update -y && apt install libssl1.1
 COPY --from=builder /src/target/release/gum /bin/gum
 WORKDIR /config
 ENTRYPOINT ["/bin/gum"]

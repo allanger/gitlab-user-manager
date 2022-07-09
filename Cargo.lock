@@ -465,8 +465,9 @@ checksum = "78cc372d058dcf6d5ecd98510e7fbc9e5aec4d21de70f65fea8fecebcd881bd4"
 
 [[package]]
 name = "gitlab"
-version = "0.1408.0"
-source = "git+https://gitlab.kitware.com/allanger/rust-gitlab.git?tag=temp-version-fix#2ba26dbb93c866b92be77c4e17047dc4a4f9a9d7"
+version = "0.1501.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f8e268c1fd0cf2b8143b192247a7d9739452d5182535c1fa79b8739c33f6f773"
 dependencies = [
  "async-trait",
  "base64",
