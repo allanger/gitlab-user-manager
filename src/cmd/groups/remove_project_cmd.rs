@@ -15,7 +15,7 @@ pub(crate) struct RemoveProjectCmd {
 impl Cmd for RemoveProjectCmd {
     type CmdType = RemoveProjectCmd;
 
-    fn add() -> Command<'static> {
+    fn add() -> Command {
         Command::new("remove-project")
             .alias("rp")
             .about("Remove group from the project")

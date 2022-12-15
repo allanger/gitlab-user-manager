@@ -20,7 +20,7 @@ pub(crate) struct InitCmd {
 impl Cmd for InitCmd {
     type CmdType = InitCmd;
 
-    fn add() -> Command<'static> {
+    fn add() -> Command {
         Command::new("init")
             .about("Generate a config file")
             .alias("i")

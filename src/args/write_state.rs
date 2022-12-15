@@ -8,7 +8,7 @@ pub(crate) struct ArgWriteState;
 impl Args for ArgWriteState {
     type ArgType = bool;
 
-    fn add() -> Arg<'static> {
+    fn add() -> Arg {
         Arg::new(ARG_DRY_RUN)
             .long(ARG_DRY_RUN)
             .short('w')

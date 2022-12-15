@@ -13,7 +13,7 @@ use crate::{
     output::{out_message::OutMessage, out_spinner::OutSpinner},
 };
 
-pub(crate) fn find_projects<'a>() -> Command<'a> {
+pub(crate) fn find_projects<'a>() -> Command {
     return Command::new("projects")
         .about("Look for GitLab projects")
         .aliases(&["p", "project"])

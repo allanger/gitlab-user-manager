@@ -16,7 +16,7 @@ impl ArgNoConfirm {
 impl Args for ArgNoConfirm {
     type ArgType = ArgNoConfirm;
 
-    fn add() -> Arg<'static> {
+    fn add() -> Arg {
         Arg::new(ARG)
             .long(ARG)
             .short('y')

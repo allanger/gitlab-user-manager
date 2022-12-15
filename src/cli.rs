@@ -7,7 +7,7 @@ use crate::cmd::{
 use std::io::{Result, Error, ErrorKind};
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-pub(crate) fn build() -> Command<'static> {
+pub(crate) fn build() -> Command {
     Command::new("gum")
         .about("Manage your GitLab team access in a better way, dude")
         .version(VERSION)

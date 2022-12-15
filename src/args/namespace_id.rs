@@ -9,7 +9,7 @@ pub(crate) struct ArgNamespaceId;
 impl Args for ArgNamespaceId {
     type ArgType = u64;
 
-    fn add() -> Arg<'static> {
+    fn add() -> Arg {
         Arg::new(ARG)
             .short('n')
             .long(ARG)

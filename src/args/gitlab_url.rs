@@ -10,7 +10,7 @@ pub(crate) struct ArgGitlabUrl;
 impl Args for ArgGitlabUrl {
     type ArgType = String;
 
-    fn add() -> Arg<'static> {
+    fn add() -> Arg {
         return Arg::new(ARG)
             .long(ARG)
             .takes_value(true)

@@ -13,7 +13,7 @@ pub(crate) struct ArgAccess;
 impl Args for ArgAccess {
     type ArgType = AccessLevel;
 
-    fn add() -> Arg<'static> {
+    fn add() -> Arg {
         Arg::new(ARG)
             .long(ARG)
             .short('a')

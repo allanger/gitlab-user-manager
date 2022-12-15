@@ -13,7 +13,7 @@ use crate::{
     output::{out_message::OutMessage, out_spinner::OutSpinner},
 };
 
-pub(crate) fn find_groups<'a>() -> Command<'a> {
+pub(crate) fn find_groups<'a>() -> Command {
     return Command::new("groups")
         .about("Look for GitLab groups")
         .aliases(&["g", "group"])

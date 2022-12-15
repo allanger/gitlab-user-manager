@@ -10,7 +10,7 @@ pub(crate) struct ArgFileName;
 impl Args for ArgFileName {
     type ArgType = String;
 
-    fn add() -> Arg<'static> {
+    fn add() -> Arg {
         Arg::new(ARG)
             .short('f')
             .long(ARG)

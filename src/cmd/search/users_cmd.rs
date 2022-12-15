@@ -13,7 +13,7 @@ use crate::{
     output::{out_message::OutMessage, out_spinner::OutSpinner},
 };
 
-pub(crate) fn find_users<'a>() -> Command<'a> {
+pub(crate) fn find_users<'a>() -> Command {
     return Command::new("users")
         .about("Look for GitLab users")
         .aliases(&["u", "user"])

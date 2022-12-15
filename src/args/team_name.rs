@@ -10,7 +10,7 @@ pub(crate) struct ArgTeamName;
 impl Args for ArgTeamName {
     type ArgType = String;
 
-    fn add() -> Arg<'static> {
+    fn add() -> Arg {
         Arg::new(ARG)
             .short('n')
             .takes_value(true)

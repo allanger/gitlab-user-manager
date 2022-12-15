@@ -9,7 +9,7 @@ pub(crate) struct ArgGroupList;
 impl Args for ArgGroupList {
     type ArgType = Vec<u64>;
 
-    fn add() -> Arg<'static> {
+    fn add() -> Arg {
         Arg::new(ARG)
             .short('g')
             .long(ARG)

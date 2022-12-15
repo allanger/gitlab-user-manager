@@ -15,7 +15,7 @@ pub(crate) struct AddTeamCmd {
 impl Cmd for AddTeamCmd {
     type CmdType = AddTeamCmd;
 
-    fn add() -> Command<'static> {
+    fn add() -> Command {
         Command::new("add-team")
             .alias("at")
             .about("Add user to the team")

@@ -10,7 +10,7 @@ pub(crate) struct ArgGitlabToken;
 impl Args for ArgGitlabToken {
     type ArgType = String;
 
-    fn add() -> Arg<'static> {
+    fn add() -> Arg {
         return Arg::new(ARG)
             .short('t')
             .long(ARG)

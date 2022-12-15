@@ -18,7 +18,7 @@ use self::{
 
 use super::{Cmd, CmdOld};
 
-pub(crate) fn add_groups_cmd() -> Command<'static> {
+pub(crate) fn add_groups_cmd() -> Command {
     return Command::new("groups")
         .aliases(&["g", "group"])
         .about("Manage GitLab groups")

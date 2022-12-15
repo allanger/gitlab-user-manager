@@ -9,7 +9,7 @@ pub(crate) struct ArgDryRun;
 impl Args for ArgDryRun {
     type ArgType = bool;
 
-    fn add() -> Arg<'static> {
+    fn add() -> Arg {
         Arg::new(ARG)
             .long(ARG)
             .short('d')

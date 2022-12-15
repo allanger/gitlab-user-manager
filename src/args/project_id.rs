@@ -9,7 +9,7 @@ pub(crate) struct ArgProjectId;
 impl Args for ArgProjectId {
     type ArgType = u64;
 
-    fn add() -> Arg<'static> {
+    fn add() -> Arg {
         Arg::new(ARG)
             .short('p')
             .takes_value(true)

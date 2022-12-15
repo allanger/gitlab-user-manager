@@ -14,7 +14,7 @@ use crate::{
 };
 
 /// Register search cmd
-pub(crate) fn add_search_cmd() -> Command<'static> {
+pub(crate) fn add_search_cmd() -> Command {
     return Command::new("search")
         .aliases(&["s", "find"])
         .about("Search for GitLab entities")

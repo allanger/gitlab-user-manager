@@ -10,7 +10,7 @@ pub(crate) struct ArgShell;
 impl Args for ArgShell {
     type ArgType = Shell;
 
-    fn add() -> Arg<'static> {
+    fn add() -> Arg {
         Arg::new(ARG)
             .short('s')
             .takes_value(true)

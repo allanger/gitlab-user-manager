@@ -17,7 +17,7 @@ pub(crate) struct CreateCmd {
 impl Cmd for CreateCmd {
     type CmdType = CreateCmd;
 
-    fn add() -> Command<'static> {
+    fn add() -> Command {
         Command::new("create")
             .alias("c")
             .about("Add user to the config file")

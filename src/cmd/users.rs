@@ -17,7 +17,7 @@ use super::{Cmd, CmdOld};
 use clap::{ArgMatches, Command};
 use std::io::Error;
 
-pub(crate) fn add_users_cmd() -> Command<'static> {
+pub(crate) fn add_users_cmd() -> Command {
     return Command::new("users")
         .aliases(&["u", "users"])
         .about("Manage GitLab users")

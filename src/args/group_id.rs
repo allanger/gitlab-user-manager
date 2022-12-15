@@ -9,7 +9,7 @@ pub(crate) struct ArgGroupId;
 impl Args for ArgGroupId {
     type ArgType = u64;
 
-    fn add() -> Arg<'static> {
+    fn add() -> Arg {
         Arg::new(ARG)
             .short('g')
             .long(ARG)

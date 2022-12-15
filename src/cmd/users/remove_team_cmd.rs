@@ -15,7 +15,7 @@ pub(crate) struct RemoveTeamCmd {
 impl Cmd for RemoveTeamCmd {
     type CmdType = RemoveTeamCmd;
 
-    fn add() -> Command<'static> {
+    fn add() -> Command {
         Command::new("remove-team")
             .alias("rt")
             .about("Remove a user from the team")

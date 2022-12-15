@@ -18,7 +18,7 @@ pub(crate) struct ListCmd {
 impl Cmd for ListCmd {
     type CmdType = ListCmd;
 
-    fn add() -> Command<'static> {
+    fn add() -> Command {
         Command::new("list")
             .alias("l")
             .about("List users from defined in the config file")

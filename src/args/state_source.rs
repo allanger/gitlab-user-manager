@@ -10,7 +10,7 @@ pub(crate) struct ArgStateSource;
 impl Args for ArgStateSource {
     type ArgType = String;
 
-    fn add() -> Arg<'static> {
+    fn add() -> Arg {
         return Arg::new(ARG)
             .long(ARG)
             .short('s')

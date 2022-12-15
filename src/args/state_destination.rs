@@ -10,7 +10,7 @@ pub(crate) struct ArgStateDestination;
 impl Args for ArgStateDestination {
     type ArgType = String;
 
-    fn add() -> Arg<'static> {
+    fn add() -> Arg {
         return Arg::new(ARG)
             .long(ARG)
             .takes_value(true)

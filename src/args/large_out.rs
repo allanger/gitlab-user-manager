@@ -8,7 +8,7 @@ pub(crate) struct ArgLargeOut;
 impl Args for ArgLargeOut {
     type ArgType = bool;
 
-    fn add() -> Arg<'static> {
+    fn add() -> Arg {
         Arg::new(ARG)
             .long(ARG)
             .short('l')

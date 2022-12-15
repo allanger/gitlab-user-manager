@@ -15,7 +15,7 @@ pub(crate) struct RemoveNamespaceCmd {
 impl Cmd for RemoveNamespaceCmd {
     type CmdType = RemoveNamespaceCmd;
 
-    fn add() -> Command<'static> {
+    fn add() -> Command {
         Command::new("remove-namespace")
             .alias("rn")
             .about("Remove user from namespace")
