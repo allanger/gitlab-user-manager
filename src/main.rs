@@ -11,8 +11,7 @@ use std::process::exit;
 
 const MESSAGE_OF_THE_DAY: &str = "☮️  Fight war, not wars ☮️";
 const NEWS: &[&str] = &[
-    "IMPORTANT: Rename teams.groups to teams.namespace in your config file, otherwise gum shall not pass",
-    "COOL: Now you can generate basic completions for your shell, check the `generate` command out"
+    "IMPORTANT: It's not a dead project yet, but I'm just not using gitlab anymore, so development is kinda slow"
 ];
 
 fn main() {
