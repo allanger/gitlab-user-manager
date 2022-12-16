@@ -13,7 +13,6 @@ impl Args for ArgGroupId {
         Arg::new(ARG)
             .short('g')
             .long(ARG)
-            .takes_value(true)
             .value_name("GROUP_ID")
             .help("Provide the id of the GitLab group")
             .default_value("-1")

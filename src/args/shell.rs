@@ -1,5 +1,5 @@
 use super::Args;
-use clap::{Arg, ArgMatches};
+use clap::{Arg, ArgMatches, ValueEnum};
 use clap_complete::Shell;
 use std::io::{Error, ErrorKind, Result};
 
@@ -13,9 +13,8 @@ impl Args for ArgShell {
     fn add() -> Arg {
         Arg::new(ARG)
             .short('s')
-            .takes_value(true)
             .value_name("SHELL")
-            .possible_values(Shell::possible_values())
+            .value_parser(Shell::value_variants())
             .default_value("zsh")
     }
 

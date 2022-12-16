@@ -13,7 +13,6 @@ impl Args for ArgGitlabUrl {
     fn add() -> Arg {
         return Arg::new(ARG)
             .long(ARG)
-            .takes_value(true)
             .value_name("GITLAB_URL")
             .help("Provide the gitlab url if it's not gitlab.com")
             .default_value("gitlab.com")

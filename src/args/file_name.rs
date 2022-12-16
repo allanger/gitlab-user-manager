@@ -14,7 +14,6 @@ impl Args for ArgFileName {
         Arg::new(ARG)
             .short('f')
             .long(ARG)
-            .takes_value(true)
             .value_name("FILE_PATH")
             .help("Provide a name of the config file")
             .default_value("gum-config.yaml")

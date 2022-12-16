@@ -13,11 +13,10 @@ impl Args for ArgGroupList {
         Arg::new(ARG)
             .short('g')
             .long(ARG)
-            .takes_value(true)
             .value_name("GROUP_IDS")
             .help("Provide a list of groups to create a snapshot on initializing")
             .global(true)
-            .multiple_values(true)
+            .num_args(1..)
     }
 
     fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<Vec<u64>> {

@@ -12,7 +12,6 @@ impl Args for ArgProjectId {
     fn add() -> Arg {
         Arg::new(ARG)
             .short('p')
-            .takes_value(true)
             .value_name("PROJECT_ID")
             .help("Provide the GitLab project ID")
             .default_value("-1")

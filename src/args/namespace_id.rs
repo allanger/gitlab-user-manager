@@ -13,7 +13,6 @@ impl Args for ArgNamespaceId {
         Arg::new(ARG)
             .short('n')
             .long(ARG)
-            .takes_value(true)
             .value_name("NAMESPACE_ID")
             .help("Provide the id of the GitLab namespace")
             .default_value("-1")

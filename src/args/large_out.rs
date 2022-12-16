@@ -12,11 +12,11 @@ impl Args for ArgLargeOut {
         Arg::new(ARG)
             .long(ARG)
             .short('l')
-            .takes_value(false)
+            .num_args(0)
             .help("Display a lot of data")
     }
 
     fn parse<'b>(sub_matches: &'b ArgMatches) -> std::io::Result<bool> {
-        Ok(sub_matches.is_present(ARG))
+        Ok(sub_matches.contains_id(ARG))
     }
 }

@@ -13,7 +13,6 @@ impl Args for ArgUserId {
         Arg::new(ARG)
             .short('u')
             .long(ARG)
-            .takes_value(true)
             .value_name("USER_ID")
             .help("Provide the id of the GitLab user")
             .default_value("-1")

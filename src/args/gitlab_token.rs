@@ -14,7 +14,6 @@ impl Args for ArgGitlabToken {
         return Arg::new(ARG)
             .short('t')
             .long(ARG)
-            .takes_value(true)
             .value_name("GITLAB_TOKEN")
             .help("Provide your GitLab token")
             .env("GITLAB_TOKEN")

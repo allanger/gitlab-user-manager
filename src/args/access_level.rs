@@ -17,12 +17,11 @@ impl Args for ArgAccess {
         Arg::new(ARG)
             .long(ARG)
             .short('a')
-            .takes_value(true)
             .value_name("ACCESS")
             .help("Provide a valid access level")
             .default_value("guest")
             .global(true)
-            .possible_values([
+            .value_parser([
                 "guest",
                 "reporter",
                 "developer",
