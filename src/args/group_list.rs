@@ -20,7 +20,7 @@ impl Args for ArgGroupList {
     }
 
     fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<Vec<u64>> {
-        let value = match sub_matches.values_of(ARG) {
+        let value = match sub_matches.get_many::<String>(ARG) {
             Some(v) => v.map(|f| f.parse::<u64>().unwrap()).collect(),
             None => Vec::new(),
         };

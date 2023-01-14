@@ -33,7 +33,7 @@ impl Args for ArgAccess {
 
     fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<AccessLevel> {
         sub_matches
-            .value_of(ARG)
+            .get_one::<String>(ARG)
             .ok_or_else(|| {
                 let err_msg = "Access level is not provided";
                 OutMessage::message_error(err_msg);

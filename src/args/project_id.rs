@@ -1,5 +1,7 @@
+use crate::output::out_message::OutMessage;
+
 use super::Args;
-use clap::{Arg, ArgMatches};
+use clap::{Arg, ArgMatches, value_parser};
 use std::io::{Error, ErrorKind, Result};
 
 static ARG: &str = "project-id";
@@ -16,12 +18,18 @@ impl Args for ArgProjectId {
             .help("Provide the GitLab project ID")
             .default_value("-1")
             .global(true)
+            
     }
 
     fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<u64> {
-        match sub_matches.value_of_t(ARG) {
-            Ok(value) => Ok(value),
-            Err(err) => Err(Error::new(ErrorKind::InvalidInput, err.to_string())),
-        }
+        sub_matches.get_one::<String>(ARG)
+        .ok_or_else(|| {
+            let err_msg = "Project ID is incorrect";
+            OutMessage::message_error(err_msg);
+            Error::new(std::io::ErrorKind::InvalidInput, err_msg)
+        })
+        .and_then(|value| {
+            return Ok(value.parse::<u64>().unwrap());
+        })
     }
 }

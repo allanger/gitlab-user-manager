@@ -23,7 +23,7 @@ impl Args for ArgGitlabToken {
 
     fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<String> {
         sub_matches
-            .value_of(ARG)
+            .get_one::<String>(ARG)
             .ok_or_else(|| {
                 let err_msg = "GitLab token is not specified";
                 OutMessage::message_error(err_msg);

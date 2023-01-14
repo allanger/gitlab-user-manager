@@ -13,7 +13,7 @@ impl Args for ArgTeamName {
     fn add() -> Arg {
         Arg::new(ARG)
             .short('n')
-            .takes_value(true)
+            .num_args(1..)
             .value_name("TEAM_NAME")
             .help("Provide a name of the team")
             .default_value("default")
@@ -21,7 +21,7 @@ impl Args for ArgTeamName {
 
     fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<String> {
         sub_matches
-            .value_of(ARG)
+            .get_one::<String>(ARG)
             .ok_or_else(|| {
                 let err_msg = "GitLab token is not specified";
                 OutMessage::message_error(err_msg);

@@ -24,7 +24,7 @@ pub(crate) fn prepare<'a>(
     sub_matches: &'_ ArgMatches,
     gitlab_client: &'a Gitlab,
 ) -> Result<impl CmdOld<'a>, Error> {
-    let search_string = sub_matches.value_of("SEARCH").ok_or(Error::new(
+    let search_string = sub_matches.get_one::<String>("SEARCH").ok_or(Error::new(
         std::io::ErrorKind::InvalidInput,
         "Whatcha lookin' for, mate?",
     ));

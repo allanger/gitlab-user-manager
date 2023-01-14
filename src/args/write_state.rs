@@ -12,11 +12,11 @@ impl Args for ArgWriteState {
         Arg::new(ARG_DRY_RUN)
             .long(ARG_DRY_RUN)
             .short('w')
-            .takes_value(false)
+            .num_args(1..)
             .help("Use if you wanna save state in a separate json file")
     }
 
     fn parse<'b>(sub_matches: &'b ArgMatches) -> std::io::Result<Self::ArgType> {
-        Ok(sub_matches.is_present(ARG_DRY_RUN))
+        Ok(sub_matches.contains_id(ARG_DRY_RUN))
     }
 }

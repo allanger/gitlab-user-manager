@@ -41,7 +41,7 @@ impl OutSpinner {
 
         let spinner_style = ProgressStyle::default_spinner()
             .tick_chars(&chars)
-            .template(" [ {spinner} ] {msg}: ... ");
+            .template(" [ {spinner} ] {msg}: ... ").unwrap();
 
         let spinner = ProgressBar::new_spinner()
             .with_style(spinner_style)
