@@ -10,11 +10,10 @@ pub(crate) struct ArgFileName;
 impl Args for ArgFileName {
     type ArgType = String;
 
-    fn add() -> Arg<'static> {
+    fn add() -> Arg {
         Arg::new(ARG)
             .short('f')
             .long(ARG)
-            .takes_value(true)
             .value_name("FILE_PATH")
             .help("Provide a name of the config file")
             .default_value("gum-config.yaml")
@@ -24,7 +23,7 @@ impl Args for ArgFileName {
 
     fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<String> {
         sub_matches
-            .value_of(ARG)
+            .get_one::<String>(ARG)
             .ok_or_else(|| {
                 let err_msg = "File is not specified";
                 OutMessage::message_error(err_msg);

@@ -10,10 +10,10 @@ pub(crate) struct ArgStateDestination;
 impl Args for ArgStateDestination {
     type ArgType = String;
 
-    fn add() -> Arg<'static> {
+    fn add() -> Arg {
         return Arg::new(ARG)
             .long(ARG)
-            .takes_value(true)
+            .num_args(1..)
             .value_name("FILE_PATH")
             .help("Provide a path where you would like to save new state")
             .default_value("/tmp/gum/gum-state.json")
@@ -22,7 +22,7 @@ impl Args for ArgStateDestination {
 
     fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<String> {
         sub_matches
-            .value_of(ARG)
+            .get_one::<String>(ARG)
             .ok_or_else(|| {
                 let err_msg = "State destination is not specified";
                 OutMessage::message_error(err_msg);

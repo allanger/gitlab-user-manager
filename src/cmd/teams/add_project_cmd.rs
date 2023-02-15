@@ -21,7 +21,7 @@ pub(crate) struct AddProjectCmd {
 impl Cmd for AddProjectCmd {
     type CmdType = AddProjectCmd;
 
-    fn add() -> Command<'static> {
+    fn add() -> Command {
         Command::new("add-project")
             .alias("ap")
             .about("Grant team access to a project")

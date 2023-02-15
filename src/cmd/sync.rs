@@ -29,10 +29,9 @@ pub(crate) struct SyncCmd {
 
 impl<'a> Cmd for SyncCmd {
     type CmdType = SyncCmd;
-    fn add() -> Command<'static> {
+    fn add() -> Command {
         Command::new("sync")
             .about("Sync your config file with GitLab and generate the state file")
-            .alias("s")
             .after_help("$ gum sync -f gum-config-example.yaml --dry-run")
             .before_help("Use this command if you want to apply changes in your configuration file to GitLab")
             .arg(ArgDryRun::add())

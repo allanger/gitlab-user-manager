@@ -1,5 +1,7 @@
+use crate::output::out_message::OutMessage;
+
 use super::Args;
-use clap::{Arg, ArgMatches};
+use clap::{Arg, ArgMatches, ValueEnum, value_parser};
 use clap_complete::Shell;
 use std::io::{Error, ErrorKind, Result};
 
@@ -10,19 +12,23 @@ pub(crate) struct ArgShell;
 impl Args for ArgShell {
     type ArgType = Shell;
 
-    fn add() -> Arg<'static> {
+    fn add() -> Arg {
         Arg::new(ARG)
             .short('s')
-            .takes_value(true)
             .value_name("SHELL")
-            .possible_values(Shell::possible_values())
+            .value_parser(value_parser!(Shell))
             .default_value("zsh")
     }
 
     fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<Shell> {
-        return sub_matches.value_of_t::<Shell>(ARG).or(Err(Error::new(
-            ErrorKind::InvalidInput,
-            "Provided shell doesn't exist",
-        )));
+        sub_matches.get_one::<Shell>(ARG)
+        .ok_or_else(|| {
+            let err_msg = "Group ID is incorrect";
+            OutMessage::message_error(err_msg);
+            Error::new(std::io::ErrorKind::InvalidInput, err_msg)
+        })
+        .and_then(|value| {
+            return Ok(value);
+        }).copied()
     }
 }

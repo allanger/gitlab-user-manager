@@ -10,7 +10,7 @@ use crate::{
 };
 
 /// init cmd should be used to generate an empty gum-config
-pub(crate) fn add_upgrade_cmd() -> Command<'static> {
+pub(crate) fn add_upgrade_cmd() -> Command {
     return Command::new("upgrade")
         .about("Update current gum with a newer version")
         .arg(ArgNoConfirm::add());

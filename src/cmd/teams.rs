@@ -15,7 +15,7 @@ use self::{
 
 use super::{Cmd, CmdOld};
 
-pub(crate) fn add_teams_cmd() -> Command<'static> {
+pub(crate) fn add_teams_cmd() -> Command {
     // Register command
     return Command::new("teams")
         .aliases(&["t", "team"])

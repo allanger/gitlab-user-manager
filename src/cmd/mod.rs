@@ -21,7 +21,7 @@ pub(crate) trait CmdOld<'a> {
 
 pub(crate) trait Cmd {
     type CmdType;
-    fn add() -> Command<'static>;
+    fn add() -> Command;
     fn prepare(sub_matches: &'_ ArgMatches) -> Result<Self::CmdType>;
     fn exec(&self) -> Result<()>;
 }

@@ -10,10 +10,9 @@ pub(crate) struct ArgGitlabUrl;
 impl Args for ArgGitlabUrl {
     type ArgType = String;
 
-    fn add() -> Arg<'static> {
+    fn add() -> Arg {
         return Arg::new(ARG)
             .long(ARG)
-            .takes_value(true)
             .value_name("GITLAB_URL")
             .help("Provide the gitlab url if it's not gitlab.com")
             .default_value("gitlab.com")
@@ -22,7 +21,7 @@ impl Args for ArgGitlabUrl {
 
     fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<String> {
         sub_matches
-            .value_of(ARG)
+            .get_one::<String>(ARG)
             .ok_or_else(|| {
                 let err_msg = "GitLab url is not specified";
                 OutMessage::message_error(err_msg);

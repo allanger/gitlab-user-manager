@@ -12,7 +12,7 @@ pub(crate) struct GenerateCmd {
 impl Cmd for GenerateCmd {
     type CmdType = GenerateCmd;
 
-    fn add() -> clap::Command<'static> {
+    fn add() -> clap::Command {
         Command::new("generate")
             .about("Generate autocompletion for you shell")
             .arg(ArgShell::add())

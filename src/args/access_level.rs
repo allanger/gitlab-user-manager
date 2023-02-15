@@ -13,16 +13,15 @@ pub(crate) struct ArgAccess;
 impl Args for ArgAccess {
     type ArgType = AccessLevel;
 
-    fn add() -> Arg<'static> {
+    fn add() -> Arg {
         Arg::new(ARG)
             .long(ARG)
             .short('a')
-            .takes_value(true)
             .value_name("ACCESS")
             .help("Provide a valid access level")
             .default_value("guest")
             .global(true)
-            .possible_values([
+            .value_parser([
                 "guest",
                 "reporter",
                 "developer",
@@ -34,7 +33,7 @@ impl Args for ArgAccess {
 
     fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<AccessLevel> {
         sub_matches
-            .value_of(ARG)
+            .get_one::<String>(ARG)
             .ok_or_else(|| {
                 let err_msg = "Access level is not provided";
                 OutMessage::message_error(err_msg);

@@ -16,17 +16,16 @@ impl ArgNoConfirm {
 impl Args for ArgNoConfirm {
     type ArgType = ArgNoConfirm;
 
-    fn add() -> Arg<'static> {
+    fn add() -> Arg {
         Arg::new(ARG)
             .long(ARG)
             .short('y')
-            .takes_value(false)
             .help("Use if the user shouldn't be prompted to confirm an update")
     }
 
     fn parse<'b>(sub_matches: &'b ArgMatches) -> std::io::Result<Self::ArgType> {
         Ok(ArgNoConfirm {
-            value: sub_matches.is_present(ARG),
+            value: sub_matches.contains_id(ARG),
         })
     }
 }

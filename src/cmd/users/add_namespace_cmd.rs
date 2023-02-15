@@ -21,7 +21,7 @@ pub(crate) struct AddNamespaceCmd {
 impl Cmd for AddNamespaceCmd {
     type CmdType = AddNamespaceCmd;
 
-    fn add() -> Command<'static> {
+    fn add() -> Command {
         Command::new("add-namespace")
             .alias("an")
             .about("Add a user access to a namespace")

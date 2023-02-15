@@ -1,6 +1,6 @@
 use console::{style, Emoji};
 use indicatif::{ProgressBar, ProgressStyle};
-use std::io::Result;
+use std::{io::Result, time::Duration};
 
 pub(crate) struct OutSpinner {
     msg: String,
@@ -41,13 +41,13 @@ impl OutSpinner {
 
         let spinner_style = ProgressStyle::default_spinner()
             .tick_chars(&chars)
-            .template(" [ {spinner} ] {msg}: ... ");
+            .template(" [ {spinner} ] {msg}: ... ").unwrap();
 
         let spinner = ProgressBar::new_spinner()
             .with_style(spinner_style)
             .with_message(msg.clone());
 
-        spinner.enable_steady_tick(2);
+        spinner.enable_steady_tick(Duration::from_secs(2));
         OutSpinner { msg, spinner }
     }
     pub(crate) fn spinner_success(self, status: String) {

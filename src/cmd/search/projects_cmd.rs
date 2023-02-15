@@ -13,7 +13,7 @@ use crate::{
     output::{out_message::OutMessage, out_spinner::OutSpinner},
 };
 
-pub(crate) fn find_projects<'a>() -> Command<'a> {
+pub(crate) fn find_projects<'a>() -> Command {
     return Command::new("projects")
         .about("Look for GitLab projects")
         .aliases(&["p", "project"])
@@ -24,7 +24,7 @@ pub(crate) fn prepare<'a>(
     sub_matches: &'_ ArgMatches,
     gitlab_client: &'a Gitlab,
 ) -> Result<impl CmdOld<'a>, Error> {
-    let search_string = sub_matches.value_of("SEARCH").ok_or_else(|| {
+    let search_string = sub_matches.get_one::<String>("SEARCH").ok_or_else(|| {
         Error::new(
             std::io::ErrorKind::PermissionDenied,
             "whatcha lookin' for, mate?",

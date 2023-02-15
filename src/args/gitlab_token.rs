@@ -10,11 +10,10 @@ pub(crate) struct ArgGitlabToken;
 impl Args for ArgGitlabToken {
     type ArgType = String;
 
-    fn add() -> Arg<'static> {
+    fn add() -> Arg {
         return Arg::new(ARG)
             .short('t')
             .long(ARG)
-            .takes_value(true)
             .value_name("GITLAB_TOKEN")
             .help("Provide your GitLab token")
             .env("GITLAB_TOKEN")
@@ -24,7 +23,7 @@ impl Args for ArgGitlabToken {
 
     fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<String> {
         sub_matches
-            .value_of(ARG)
+            .get_one::<String>(ARG)
             .ok_or_else(|| {
                 let err_msg = "GitLab token is not specified";
                 OutMessage::message_error(err_msg);

@@ -1,3 +1,5 @@
+use crate::output::out_message::OutMessage;
+
 use super::Args;
 use clap::{Arg, ArgMatches};
 use std::io::{Error, ErrorKind, Result};
@@ -9,11 +11,10 @@ pub(crate) struct ArgGroupId;
 impl Args for ArgGroupId {
     type ArgType = u64;
 
-    fn add() -> Arg<'static> {
+    fn add() -> Arg {
         Arg::new(ARG)
             .short('g')
             .long(ARG)
-            .takes_value(true)
             .value_name("GROUP_ID")
             .help("Provide the id of the GitLab group")
             .default_value("-1")
@@ -21,9 +22,14 @@ impl Args for ArgGroupId {
     }
 
     fn parse<'a>(sub_matches: &'_ ArgMatches) -> Result<u64> {
-        match sub_matches.value_of_t(ARG) {
-            Ok(value) => Ok(value),
-            Err(err) => Err(Error::new(ErrorKind::InvalidInput, err.to_string())),
-        }
+        sub_matches.get_one::<String>(ARG)
+        .ok_or_else(|| {
+            let err_msg = "Group ID is incorrect";
+            OutMessage::message_error(err_msg);
+            Error::new(std::io::ErrorKind::InvalidInput, err_msg)
+        })
+        .and_then(|value| {
+            return Ok(value.parse::<u64>().unwrap());
+        })
     }
 }

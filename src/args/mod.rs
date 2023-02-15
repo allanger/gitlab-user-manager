@@ -64,6 +64,6 @@ use std::io::Result;
 
 pub(crate) trait Args {
     type ArgType;
-    fn add() -> Arg<'static>;
+    fn add() -> Arg;
     fn parse<'b>(sub_matches: &'b ArgMatches) -> Result<Self::ArgType>;
 }
